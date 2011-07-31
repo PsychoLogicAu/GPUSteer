@@ -4,30 +4,34 @@
 #include <vector>
 #include <cuda_runtime.h>
 
-#include "VectorMath.cu"
+#include "VectorUtils.cu"
 
 namespace OpenSteer
 {
-	typedef struct vehicle_data {
-		unsigned int id;
+	typedef unsigned int id_type;
+
+	typedef struct vehicle_data
+	{
+		id_type	id;
 
 		// LocalSpace
-		float3  side;					// Side vector
-		float3  up;						// Up vector
-		float3  forward;				// Forward vector
-		float3  position;				// Current position
+		float3	side;					// Side vector
+		float3	up;						// Up vector
+		float3	forward;				// Forward vector
+		float3	position;				// Current position
 		float3	steering;				// Steering vector
 	    
 		// SimpleVehicle
-		float   speed;					// Current speed
-		float3  smoothedAcceleration;
+		float	speed;					// Current speed
+		float3	smoothedAcceleration;
 
-		float3 predictFuturePosition(const float predictionTime) const;
-		__host__ __device__ float3 velocity(void) const { return float3_scalar_multiply(forward, speed); }
+		__host__ __device__ float3 predictFuturePosition( const float predictionTime ) const;
+		__host__ __device__ float3 velocity( void ) const { return float3_scalar_multiply(forward, speed); }
 	} VehicleData;
 
-	typedef struct vehicle_const {
-		unsigned int id;
+	typedef struct vehicle_const
+	{
+		id_type id;
 
 		// SimpleVehicle
 		float   maxForce;

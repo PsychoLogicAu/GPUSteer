@@ -104,7 +104,7 @@ bool enableAttackEvade					= true; // for testing (perhaps retain for UI control
 int resetCount = 0;
 
 // Function prototypes.
-void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst);
+void randomizeStartingPositionAndHeading( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side );
 
 
 // ----------------------------------------------------------------------------
@@ -260,12 +260,19 @@ void CtfEnemyGroup::draw(void)
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
-	const VehicleData *enemiesData = gEnemies->GetVehicleData();
-	const VehicleConst *enemiesConst = gEnemies->GetVehicleConst();
+	VehicleConst vc;
+	VehicleData vd;
 
-	for(int i = 0; i < gEnemyCount; i++)
+	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
+	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+
+	// For each enemy...
+	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
-		drawBasic2dCircularVehicle(enemiesData[i], enemiesConst[i], bodyColor);
+		// Get its data and const.
+		vgch.GetVehicleData( i, vc );
+		vgdh.GetVehicleData( i, vd );
+		drawBasic2dCircularVehicle( vc.radius, vd.position, vd.forward, vd.side, bodyColor );
 	}
 }
 
@@ -358,7 +365,7 @@ void CtfBase::reset (void)
 
     avoiding = false;         // not actively avoiding
 
-	randomizeStartingPositionAndHeading(_data, _const);  // new starting position
+	randomizeStartingPositionAndHeading( _data.position, _const.radius, _data.up, _data.forward, _data.side );  // new starting position
 
     clearTrailHistory ();     // prevent long streaks due to teleportation
 }
@@ -392,26 +399,27 @@ void CtfBase::draw (void)
 
 
 
-void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst)
+//void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst)
+void randomizeStartingPositionAndHeading( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side )
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
-    const float rRadius = frandom2 (gMinStartRadius, gMaxStartRadius);
-    const float3 randomOnRing = float3_scalar_multiply(float3_RandomUnitVectorOnXZPlane (), rRadius);
-    vehicleData.position =  float3_add(gHomeBaseCenter, randomOnRing);
+    const float rRadius = frandom2 ( gMinStartRadius, gMaxStartRadius );
+    const float3 randomOnRing = float3_scalar_multiply( float3_RandomUnitVectorOnXZPlane(), rRadius );
+    position =  float3_add( gHomeBaseCenter, randomOnRing );
 
     // are we are too close to an obstacle?
 	float distance;
-	if (gObstacles->MinDistanceToObstacle(vehicleData.position, vehicleConst.radius * 5, distance))
+	if ( gObstacles->MinDistanceToObstacle( position, radius * 5, distance ) )
     {
         // if so, retry the randomization (this recursive call may not return
         // if there is too little free space)
-		randomizeStartingPositionAndHeading(vehicleData, vehicleConst);
+		randomizeStartingPositionAndHeading( position, radius, up, forward, side );
     }
     else
     {
         // otherwise, if the position is OK, randomize 2D heading
-        randomizeHeadingOnXZPlane(vehicleData);
+        randomizeHeadingOnXZPlane( up, forward, side );
     }
 }
 
@@ -493,15 +501,18 @@ bool CtfSeeker::clearPathToGoal (void)
     // for annotation: loop over all and save result, instead of early return 
     bool xxxReturn = true;
 
-	VehicleData *enemiesData = gEnemies->GetVehicleData();
-	VehicleConst *enemiesConst = gEnemies->GetVehicleConst();
+	VehicleConst econst;
+	VehicleData edata;
 
-    // loop over enemies
-    for (int enemy = 0; enemy < gEnemyCount; enemy++)
-    {
-		// short name for this enemy's data.
-		const VehicleData &edata = enemiesData[enemy];
-		const VehicleConst &econst = enemiesConst[enemy];
+	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
+	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+
+	// For each enemy...
+	for( size_t i = 0; i < gEnemies->Size(); i++ )
+	{
+		// Get its data and const.
+		vgch.GetVehicleData( i, econst );
+		vgdh.GetVehicleData( i, edata );
 
 		const float eDistance = float3_distance (position(), edata.position);
 
@@ -617,14 +628,18 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
 
     const float goalDistance = float3_distance(gHomeBaseCenter, position());
 
-	VehicleData *enemiesData = gEnemies->GetVehicleData();
-	VehicleConst *enemiesConst = gEnemies->GetVehicleConst();
+	VehicleConst econst;
+	VehicleData edata;
 
-    // sum up weighted evasion
-    for (int i = 0; i < gEnemyCount; i++)
-    {
-		const VehicleData &edata = enemiesData[i];
-		const VehicleConst &econst = enemiesConst[i];
+	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
+	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+
+	// For each enemy...
+	for( size_t i = 0; i < gEnemies->Size(); i++ )
+	{
+		// Get its data and const.
+		vgch.GetVehicleData( i, econst );
+		vgdh.GetVehicleData( i, edata );
 
         const float3 eOffset = float3_subtract(edata.position, position());
         const float eDistance = float3_length(eOffset);
@@ -660,13 +675,18 @@ float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
     // sum up weighted evasion
     float3 evade = float3_zero();
 
-	VehicleData *enemiesData = gEnemies->GetVehicleData();
-	VehicleConst *enemiesConst = gEnemies->GetVehicleConst();
+	VehicleConst econst;
+	VehicleData edata;
 
-	for (int i = 0; i < gEnemyCount; i++)
-    {
-		const VehicleData &edata = enemiesData[i];
-		const VehicleConst &econst = enemiesConst[i];
+	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
+	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+
+	// For each enemy...
+	for( size_t i = 0; i < gEnemies->Size(); i++ )
+	{
+		// Get its data and const.
+		vgch.GetVehicleData( i, econst );
+		vgdh.GetVehicleData( i, edata );
 
         const float3 eOffset = float3_subtract(edata.position, position());
         const float eDistance = float3_length(eOffset);
@@ -1052,16 +1072,19 @@ public:
         // reset the seeker ("hero"/"attacker")
         ctfSeeker->reset ();
 
-		// reset the enemies
-        //for (int i = 0; i<ctfEnemyCount; i++) ctfEnemies[i]->reset ();
-		VehicleData *enemiesData = gEnemies->GetVehicleData();	
-		VehicleConst *enemiesConst = gEnemies->GetVehicleConst();
+		VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+		VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
 
-		for(int i = 0; i < gEnemyCount; i++)
+		// reset the enemies
+
+		// For each enemy...
+		for( size_t i = 0; i < gEnemies->Size(); i++ )
 		{
-			enemiesData[i].speed = 3.0f;
-			randomizeHeadingOnXZPlane(enemiesData[i]);
-			randomizeStartingPositionAndHeading(enemiesData[i], enemiesConst[i]);
+			//enemiesData[i].speed = 3.0f;
+			vgdh.hvSpeed[i] = 3.0f;
+			//randomizeHeadingOnXZPlane(enemiesData[i]);
+			randomizeHeadingOnXZPlane( vgdh.hvUp[i], vgdh.hvForward[i], vgdh.hvSide[i] );
+			randomizeStartingPositionAndHeading( vgdh.hvPosition[i], vgch.hvRadius[i], vgdh.hvUp[i], vgdh.hvForward[i], vgdh.hvSide[i] );
 		}
 
         // reset camera position

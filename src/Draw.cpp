@@ -1173,23 +1173,24 @@ OpenSteer::drawBasic2dCircularVehicle (const AbstractVehicle& vehicle,
 }
 
 void 
-OpenSteer::drawBasic2dCircularVehicle (	const VehicleData& vdata,
-										const VehicleConst& vconst,
-										const float3& color)
+//OpenSteer::drawBasic2dCircularVehicle (	const VehicleData& vdata,
+//										const VehicleConst& vconst,
+//										const float3& color)
+OpenSteer::drawBasic2dCircularVehicle (	float const& radius,
+										float3 const& position,
+										float3 const& forward,
+										float3 const& side,
+										const float3& color )
 {
     // "aspect ratio" of body (as seen from above)
     const float x = 0.5f;
     const float y = sqrtXXX (1 - (x * x));
 
-    // radius and position of vehicle
-    const float r = vconst.radius;
-    const float3& p = vdata.position;
-
     // shape of triangular body
-	const float3 u = float3_scalar_multiply(make_float3(0,1,0), r * 0.05f); // slightly up
-	const float3 f = float3_scalar_multiply(vdata.forward, r);
-	const float3 s = float3_scalar_multiply(vdata.side, r * x);
-	const float3 b = float3_scalar_multiply(vdata.forward, r * -y);
+	const float3 u = float3_scalar_multiply( make_float3( 0, 1, 0 ), radius * 0.05f ); // slightly up
+	const float3 f = float3_scalar_multiply( forward, radius );
+	const float3 s = float3_scalar_multiply( side, radius * x );
+	const float3 b = float3_scalar_multiply( forward, radius * -y );
 
     // draw double-sided triangle (that is: no (back) face culling)
     beginDoubleSidedDrawing ();

@@ -66,7 +66,7 @@
 
 #include "AbstractVehicle.h"
 #include "SteerLibrary.h"
-#include "VehicleData.cu"
+#include "VehicleGroupData.cu"
 
 namespace OpenSteer {
 
@@ -351,11 +351,18 @@ namespace OpenSteer {
         }
     };
 
-	inline void randomizeHeadingOnXZPlane (VehicleData &vehicleData)
+	/*inline void randomizeHeadingOnXZPlane(VehicleData &vehicleData)
     {
 		vehicleData.up = float3_up();
 		vehicleData.forward = float3_RandomUnitVectorOnXZPlane ();
 		vehicleData.side = make_float3(-vehicleData.forward.z, vehicleData.forward.y, vehicleData.forward.x);
+    }*/
+
+	inline void randomizeHeadingOnXZPlane( float3 & up, float3 & forward, float3 & side )
+    {
+		up = float3_up();
+		forward = float3_RandomUnitVectorOnXZPlane ();
+		side = make_float3( -forward.z, forward.y, forward.x );
     }
 
 
