@@ -177,7 +177,7 @@
 			Name="plugins"
 			>
 			<File
-				RelativePath="..\plugins\CaptureTheFlagGroup.cpp"
+				RelativePath="..\plugins\CaptureTheFlagGroup.cu"
 				>
 			</File>
 		</Filter>

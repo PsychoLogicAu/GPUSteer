@@ -1,45 +1,63 @@
 #ifndef OPENSTEER_VEHICLEGROUP_H
 #define OPENSTEER_VEHICLEGROUP_H
 
-#include "VehicleData.cu"
+#include "VehicleGroupData.cu"
 #include <map>
 
 namespace OpenSteer
 {
-	class VehicleGroup
-	{
-		typedef std::map<unsigned int, unsigned int> idToIndexMap;
+class VehicleGroup
+{
+	typedef std::map< id_type, size_t > IDToIndexMap;
 
-	protected:
-		std::vector<vehicle_data>		m_vehicleData;
-		std::vector<vehicle_const>		m_vehicleConst;
-		idToIndexMap					m_idToIndexMap;
+protected:
+	int		GetVehicleIndex( id_type _id ) const;
 
-		unsigned int					m_nCount;
+	void	RebuildIDToIndexMap( void );
+	/// Copy the host structures to the device.
+	void	SyncDevice( void );
+	/// Copy the device structures to the host.
+	void	SyncHost( void );
 
-		int GetVehicleIndex(unsigned int _id) const;
 
-	public:
-		VehicleGroup(void);
-		virtual ~VehicleGroup(void);
+	// Host data.
+	VehicleGroupDataHost		m_vehicleDataHost;
+	VehicleGroupConstHost		m_vehicleConstHost;
 
-		bool AddVehicle(VehicleData _data, VehicleConst _const);
-		void RemoveVehicle(const unsigned int _id);
-		void Clear(void);
+	// Device data.
+	VehicleGroupDataDevice		m_vehicleDataDevice;
+	VehicleGroupConstDevice		m_vehicleConstDevice;
 
-		/// Get the size of the collection.
-		unsigned int Size() const { return m_nCount; }
+	IDToIndexMap				m_cIDToIndexMap;
 
-		/// Retrieve a pointer to the VehicleData array.
-		VehicleData* GetVehicleData() { if(m_nCount > 0) return &m_vehicleData[0]; else return NULL; }
+	size_t						m_nCount;
 
-		/// Retrieve a pointer to the VehicleConst array.
-		VehicleConst* GetVehicleConst() { if(m_nCount > 0) return &m_vehicleConst[0]; else return NULL; }
+	bool						m_bSyncDevice;
+	bool						m_bSyncHost;
 
-		/// Use to extract data for an individual vehicle
-		bool GetDataForVehicle(const unsigned int _id, VehicleData &_data, VehicleConst &_const) const;
+public:
+	VehicleGroup(void);
+	virtual ~VehicleGroup(void);
 
-		void OutputDataToFile(const char *filename);
-	};//class VehicleGroup
-}//namespace OpenSteer
+	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );
+	void RemoveVehicle( id_type const id );
+	/// Clear all vehicles from the group.
+	void Clear( void );
+	void SetSyncHost( void )	{ m_bSyncHost = true; }
+
+	/// Get the size of the collection.
+	size_t Size( void ) const { return m_nCount; }
+
+	VehicleGroupConstDevice &	GetVehicleGroupConstDevice()	{ return m_vehicleConstDevice; }
+	VehicleGroupDataDevice &	GetVehicleGroupDataDevice()		{ return m_vehicleDataDevice; }
+	
+	VehicleGroupConstHost &		GetVehicleGroupConstHost()		{ return m_vehicleConstHost; }
+	VehicleGroupDataHost &		GetVehicleGroupDataHost()		{ return m_vehicleDataHost; }
+
+	/// Use to extract data for an individual vehicle
+	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
+
+	void OutputDataToFile( const char *filename );
+};	//class VehicleGroup
+}	//namespace OpenSteer
 #endif

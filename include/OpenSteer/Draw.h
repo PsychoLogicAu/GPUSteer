@@ -55,7 +55,7 @@
 #include "VectorUtils.cu"
 #include "AbstractVehicle.h"
 #include "OpenSteerDemo.h"
-#include "VehicleData.cu"
+#include "VehicleGroupData.cu"
 
 
 // ------------------------------------------------------------------------
@@ -251,9 +251,15 @@ namespace OpenSteer {
     void drawBasic2dCircularVehicle (const AbstractVehicle& bv,
                                      const float3& color);
 
-	void drawBasic2dCircularVehicle (const VehicleData& vdata,
+	void drawBasic2dCircularVehicle (	float const& radius,
+										float3 const& position,
+										float3 const& forward,
+										float3 const& side,
+										const float3& color );
+
+	/*void drawBasic2dCircularVehicle (const VehicleData& vdata,
 									 const VehicleConst& vconst,
-									 const float3& color);
+									 const float3& color);*/
 
     void drawBasic3dSphericalVehicle (const AbstractVehicle& bv,
                                       const float3& color);

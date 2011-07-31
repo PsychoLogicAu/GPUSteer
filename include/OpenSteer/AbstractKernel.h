@@ -2,7 +2,7 @@
 #define OPENSTEER_ABSTRACTKERNEL_H
 
 #include <cuda_runtime.h>
-#include "VehicleData.cu"
+#include "VehicleGroupData.cu"
 #include "VehicleGroup.h"
 
 namespace OpenSteer
@@ -10,21 +10,21 @@ namespace OpenSteer
 	class AbstractKernel
 	{
 	protected:
-		VehicleGroup*	m_pVehicleGroup;
+		VehicleGroup *	m_pVehicleGroup;
 
-		inline size_t getDataSizeInBytes(void)
-		{
-			return sizeof(VehicleData) * getNumberOfAgents();
-		}
+		//inline size_t getDataSizeInBytes(void)
+		//{
+		//	return sizeof(VehicleData) * getNumberOfAgents();
+		//}
 
-		inline size_t getConstSizeInBytes(void)
-		{
-			return sizeof(VehicleConst) * getNumberOfAgents();
-		}
+		//inline size_t getConstSizeInBytes(void)
+		//{
+		//	return sizeof(VehicleConst) * getNumberOfAgents();
+		//}
 
-		inline int getNumberOfAgents(void)
+		inline size_t getNumberOfAgents( void )
 		{
-			if(m_pVehicleGroup != NULL)
+			if( m_pVehicleGroup != NULL )
 				return m_pVehicleGroup->Size();
 
 			return 0;
@@ -45,7 +45,12 @@ namespace OpenSteer
 			init();
 		}
 
-		VehicleData* getVehicleData(void)
+		VehicleGroup * GetVehicleGroup( void )
+		{
+			return m_pVehicleGroup;
+		}
+
+		/*VehicleData* getVehicleData(void)
 		{
 			if(m_pVehicleGroup != NULL)
 				return m_pVehicleGroup->GetVehicleData();
@@ -59,7 +64,7 @@ namespace OpenSteer
 				return m_pVehicleGroup->GetVehicleConst();
 
 			return NULL;
-		}
+		}*/
 	};
 } // namespace OpenSteer
 #endif

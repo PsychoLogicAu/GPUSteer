@@ -1,5 +1,5 @@
-#ifndef OPENSTEER_VECTORMATH_H
-#define OPENSTEER_VECTORMATH_H
+#ifndef OPENSTEER_VECTORUTILS_CU
+#define OPENSTEER_VECTORUTILS_CU
 
 // CUDA includes
 #include <vector_types.h>
