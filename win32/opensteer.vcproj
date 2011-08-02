@@ -179,7 +179,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CPU\CPUGroupSteerLibrary.cpp"
+					RelativePath="..\include\OpenSteer\CPU\CPUGroupSteerLibrary.cu"
 					>
 				</File>
 				<File
@@ -193,25 +193,57 @@
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.cu"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.h"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.h"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\CUDAGlobals.h"
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\CUDAGroupSteerLibrary.cpp"
+					RelativePath="..\include\OpenSteer\CUDA\CUDAGroupSteerLibrary.cu"
 					>
 				</File>
 				<File
@@ -380,19 +412,19 @@
 			Name="src"
 			>
 			<File
-				RelativePath="..\src\Annotation.cpp"
+				RelativePath="..\src\Annotation.cu"
 				>
 			</File>
 			<File
-				RelativePath="..\src\Camera.cpp"
+				RelativePath="..\src\Camera.cu"
 				>
 			</File>
 			<File
-				RelativePath="..\src\Clock.cpp"
+				RelativePath="..\src\Clock.cu"
 				>
 			</File>
 			<File
-				RelativePath="..\src\Draw.cpp"
+				RelativePath="..\src\Draw.cu"
 				>
 			</File>
 			<File
@@ -404,7 +436,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\OpenSteerDemo.cpp"
+				RelativePath="..\src\OpenSteerDemo.cu"
 				>
 			</File>
 			<File
@@ -416,15 +448,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\SimpleVehicle.cpp"
+				RelativePath="..\src\SimpleVehicle.cu"
 				>
 			</File>
 			<File
-				RelativePath="..\src\SteerLibrary.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\VehicleData.cpp"
+				RelativePath="..\src\SteerLibrary.cu"
 				>
 			</File>
 			<File

@@ -1,3 +1,5 @@
+/*
+
 #include "AvoidObstaclesCUDA.h"
 
 #include "CUDAKernelGlobals.h"
@@ -128,3 +130,5 @@ extern "C"
 		}
 	}
 }
+
+*/

@@ -44,7 +44,7 @@
 #include <cfloat>    // for FLT_MAX, etc.
 #include <cmath>     // for sqrt, etc.
 
-#include <vector_types.h>
+//#include <vector_types.h>
 
 #ifndef OPENSTEER_M_PI
 #define OPENSTEER_M_PI 3.14159265358979323846f

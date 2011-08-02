@@ -15,29 +15,31 @@ namespace OpenSteer
 	protected:
 		int m_threadsPerBlock;
 
-		// Device pointers.
-		VehicleData*	m_pdVehicleData;
-		VehicleConst*	m_pdVehicleConst;
+		// Structures containing device pointers.
+		VehicleGroupDataDevice *	m_pdVehicleGroupData;
+		VehicleGroupConstDevice *	m_pdVehicleGroupConst;
 
 	public:
-		AbstractCUDAKernel(VehicleGroup *pVehicleGroup)
-		:	AbstractKernel(pVehicleGroup),
-			m_pdVehicleData(NULL),
-			m_threadsPerBlock(THREADSPERBLOCK)
-		{}
-
-		virtual void init(void) = 0;
-		virtual void run(void) = 0;
-		virtual void close(void) = 0;
-
-		virtual dim3 gridDim(void)
+		AbstractCUDAKernel( VehicleGroup * pVehicleGroup )
+		:	AbstractKernel( pVehicleGroup ),
+			m_threadsPerBlock( THREADSPERBLOCK )
 		{
-			return dim3((getNumberOfAgents() + m_threadsPerBlock - 1) / m_threadsPerBlock);
+			m_pdVehicleGroupData = &m_pVehicleGroup->GetVehicleGroupDataDevice();
+			m_pdVehicleGroupConst = &m_pVehicleGroup->GetVehicleGroupConstDevice();
 		}
 
-		virtual dim3 blockDim(void)
+		virtual void init( void ) = 0;
+		virtual void run( void ) = 0;
+		virtual void close( void ) = 0;
+
+		virtual dim3 gridDim( void )
 		{
-			return dim3(m_threadsPerBlock);
+			return dim3( ( getNumAgents() + m_threadsPerBlock - 1 ) / m_threadsPerBlock );
+		}
+
+		virtual dim3 blockDim( void )
+		{
+			return dim3( m_threadsPerBlock );
 		}
 	};
 }
