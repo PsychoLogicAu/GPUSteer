@@ -53,20 +53,20 @@ void CUDAGroupSteerLibrarySingleton::steerToStayOnPath(VehicleGroup &vehicleGrou
 
 void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle )
 {
-	AvoidObstacleCUDA kernel( &vehicleGroup, minTimeToCollision, &obstacle );
+	//AvoidObstacleCUDA kernel( &vehicleGroup, minTimeToCollision, &obstacle );
 
-	kernel.init();
-	kernel.run();
-	kernel.close();
+	//kernel.init();
+	//kernel.run();
+	//kernel.close();
 }
 
 void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup &obstacles )
 {
-	AvoidObstaclesCUDA kernel( &vehicleGroup, minTimeToCollision, &obstacles );
+	//AvoidObstaclesCUDA kernel( &vehicleGroup, minTimeToCollision, &obstacles );
 
-	kernel.init();
-	kernel.run();
-	kernel.close();
+	//kernel.init();
+	//kernel.run();
+	//kernel.close();
 }
 
 void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others )

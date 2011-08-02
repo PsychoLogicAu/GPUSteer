@@ -1,6 +1,6 @@
 #include "UpdateCUDA.h"
 
-#include "../VehicleGroupData.cu"
+#include "../VehicleGroupData.h"
 #include "../VectorUtils.cu"
 
 #include "CUDAKernelGlobals.h"

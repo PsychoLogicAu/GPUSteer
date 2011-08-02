@@ -14,6 +14,9 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<DefaultToolFile
+			FileName="NvCudaRuntimeApi.v4.0.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -28,6 +31,11 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="Cudart Build Rule"
+				Include="&quot;$(SolutionDir)opensteer\include&quot;"
+				Runtime="3"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -104,6 +112,10 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="Cudart Build Rule"
+				Include="&quot;$(SolutionDir)opensteer\include&quot;"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -186,6 +198,10 @@
 			>
 			<File
 				RelativePath="..\src\main.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\steertest.cu"
 				>
 			</File>
 		</Filter>

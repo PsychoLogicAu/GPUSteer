@@ -55,7 +55,7 @@
 #include "VectorUtils.cu"
 #include "AbstractVehicle.h"
 #include "OpenSteerDemo.h"
-#include "VehicleGroupData.cu"
+#include "VehicleGroupData.h"
 
 
 // ------------------------------------------------------------------------
