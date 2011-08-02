@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cuda_runtime.h>
+#include <vector_types.h>
 
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>

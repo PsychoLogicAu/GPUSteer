@@ -5,25 +5,23 @@ using namespace OpenSteer;
 // Kernel function prototype.
 extern "C"
 {
-	__global__ void UpdateCUDAKernel(vehicle_data *vehicleData, vehicle_const *vehicleConst, float elapsedTime, int numAgents);
+	__global__ void UpdateCUDAKernel(	// vehicle_group_data members.
+										float3 * pdSide, float3 * pdUp, float3 * pdForward,
+										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
+										// vehicle_group_const members.
+										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
+										float const elapsedTime, size_t const numAgents );
 }
 
-UpdateCUDA::UpdateCUDA(VehicleGroup *pVehicleGroup, const float elapsedTime)
-:	AbstractCUDAKernel(pVehicleGroup),
-	m_elapsedTime(elapsedTime)
+UpdateCUDA::UpdateCUDA( VehicleGroup * pVehicleGroup, const float fElapsedTime )
+:	AbstractCUDAKernel( pVehicleGroup ),
+	m_fElapsedTime( fElapsedTime )
 {
-	m_threadsPerBlock = THREADSPERBLOCK;
 }
 
-void UpdateCUDA::init(void)
+void UpdateCUDA::init( void )
 {
-	// Allocate device memory.
-	HANDLE_ERROR(cudaMalloc((void**)&m_pdVehicleData, getDataSizeInBytes()));
-	HANDLE_ERROR(cudaMalloc((void**)&m_pdVehicleConst, getConstSizeInBytes()));
-
-	// Copy data to device memory.
-	HANDLE_ERROR(cudaMemcpy(m_pdVehicleData, (void*)getVehicleData(), getDataSizeInBytes(), cudaMemcpyHostToDevice));
-	HANDLE_ERROR(cudaMemcpy(m_pdVehicleConst, (void*)getVehicleConst(), getConstSizeInBytes(), cudaMemcpyHostToDevice));
+	// Nothing to do.
 }
 
 void UpdateCUDA::run(void)
@@ -31,20 +29,27 @@ void UpdateCUDA::run(void)
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	UpdateCUDAKernel<<<grid, block>>>(m_pdVehicleData, m_pdVehicleConst, m_elapsedTime, getNumberOfAgents());
+	// Gather pointers to the required data...
+	float3 * pdSide = m_pdVehicleGroupData->dpSide();
+	float3 * pdUp = m_pdVehicleGroupData->dpUp();
+	float3 * pdForward = m_pdVehicleGroupData->dpForward();
+	float3 * pdPosition = m_pdVehicleGroupData->dpPosition();
+	float3 * pdSteering = m_pdVehicleGroupData->dpSteering();
+	float * pdSpeed = m_pdVehicleGroupData->dpSpeed();
+
+	float const* pdMaxForce = m_pdVehicleGroupConst->dpMaxForce();
+	float const* pdMaxSpeed = m_pdVehicleGroupConst->dpMaxSpeed();
+	float const* pdMass = m_pdVehicleGroupConst->dpMass();
+
+	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdForward, pdPosition, pdSteering, pdSpeed,
+											pdMaxForce, pdMaxSpeed, pdMass,
+											m_fElapsedTime, getNumAgents() );
 
 	cudaThreadSynchronize();
 }
 
 void UpdateCUDA::close(void)
 {
-	// Copy vehicle data back to the host memory.
-	HANDLE_ERROR(cudaMemcpy((void*)getVehicleData(), m_pdVehicleData, getDataSizeInBytes(), cudaMemcpyDeviceToHost));
-
-	// Deallocate device memory
-	HANDLE_ERROR(cudaFree(m_pdVehicleData));
-	HANDLE_ERROR(cudaFree(m_pdVehicleConst));
-
-	m_pdVehicleData = NULL;
-	m_pdVehicleConst = NULL;
+	// Device data has changed. Instruct the VehicleGroup it needs to synchronize the host.
+	m_pVehicleGroup->SetSyncHost();
 }

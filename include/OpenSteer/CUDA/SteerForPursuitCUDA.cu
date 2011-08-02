@@ -1,55 +1,49 @@
 #include "SteerForPursuitCUDA.h"
 
-#include "../VehicleData.cu"
+#include "../VehicleGroupData.cu"
 
 using namespace OpenSteer;
 
 // Kernel function prototype.
 extern "C"
 {
-	__global__ void SteerForPursuitCUDAKernel(vehicle_data *vehicleData, vehicle_data *target, const int numAgents, const float maxPredictionTime);
+	__global__ void SteerForPursuitCUDAKernel(	float3 * pdSteering, float3 const* pdPosition, float3 const* pdForward, float const* pdSpeed, 
+												float3 const targetPosition, float3 const targetForward, float3 const targetVelocity, float const targetSpeed,
+												size_t const numAgents, float const maxPredictionTime );
 }
 
-SteerForPursuitCUDA::SteerForPursuitCUDA(VehicleGroup *pVehicleGroup, const vehicle_data *pTarget, const float maxPredictionTime)
-:	AbstractCUDAKernel(pVehicleGroup),
-	m_pTarget(pTarget),
-	m_maxPredictionTime(maxPredictionTime)
-{
-}
+SteerForPursuitCUDA::SteerForPursuitCUDA(	VehicleGroup * pVehicleGroup, 
+											float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
+											const float fMaxPredictionTime )
+:	AbstractCUDAKernel( pVehicleGroup ),
+	m_targetPosition( targetPosition ),
+	m_targetForward( targetForward ),
+	m_targetVelocity( targetVelocity ),
+	m_targetSpeed( targetSpeed ),
+	m_fMaxPredictionTime( fMaxPredictionTime )
+{ }
 
 void SteerForPursuitCUDA::init(void)
-{
-	size_t av_size = sizeof(vehicle_data);
-	size_t vdata_size = getDataSizeInBytes();
-
-	// Allocate device memory.
-	HANDLE_ERROR(cudaMalloc((void**)&m_pdVehicleData, vdata_size));
-	HANDLE_ERROR(cudaMalloc((void**)&m_pdTarget, av_size));
-
-	// Copy data to device memory.
-	HANDLE_ERROR(cudaMemcpy(m_pdVehicleData, getVehicleData(), vdata_size, cudaMemcpyHostToDevice));
-	HANDLE_ERROR(cudaMemcpy(m_pdTarget, m_pTarget, av_size, cudaMemcpyHostToDevice));
-}
+{ }
 
 void SteerForPursuitCUDA::run(void)
 {
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	SteerForPursuitCUDAKernel<<<grid, block>>>(m_pdVehicleData, m_pdTarget, getNumberOfAgents(), m_maxPredictionTime);
+	// Gether the required device pointers.
+	float3 * pdSteering = m_pdVehicleGroupData->dpSteering();
+	float3 const* pdPosition = m_pdVehicleGroupData->dpPosition();
+	float3 const* pdForward = m_pdVehicleGroupData->dpForward();
+	float const* pdSpeed = m_pdVehicleGroupData->dpSpeed();
+
+	SteerForPursuitCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, pdSpeed, m_targetPosition, m_targetForward, m_targetVelocity, m_targetSpeed, getNumAgents(), m_fMaxPredictionTime );
 
 	cudaThreadSynchronize();
 }
 
 void SteerForPursuitCUDA::close(void)
 {
-	// Copy vehicle data back to the host memory.
-	HANDLE_ERROR(cudaMemcpy((void*)getVehicleData(), m_pdVehicleData, getDataSizeInBytes(), cudaMemcpyDeviceToHost));
-
-	// Deallocate device memory
-	HANDLE_ERROR(cudaFree(m_pdVehicleData));
-	HANDLE_ERROR(cudaFree(m_pdTarget));
-	
-	m_pdVehicleData = NULL;
-	m_pdTarget = NULL;
+	// Device data has changed. Instruct the VehicleGroup it needs to synchronize the host.
+	m_pVehicleGroup->SetSyncHost();
 }

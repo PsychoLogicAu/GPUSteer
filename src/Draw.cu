@@ -1194,14 +1194,14 @@ OpenSteer::drawBasic2dCircularVehicle (	float const& radius,
 
     // draw double-sided triangle (that is: no (back) face culling)
     beginDoubleSidedDrawing ();
-    iDrawTriangle (float3_add(float3_add(p, f), u),
-				   float3_subtract(float3_add(p, b), float3_add(s, u)),
-				   float3_add(float3_add(p, b), float3_add(s, u)),
+    iDrawTriangle (float3_add(float3_add(position, f), u),
+				   float3_subtract(float3_add(position, b), float3_add(s, u)),
+				   float3_add(float3_add(position, b), float3_add(s, u)),
                    color);
     endDoubleSidedDrawing ();
 
     // draw the circular collision boundary
-    drawXZCircle (r, float3_add(p, u), gWhite, 20);
+    drawXZCircle (radius, float3_add(position, u), gWhite, 20);
 }
 
 

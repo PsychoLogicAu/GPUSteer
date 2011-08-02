@@ -36,8 +36,8 @@ protected:
 	bool						m_bSyncHost;
 
 public:
-	VehicleGroup(void);
-	virtual ~VehicleGroup(void);
+	VehicleGroup( void );
+	virtual ~VehicleGroup( void );
 
 	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );
 	void RemoveVehicle( id_type const id );

@@ -12,17 +12,7 @@ namespace OpenSteer
 	protected:
 		VehicleGroup *	m_pVehicleGroup;
 
-		//inline size_t getDataSizeInBytes(void)
-		//{
-		//	return sizeof(VehicleData) * getNumberOfAgents();
-		//}
-
-		//inline size_t getConstSizeInBytes(void)
-		//{
-		//	return sizeof(VehicleConst) * getNumberOfAgents();
-		//}
-
-		inline size_t getNumberOfAgents( void )
+		inline size_t getNumAgents( void )
 		{
 			if( m_pVehicleGroup != NULL )
 				return m_pVehicleGroup->Size();
@@ -31,8 +21,8 @@ namespace OpenSteer
 		}
 
 	public:
-		AbstractKernel(VehicleGroup *vehicleGroup)
-			: m_pVehicleGroup(vehicleGroup)
+		AbstractKernel( VehicleGroup * pVehicleGroup )
+			: m_pVehicleGroup( pVehicleGroup )
 		{ }
 
 		virtual void init(void) = 0;
@@ -49,22 +39,6 @@ namespace OpenSteer
 		{
 			return m_pVehicleGroup;
 		}
-
-		/*VehicleData* getVehicleData(void)
-		{
-			if(m_pVehicleGroup != NULL)
-				return m_pVehicleGroup->GetVehicleData();
-
-			return NULL;
-		}
-
-		VehicleConst* getVehicleConst(void)
-		{
-			if(m_pVehicleGroup != NULL)
-				return m_pVehicleGroup->GetVehicleConst();
-
-			return NULL;
-		}*/
 	};
 } // namespace OpenSteer
 #endif

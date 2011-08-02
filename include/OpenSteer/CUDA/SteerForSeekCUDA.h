@@ -11,12 +11,12 @@ namespace OpenSteer
 		float3		m_target;
 
 	public:
-		SteerForSeekCUDA(VehicleGroup *pVehicleGroup, const float3 &target);
-		~SteerForSeekCUDA(void) {}
+		SteerForSeekCUDA( VehicleGroup *pVehicleGroup, const float3 &target );
+		~SteerForSeekCUDA( void ) {}
 
-		virtual void init(void);
-		virtual void run(void);
-		virtual void close(void);
+		virtual void init( void );
+		virtual void run( void );
+		virtual void close(void );
 	};
 } // namespace OpenSteer
 #endif
