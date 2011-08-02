@@ -1,6 +1,6 @@
 #include "SteerForFleeCUDA.h"
 
-#include "../VehicleGroupData.cu"
+#include "../VehicleGroupData.h"
 
 using namespace OpenSteer;
 

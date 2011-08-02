@@ -404,7 +404,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OpenSteer\VehicleGroupData.cu"
+				RelativePath="..\include\OpenSteer\VehicleGroupData.h"
 				>
 			</File>
 		</Filter>

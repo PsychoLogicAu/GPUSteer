@@ -2,7 +2,7 @@
 #define KERNELGLOBALSCUDA_H
 
 #include "../VectorUtils.cu"
-#include "../VehicleGroupData.cu"
+#include "../VehicleGroupData.h"
 //
 // Global memory
 //

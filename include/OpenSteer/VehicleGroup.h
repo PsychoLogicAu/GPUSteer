@@ -1,7 +1,7 @@
 #ifndef OPENSTEER_VEHICLEGROUP_H
 #define OPENSTEER_VEHICLEGROUP_H
 
-#include "VehicleGroupData.cu"
+#include "VehicleGroupData.h"
 #include <map>
 
 namespace OpenSteer
