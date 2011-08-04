@@ -30,6 +30,9 @@ public:
 	virtual void steerForPursuit(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime) = 0;
 	virtual void steerForEvasion(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime) = 0;
 
+	// KNN search
+	virtual void findKNearestNeighbors( VehicleGroup & vehicleGroup, size_t const k ) = 0;
+
 	// Update
 	virtual void update(VehicleGroup &vehicleGroup, const float elapsedTime) = 0;
 };	// class AbstractGroupSteerLibrary

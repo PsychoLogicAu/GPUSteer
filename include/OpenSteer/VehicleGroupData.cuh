@@ -1,5 +1,5 @@
-#ifndef OPENSTEER_VEHICLEGROUPDATA_CU
-#define OPENSTEER_VEHICLEGROUPDATA_CU
+#ifndef OPENSTEER_VEHICLEGROUPDATA_CUH
+#define OPENSTEER_VEHICLEGROUPDATA_CUH
 
 #include <vector>
 #include <cuda_runtime.h>
@@ -10,6 +10,64 @@
 
 #include "VehicleData.h"
 #include "VectorUtils.cu"
+
+// Internal device vector class. Thrust's one is too bulky, requires everything to be compiled by nvcc, and throws millions of compile warnings.
+template < typename T >
+class dev_vector< T >
+{
+private:
+	T *		m_pdMem;	// Data on the CUDA device.
+	size_t	m_nSize;	// Number of elements.
+
+	// Internal helpers.
+	T * allocate( size_t const& nSize )
+	{
+		// Allocate device memory to hold nSize elements of type T.
+		T * pdMem;
+		cudaMalloc( (void**)&pdMem, nSize * sizeof(T) );
+		return pdMem;
+	}
+	cudaError_t free( T * pdMem )
+	{
+		return cudaFree( pdMem );
+	}
+
+public:
+	dev_vector<T>( void );					// Default - set nSize to something appropriate.
+	dev_vector<T>( size_t const& nSize );	// nSize = number of elements to reserve.
+	~dev_vector<T>( void )					// Destructor.
+	{
+		free( m_pdMem );
+	}
+
+	dev_vector<T> & operator=( const dev_vector<T> & other )	// Assignment from other dev_vector<T>
+	{
+		free( m_pMem );
+
+		if( m_nSize != other.m_nSize )
+		{
+
+			resize(
+		}
+		// Allocate memory.
+	}
+
+	dev_vector<T> & operator=( const std::vector<T> & stlVec );	// Assignment from stl vector<T>.
+
+	void	resize( size_t const& nSize );			// Resize the device memory and copy over current contents(?).
+
+	T *		begin( void )							// Return a pointer to the first element in the vector.
+	{
+		return m_pdMem;
+	}
+
+	T *		end( void )								// Return a pointer to one past the last element in the vector.
+	{
+		return m_pdMem + m_nSize;
+	}
+
+
+};	// class dev_vector
 
 namespace OpenSteer
 {

@@ -35,6 +35,7 @@
 			<Tool
 				Name="Cudart Build Rule"
 				Include="&quot;$(SolutionDir)opensteer\include&quot;"
+				Arch2="0"
 				Runtime="3"
 			/>
 			<Tool
@@ -116,6 +117,7 @@
 			<Tool
 				Name="Cudart Build Rule"
 				Include="&quot;$(SolutionDir)opensteer\include&quot;"
+				Arch2="0"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
