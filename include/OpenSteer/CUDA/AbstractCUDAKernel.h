@@ -16,16 +16,16 @@ namespace OpenSteer
 		int m_threadsPerBlock;
 
 		// Structures containing device pointers.
-		VehicleGroupDataDevice *	m_pdVehicleGroupData;
-		VehicleGroupConstDevice *	m_pdVehicleGroupConst;
+		VehicleGroupData *	m_pdVehicleGroupData;
+		VehicleGroupConst *	m_pdVehicleGroupConst;
 
 	public:
 		AbstractCUDAKernel( VehicleGroup * pVehicleGroup )
 		:	AbstractKernel( pVehicleGroup ),
 			m_threadsPerBlock( THREADSPERBLOCK )
 		{
-			m_pdVehicleGroupData = &m_pVehicleGroup->GetVehicleGroupDataDevice();
-			m_pdVehicleGroupConst = &m_pVehicleGroup->GetVehicleGroupConstDevice();
+			m_pdVehicleGroupData = &m_pVehicleGroup->GetVehicleGroupData();
+			m_pdVehicleGroupConst = &m_pVehicleGroup->GetVehicleGroupConst();
 		}
 
 		virtual void init( void ) = 0;

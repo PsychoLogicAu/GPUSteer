@@ -1,6 +1,6 @@
 #include "SteerForPursuitCUDA.h"
 
-#include "../VehicleGroupData.h"
+#include "../VehicleGroupData.cuh"
 
 using namespace OpenSteer;
 
@@ -32,10 +32,10 @@ void SteerForPursuitCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gether the required device pointers.
-	float3 * pdSteering = m_pdVehicleGroupData->dpSteering();
-	float3 const* pdPosition = m_pdVehicleGroupData->dpPosition();
-	float3 const* pdForward = m_pdVehicleGroupData->dpForward();
-	float const* pdSpeed = m_pdVehicleGroupData->dpSpeed();
+	float3 * pdSteering = m_pdVehicleGroupData->pdSteering();
+	float3 const* pdPosition = m_pdVehicleGroupData->pdPosition();
+	float3 const* pdForward = m_pdVehicleGroupData->pdForward();
+	float const* pdSpeed = m_pdVehicleGroupData->pdSpeed();
 
 	SteerForPursuitCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, pdSpeed, m_targetPosition, m_targetForward, m_targetVelocity, m_targetSpeed, getNumAgents(), m_fMaxPredictionTime );
 

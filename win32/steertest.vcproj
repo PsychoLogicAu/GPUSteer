@@ -191,7 +191,7 @@
 			Name="plugins"
 			>
 			<File
-				RelativePath="..\plugins\CaptureTheFlagGroup.cu"
+				RelativePath="..\plugins\CaptureTheFlagGroup.cpp"
 				>
 			</File>
 		</Filter>
@@ -200,10 +200,6 @@
 			>
 			<File
 				RelativePath="..\src\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\steertest.cu"
 				>
 			</File>
 		</Filter>

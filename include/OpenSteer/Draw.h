@@ -52,10 +52,10 @@
 #define OPENSTEER_DRAW_H
 
 
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 #include "AbstractVehicle.h"
 #include "OpenSteerDemo.h"
-#include "VehicleGroupData.h"
+#include "VehicleGroupData.cuh"
 
 
 // ------------------------------------------------------------------------

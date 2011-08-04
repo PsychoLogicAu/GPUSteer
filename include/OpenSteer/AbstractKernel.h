@@ -2,7 +2,7 @@
 #define OPENSTEER_ABSTRACTKERNEL_H
 
 #include <cuda_runtime.h>
-#include "VehicleGroupData.h"
+#include "VehicleGroupData.cuh"
 #include "VehicleGroup.h"
 
 namespace OpenSteer

@@ -35,29 +35,28 @@
 //
 // ------------------------------------------------------------------------
 
-extern "C"
-{
-	int steertest (int argc, char **argv);
-}
+
+#include "OpenSteer/OpenSteerDemo.h"   // OpenSteerDemo application
+#include "OpenSteer/Draw.h"            // OpenSteerDemo graphics
 
 // To include EXIT_SUCCESS
 #include <cstdlib>
 
 
-int main (int argc, char **argv) 
+extern "C"
 {
-    //// initialize OpenSteerDemo application
-    //OpenSteer::OpenSteerDemo::initialize ();
+	int main (int argc, char **argv) 
+	{
+		// initialize OpenSteerDemo application
+		OpenSteer::OpenSteerDemo::initialize ();
 
-    //// initialize graphics
-    //OpenSteer::initializeGraphics (argc, argv);
+		// initialize graphics
+		OpenSteer::initializeGraphics (argc, argv);
 
-    //// run the main event processing loop
-    //OpenSteer::runGraphics ();  
-    //return EXIT_SUCCESS;
-
-	return steertest( argc, argv );
-
+		// run the main event processing loop
+		OpenSteer::runGraphics ();  
+		return EXIT_SUCCESS;
+	}
 }
 
 

@@ -4,7 +4,7 @@
 #include <vector>
 #include <cuda_runtime.h>
 
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 
 namespace OpenSteer
 {
@@ -25,8 +25,15 @@ namespace OpenSteer
 		float	speed;					// Current speed
 		float3	smoothedAcceleration;
 
-		__host__ __device__ float3 predictFuturePosition( const float predictionTime ) const;
-		__host__ __device__ float3 velocity( void ) const { return float3_scalar_multiply(forward, speed); }
+		__host__ __device__ float3 velocity( void ) const
+		{
+			return float3_scalar_multiply( forward, speed );
+		}
+
+		__host__ __device__ float3 predictFuturePosition( const float predictionTime ) const
+		{
+			return float3_add( position, float3_scalar_multiply( velocity(), predictionTime ) );
+		}
 	} VehicleData;
 
 	typedef struct vehicle_const
@@ -40,10 +47,10 @@ namespace OpenSteer
 		float   radius;
 	} VehicleConst;
 
-	typedef std::vector<VehicleData> DataVec;
-	typedef DataVec::iterator DataVecIt;
+	//typedef std::vector<VehicleData> DataVec;
+	//typedef DataVec::iterator DataVecIt;
 
-	typedef std::vector<VehicleConst> ConstVec;
-	typedef ConstVec::iterator ConstVecIt;
+	//typedef std::vector<VehicleConst> ConstVec;
+	//typedef ConstVec::iterator ConstVecIt;
 }//namespace OpenSteer
 #endif // VEHICLE_DATA_H

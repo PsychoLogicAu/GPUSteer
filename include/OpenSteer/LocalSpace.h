@@ -63,7 +63,7 @@
 #ifndef OPENSTEER_LOCALSPACE_H
 #define OPENSTEER_LOCALSPACE_H
 
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 #include "AbstractLocalSpace.h"
 
 

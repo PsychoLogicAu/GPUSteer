@@ -45,7 +45,7 @@
 #define OPENSTEER_OPENSTEERDEMO_H
 
 
-//#include "VectorUtils.cu"
+//#include "VectorUtils.cuh"
 #include "Clock.h"
 #include "PlugIn.h"
 #include "Camera.h"

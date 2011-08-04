@@ -51,7 +51,7 @@
 
 
 //#include "Vec3.h"
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 
 
 // XXX 4-23-03: Temporary work around (see comment above)
