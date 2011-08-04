@@ -30,7 +30,7 @@ extern "C"
 		STEERING_SH( threadIdx.x ) = STEERING( offset );
 		POSITION_SH( threadIdx.x ) = POSITION( offset );
 		FORWARD_SH( threadIdx.x ) = FORWARD( offset );
-
+		
 		__syncthreads();
 
 		// If we already have a steering vector set, do nothing.
