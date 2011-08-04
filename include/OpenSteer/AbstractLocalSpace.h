@@ -1,7 +1,7 @@
 #ifndef OPENSTEER_ABSTRACTLOCALSPACE_H
 #define OPENSTEER_ABSTRACTLOCALSPACE_H
 
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 
 namespace OpenSteer {
 class AbstractLocalSpace

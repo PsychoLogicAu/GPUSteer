@@ -9,6 +9,7 @@
 #include "AvoidObstacleCUDA.h"
 #include "SteerForFleeCUDA.h"
 #include "SteerForPursuitCUDA.h"
+#include "KNNBruteForceCUDA.cuh"
 
 #include <vector>
 
@@ -34,7 +35,7 @@ public:
 
 	// Obstacle avoidance
 	virtual void steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle );
-	virtual void steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup &obstacles );
+	virtual void steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles );
 
 	// Unaligned collision avoidance
 	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others );
@@ -42,6 +43,9 @@ public:
 	// Pursuit/ Evasion
 	virtual void steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
 	virtual void steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
+
+	// KNN search
+	virtual void findKNearestNeighbors( VehicleGroup & vehicleGroup, size_t const k );
 
 	// Update
 	virtual void update( VehicleGroup &vehicleGroup, const float elapsedTime );

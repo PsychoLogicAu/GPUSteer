@@ -42,7 +42,7 @@
 
 
 //#include "Vec3.h"
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 
 
 namespace OpenSteer {

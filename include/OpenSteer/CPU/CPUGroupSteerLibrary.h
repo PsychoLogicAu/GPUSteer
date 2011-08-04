@@ -19,7 +19,7 @@ public:
 
 	//Obstacle avoidance
 	virtual void steerToAvoidObstacle(VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle); // TODO: implement
-	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, const ObstacleGroup &obstacles); // TODO: implement
+	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles); // TODO: implement
 
 	//Unaligned collision avoidance
 	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others); // TODO: implement

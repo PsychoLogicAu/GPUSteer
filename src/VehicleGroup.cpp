@@ -9,15 +9,13 @@
 #include <iostream>
 #include <fstream>
 
-#include "OpenSteer/VectorUtils.cu"
+#include "OpenSteer/VectorUtils.cuh"
 #include "OpenSteer/Utilities.h"
 
 using namespace OpenSteer;
 
 VehicleGroup::VehicleGroup(void)
-:	m_nCount( 0 ),
-	m_bSyncDevice( false ),
-	m_bSyncHost( false )
+:	m_nCount( 0 )
 {
 }
 
@@ -48,11 +46,12 @@ bool VehicleGroup::AddVehicle( VehicleData const& vd, VehicleConst const& vc )
 	if( GetVehicleIndex( vc.id ) == -1 )
 	{
 		// Add the vehicle's data to the host structures.
-		m_vehicleDataHost.AddVehicle( vd );
-		m_vehicleConstHost.AddVehicle( vc );
+		m_vehicleGroupData.addVehicle( vd );
+		m_vehicleGroupConst.addVehicle( vc );
 
-		// We will need to sync the device before next simulation step.
-		m_bSyncDevice = true;
+		// Will need to sync the device.
+		m_vehicleGroupData.m_bSyncDevice = true;
+		m_vehicleGroupConst.m_bSyncDevice = true;
 
 		// Add the id and index to the IDToIndexMap.
 		m_cIDToIndexMap[ vc.id ] = m_nCount++;
@@ -72,8 +71,8 @@ void VehicleGroup::RemoveVehicle( id_type const id )
 	if(index > -1) // Found.
 	{
 		// Remove the vehicle from the host structures.
-		m_vehicleConstHost.RemoveVehicle( index );
-		m_vehicleDataHost.RemoveVehicle( index );
+		m_vehicleGroupConst.removeVehicle( index );
+		m_vehicleGroupData.removeVehicle( index );
 
 		// There is now one less.
 		m_nCount--;
@@ -82,7 +81,8 @@ void VehicleGroup::RemoveVehicle( id_type const id )
 		RebuildIDToIndexMap();
 
 		// Will need to sync the device.
-		m_bSyncDevice = true;
+		m_vehicleGroupData.m_bSyncDevice = true;
+		m_vehicleGroupConst.m_bSyncDevice = true;
 	}
 }
 
@@ -93,8 +93,8 @@ void VehicleGroup::RebuildIDToIndexMap( void )
 
 	size_t index = 0;
 	// For each vehicle ID in the host hvId vector...
-	for(	thrust::host_vector<id_type>::iterator it = m_vehicleConstHost.hvId.begin();
-			it != m_vehicleConstHost.hvId.end();
+	for(	std::vector<id_type>::const_iterator it = m_vehicleGroupConst.hvId().begin();
+			it != m_vehicleGroupConst.hvId().end();
 			++it, ++index )
 	{
 		m_cIDToIndexMap[ (*it) ] = index;
@@ -104,11 +104,8 @@ void VehicleGroup::RebuildIDToIndexMap( void )
 void VehicleGroup::Clear(void)
 {
 	// Clear the host and device vectors.
-	m_vehicleDataHost.clear();
-	m_vehicleConstHost.clear();
-
-	m_vehicleDataDevice.clear();
-	m_vehicleConstDevice.clear();
+	m_vehicleGroupData.clear();
+	m_vehicleGroupConst.clear();
 
 	m_cIDToIndexMap.clear();
 
@@ -118,6 +115,7 @@ void VehicleGroup::Clear(void)
 // Gets the data for a vehicle from the supplied id.
 bool VehicleGroup::GetDataForVehicle( id_type const id, VehicleData & vd, VehicleConst & vc )
 {
+	// Do I want to do synchronization from this class, or vehicle_group_data/vehicle_group_const ???
 	// Sync the host.
 	SyncHost();
 
@@ -127,30 +125,22 @@ bool VehicleGroup::GetDataForVehicle( id_type const id, VehicleData & vd, Vehicl
 	if( index == -1 ) // Not found.
 		return false;
 
-	m_vehicleConstHost.GetVehicleData( index, vc );
-	m_vehicleDataHost.GetVehicleData( index, vd );
+	m_vehicleGroupConst.getVehicleData( index, vc );
+	m_vehicleGroupData.getVehicleData( index, vd );
 
 	return true;
 }
 
 void VehicleGroup::SyncDevice( void )
 {
-	if( m_bSyncDevice )
-	{
-		m_vehicleConstDevice = m_vehicleConstHost;
-		m_vehicleDataDevice = m_vehicleDataHost;
-		m_bSyncDevice = false;
-	}
+	m_vehicleGroupData.syncDevice();
+	m_vehicleGroupConst.syncDevice();
 }
 
 void VehicleGroup::SyncHost( void )
 {
-	if( m_bSyncHost )
-	{
-		m_vehicleConstHost = m_vehicleConstDevice;
-		m_vehicleDataHost = m_vehicleDataDevice;
-		m_bSyncHost = false;
-	}
+	m_vehicleGroupData.syncHost();
+	m_vehicleGroupConst.syncHost();
 }
 
 
@@ -171,8 +161,8 @@ void VehicleGroup::OutputDataToFile( char const* szFilename )
 		{
 			// Get the vehicle_data and vehicle_const structures.
 			size_t const& index = it->second;
-			m_vehicleConstHost.GetVehicleData( index, vc );
-			m_vehicleDataHost.GetVehicleData( index, vd );
+			m_vehicleGroupConst.getVehicleData( index, vc );
+			m_vehicleGroupData.getVehicleData( index, vd );
 
 			// Output the data to the stream.
 			out << "id: " << vc.id << endl;

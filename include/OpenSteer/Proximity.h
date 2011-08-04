@@ -50,7 +50,7 @@
 
 #include <algorithm>
 #include <vector>
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 #include "lq.h"   // XXX temp?
 
 

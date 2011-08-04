@@ -5,7 +5,7 @@
 #include "ObstacleGroup.h"
 #include "AbstractVehicle.h"
 #include "VehicleGroup.h"
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 
 namespace OpenSteer
 {
@@ -21,7 +21,7 @@ public:
 
 	//Obstacle avoidance
 	virtual void steerToAvoidObstacle(VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle) = 0;
-	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup &obstacles) = 0;
+	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles) = 0;
 
 	//Unaligned collision avoidance
 	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others) = 0;

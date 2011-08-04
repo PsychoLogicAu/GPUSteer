@@ -63,6 +63,8 @@
 
 #include "OpenSteer/CUDA/CUDAGroupSteerLibrary.h"
 #include "OpenSteer/CUDA/CUDAGlobals.h"
+
+#include "OpenSteer/VehicleData.h"
  
 using namespace OpenSteer;
 
@@ -76,7 +78,7 @@ class CtfBase;
 // globals
 //const int gEnemyCount					= 10000;
 //const int gEnemyCount					= 1000;
-const int gEnemyCount					= 10000;
+const int gEnemyCount					= 100000;
 const int gMaxObstacleCount				= 100;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
@@ -263,15 +265,15 @@ void CtfEnemyGroup::draw(void)
 	VehicleConst vc;
 	VehicleData vd;
 
-	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
-	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
+	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
 		// Get its data and const.
-		vgch.GetVehicleData( i, vc );
-		vgdh.GetVehicleData( i, vd );
+		vgc.getVehicleData( i, vc );
+		vgd.getVehicleData( i, vd );
 		drawBasic2dCircularVehicle( vc.radius, vd.position, vd.forward, vd.side, bodyColor );
 	}
 }
@@ -285,9 +287,16 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	//CUDAGroupSteerLibrary.steerForSeek(*this, gSeeker->position());
 
 	const float maxPredictionTime = 20.0f;
+	SyncDevice();
+	SetSyncHost();
+
 	CUDAGroupSteerLibrary.steerForPursuit(*this, gSeeker->getVehicleData(), maxPredictionTime);
 
+	//CUDAGroupSteerLibrary.findKNearestNeighbors( *this, 5 );
+
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
+
+	SyncHost();
 	// TODO: implement
 
 	/*
@@ -504,17 +513,17 @@ bool CtfSeeker::clearPathToGoal (void)
 	VehicleConst econst;
 	VehicleData edata;
 
-	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
-	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
+	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
 		// Get its data and const.
-		vgch.GetVehicleData( i, econst );
-		vgdh.GetVehicleData( i, edata );
+		vgc.getVehicleData( i, econst );
+		vgd.getVehicleData( i, edata );
 
-		const float eDistance = float3_distance (position(), edata.position);
+		const float eDistance = float3_distance ( position(), edata.position );
 
 		/*
 		// Check if we were tagged.
@@ -631,15 +640,15 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
 	VehicleConst econst;
 	VehicleData edata;
 
-	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
-	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
+	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
 		// Get its data and const.
-		vgch.GetVehicleData( i, econst );
-		vgdh.GetVehicleData( i, edata );
+		vgc.getVehicleData( i, econst );
+		vgd.getVehicleData( i, edata );
 
         const float3 eOffset = float3_subtract(edata.position, position());
         const float eDistance = float3_length(eOffset);
@@ -678,15 +687,15 @@ float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
 	VehicleConst econst;
 	VehicleData edata;
 
-	VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
-	VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
+	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
+	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
 		// Get its data and const.
-		vgch.GetVehicleData( i, econst );
-		vgdh.GetVehicleData( i, edata );
+		vgc.getVehicleData( i, econst );
+		vgd.getVehicleData( i, edata );
 
         const float3 eOffset = float3_subtract(edata.position, position());
         const float eDistance = float3_length(eOffset);
@@ -1072,8 +1081,8 @@ public:
         // reset the seeker ("hero"/"attacker")
         ctfSeeker->reset ();
 
-		VehicleGroupDataHost & vgdh = gEnemies->GetVehicleGroupDataHost();
-		VehicleGroupConstHost & vgch = gEnemies->GetVehicleGroupConstHost();
+		VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
+		VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
 
 		// reset the enemies
 
@@ -1081,11 +1090,14 @@ public:
 		for( size_t i = 0; i < gEnemies->Size(); i++ )
 		{
 			//enemiesData[i].speed = 3.0f;
-			vgdh.hvSpeed[i] = 3.0f;
+			vgd.hvSpeed()[i] = 3.0f;
 			//randomizeHeadingOnXZPlane(enemiesData[i]);
-			randomizeHeadingOnXZPlane( vgdh.hvUp[i], vgdh.hvForward[i], vgdh.hvSide[i] );
-			randomizeStartingPositionAndHeading( vgdh.hvPosition[i], vgch.hvRadius[i], vgdh.hvUp[i], vgdh.hvForward[i], vgdh.hvSide[i] );
+			randomizeHeadingOnXZPlane( vgd.hvUp()[i], vgd.hvForward()[i], vgd.hvSide()[i] );
+			randomizeStartingPositionAndHeading( vgd.hvPosition()[i], vgc.hvRadius()[i], vgd.hvUp()[i], vgd.hvForward()[i], vgd.hvSide()[i] );
 		}
+
+		// FIXME: is this line necessary?
+		//vgd.m_bSyncDevice = true;
 
         // reset camera position
         OpenSteerDemo::position2dCamera (*ctfSeeker);

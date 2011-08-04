@@ -5,286 +5,316 @@
 #include <cuda_runtime.h>
 #include <vector_types.h>
 
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
+#include <vector>
 
 #include "VehicleData.h"
-#include "VectorUtils.cu"
+#include "VectorUtils.cuh"
 
-// Internal device vector class. Thrust's one is too bulky, requires everything to be compiled by nvcc, and throws millions of compile warnings.
-template < typename T >
-class dev_vector< T >
-{
-private:
-	T *		m_pdMem;	// Data on the CUDA device.
-	size_t	m_nSize;	// Number of elements.
-
-	// Internal helpers.
-	T * allocate( size_t const& nSize )
-	{
-		// Allocate device memory to hold nSize elements of type T.
-		T * pdMem;
-		cudaMalloc( (void**)&pdMem, nSize * sizeof(T) );
-		return pdMem;
-	}
-	cudaError_t free( T * pdMem )
-	{
-		return cudaFree( pdMem );
-	}
-
-public:
-	dev_vector<T>( void );					// Default - set nSize to something appropriate.
-	dev_vector<T>( size_t const& nSize );	// nSize = number of elements to reserve.
-	~dev_vector<T>( void )					// Destructor.
-	{
-		free( m_pdMem );
-	}
-
-	dev_vector<T> & operator=( const dev_vector<T> & other )	// Assignment from other dev_vector<T>
-	{
-		free( m_pMem );
-
-		if( m_nSize != other.m_nSize )
-		{
-
-			resize(
-		}
-		// Allocate memory.
-	}
-
-	dev_vector<T> & operator=( const std::vector<T> & stlVec );	// Assignment from stl vector<T>.
-
-	void	resize( size_t const& nSize );			// Resize the device memory and copy over current contents(?).
-
-	T *		begin( void )							// Return a pointer to the first element in the vector.
-	{
-		return m_pdMem;
-	}
-
-	T *		end( void )								// Return a pointer to one past the last element in the vector.
-	{
-		return m_pdMem + m_nSize;
-	}
-
-
-};	// class dev_vector
+#include "dev_vector.cuh"
 
 namespace OpenSteer
 {
 	// Forward declarations.
-	struct vehicle_group_data_device;
-	struct vehicle_group_data_host;
-	struct vehicle_group_const_device;
-	struct vehicle_group_const_host;
+	class vehicle_group_data;
+	class vehicle_group_const;
 
-	typedef struct vehicle_group_data_device
+	class vehicle_group_data
 	{
+		friend class VehicleGroup;
+	private:
+		bool	m_bSyncHost;
+		bool	m_bSyncDevice;
+		size_t	m_nSize;
+
+		//
+		//	Device vectors
+		//
 		// LocalSpace
-		thrust::device_vector<float3>	dvSide;		// Side vectors
-		thrust::device_vector<float3>	dvUp;		// Up vectors
-		thrust::device_vector<float3>	dvForward;	// Forward vector
-		thrust::device_vector<float3>	dvPosition;	// Current position
-		thrust::device_vector<float3>	dvSteering;	// Steering vector
+		dev_vector<float3>		m_dvSide;		// Side vectors
+		dev_vector<float3>		m_dvUp;		// Up vectors
+		dev_vector<float3>		m_dvForward;	// Forward vector
+		dev_vector<float3>		m_dvPosition;	// Current position
+		dev_vector<float3>		m_dvSteering;	// Steering vector
 		// SimpleVehicle
-		thrust::device_vector<float>	dvSpeed;	// Current speed
-		/// Copy the vehicle_group_data_host structure into this one.
-		vehicle_group_data_device & operator=( vehicle_group_data_host const& hvd );
-		void clear( void )
-		{
-			dvSide.clear();
-			dvUp.clear();
-			dvForward.clear();
-			dvPosition.clear();
-			dvSteering.clear();
-			dvSpeed.clear();
-		}
+		dev_vector<float>		m_dvSpeed;	// Current speed
 
-		// Get raw device pointers to the different data elements.
-		float3 *	dpSide( void )		{ return thrust::raw_pointer_cast( &dvSide[0] ); }
-		float3 *	dpUp( void )		{ return thrust::raw_pointer_cast( &dvUp[0] ); }
-		float3 *	dpForward( void )	{ return thrust::raw_pointer_cast( &dvForward[0] ); }
-		float3 *	dpPosition( void )	{ return thrust::raw_pointer_cast( &dvPosition[0] ); }
-		float3 *	dpSteering( void )	{ return thrust::raw_pointer_cast( &dvSteering[0] ); }
-		float *		dpSpeed( void )		{ return thrust::raw_pointer_cast( &dvSpeed[0] ); }
-	} VehicleGroupDataDevice;
-
-	typedef struct vehicle_group_data_host
-	{
+		//
+		//	Host vectors
+		//
 		// LocalSpace
-		thrust::host_vector<float3>		hvSide;		// Side vectors
-		thrust::host_vector<float3>		hvUp;		// Up vectors
-		thrust::host_vector<float3>		hvForward;	// Forward vector
-		thrust::host_vector<float3>		hvPosition;	// Current position
-		thrust::host_vector<float3>		hvSteering;	// Steering vector
+		std::vector<float3>		m_hvSide;		// Side vectors
+		std::vector<float3>		m_hvUp;		// Up vectors
+		std::vector<float3>		m_hvForward;	// Forward vector
+		std::vector<float3>		m_hvPosition;	// Current position
+		std::vector<float3>		m_hvSteering;	// Steering vector
 		// SimpleVehicle
-		thrust::host_vector<float>		hvSpeed;	// Current speed
+		std::vector<float>		m_hvSpeed;	// Current speed
 
-		/// Copy the vehicle_group_data_device structure into this one.
-		vehicle_group_data_host & operator=( vehicle_group_data_device const& dvd );
+	public:
+		vehicle_group_data( void )
+			:	m_nSize( 0 ),
+				m_bSyncDevice( false ),
+				m_bSyncHost( false )
+		{ }
+		~vehicle_group_data( void )	{ }
 
-		void clear( void )
+		std::vector<float3> const& hvSide( void ) const			{ return m_hvSide; }
+		std::vector<float3> & hvSide( void )					{ m_bSyncDevice = true; return m_hvSide; }
+		std::vector<float3> const& hvUp( void ) const			{ return m_hvUp; }
+		std::vector<float3> & hvUp( void )						{ m_bSyncDevice = true; return m_hvUp; }
+		std::vector<float3> const& hvForward( void ) const		{ return m_hvForward; }
+		std::vector<float3> & hvForward( void )					{ m_bSyncDevice = true; return m_hvForward; }
+		std::vector<float3> const& hvPosition( void ) const		{ return m_hvPosition; }
+		std::vector<float3> & hvPosition( void )				{ m_bSyncDevice = true; return m_hvPosition; }
+		std::vector<float3> const& hvSteering( void ) const		{ return m_hvSteering; }
+		std::vector<float3> & hvSteering( void )				{ m_bSyncDevice = true; return m_hvSteering; }
+		std::vector<float> const& hvSpeed( void ) const	{ return m_hvSpeed; }
+		std::vector<float> & hvSpeed( void )					{ m_bSyncDevice = true; return m_hvSpeed; }
+
+		size_t size( void ) const	{ return m_nSize; }
+
+				/// Adds a vehicle_data structure to this structure.
+		void addVehicle( vehicle_data const& vd )
 		{
-			hvSide.clear();
-			hvUp.clear();
-			hvForward.clear();
-			hvPosition.clear();
-			hvSteering.clear();
-			hvSpeed.clear();
-		}
+			m_hvSide.push_back( vd.side );
+			m_hvUp.push_back( vd.up );
+			m_hvForward.push_back( vd.forward );
+			m_hvPosition.push_back( vd.position );
+			m_hvSteering.push_back( vd.steering );
+			m_hvSpeed.push_back( vd.speed );
 
-		/// Adds a vehicle_data structure to this structure.
-		void AddVehicle( vehicle_data const& vd )
-		{
-			hvSide.push_back( vd.side );
-			hvUp.push_back( vd.up );
-			hvForward.push_back( vd.forward );
-			hvPosition.push_back( vd.position );
-			hvSteering.push_back( vd.steering );
-			hvSpeed.push_back( vd.speed );
+			m_nSize++;
+			m_bSyncDevice = true;
 		}
 		/// Removes the vehicle_data structure at index.
-		void RemoveVehicle( size_t const index )
+		void removeVehicle( size_t const index )
 		{
-			hvSide.erase( hvSide.begin() + index );
-			hvUp.erase( hvUp.begin() + index );
-			hvForward.erase( hvForward.begin() + index );
-			hvPosition.erase( hvPosition.begin() + index );
-			hvSteering.erase( hvSteering.begin() + index );
-			hvSpeed.erase( hvSpeed.begin() + index );
+			m_hvSide.erase( m_hvSide.begin() + index );
+			m_hvUp.erase( m_hvUp.begin() + index );
+			m_hvForward.erase( m_hvForward.begin() + index );
+			m_hvPosition.erase( m_hvPosition.begin() + index );
+			m_hvSteering.erase( m_hvSteering.begin() + index );
+			m_hvSpeed.erase( m_hvSpeed.begin() + index );
+			
+			m_nSize--;
+			m_bSyncDevice = true;
 		}
 		/// Get the data for the vehicle_const structure at index.
-		void GetVehicleData( size_t const index, vehicle_data & vd )
+		void getVehicleData( size_t const index, vehicle_data & vd )
 		{
-			vd.side		= hvSide[ index ];
-			vd.up		= hvUp[ index ];
-			vd.forward	= hvForward[ index ];
-			vd.position	= hvPosition[ index ];
-			vd.steering	= hvSteering[ index ];
-			vd.speed	= hvSpeed[ index ];
-		}
-	} VehicleGroupDataHost;
+			syncHost();
 
-	typedef struct vehicle_group_const_device
+			vd.side		= m_hvSide[ index ];
+			vd.up		= m_hvUp[ index ];
+			vd.forward	= m_hvForward[ index ];
+			vd.position	= m_hvPosition[ index ];
+			vd.steering	= m_hvSteering[ index ];
+			vd.speed	= m_hvSpeed[ index ];
+		}
+
+		void syncHost( void )
+		{
+			if( m_bSyncHost )
+			{
+				cudaMemcpy( &m_hvSide[0], pdSide(), m_nSize * sizeof(float3), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvUp[0], pdUp(), m_nSize * sizeof(float3), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvForward[0], pdForward(), m_nSize * sizeof(float3), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvPosition[0], pdPosition(), m_nSize * sizeof(float3), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvSteering[0], pdSteering(), m_nSize * sizeof(float3), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvSpeed[0], pdSpeed(), m_nSize * sizeof(float), cudaMemcpyDeviceToHost );
+
+				m_bSyncHost = false;
+			}
+		}
+
+		void syncDevice( void )
+		{
+			if( m_bSyncDevice )
+			{
+				m_dvSide = m_hvSide;
+				m_dvUp = m_hvUp;
+				m_dvForward = m_hvForward;
+				m_dvPosition = m_hvPosition;
+				m_dvSteering = m_hvSteering;
+				m_dvSpeed = m_hvSpeed;
+
+				m_bSyncDevice = false;
+			}
+		}
+
+		void clear( void )
+		{
+			m_nSize = 0;
+			m_bSyncHost = false;
+			m_bSyncDevice = false;
+
+			m_dvSide.clear();
+			m_dvUp.clear();
+			m_dvForward.clear();
+			m_dvPosition.clear();
+			m_dvSteering.clear();
+			m_dvSpeed.clear();
+
+			m_hvSide.clear();
+			m_hvUp.clear();
+			m_hvForward.clear();
+			m_hvPosition.clear();
+			m_hvSteering.clear();
+			m_hvSpeed.clear();
+		}
+
+		// Get device pointers to the different data elements.
+		float3 *	pdSide( void )		{ return m_dvSide.begin(); }
+		float3 *	pdUp( void )		{ return m_dvUp.begin(); }
+		float3 *	pdForward( void )	{ return m_dvForward.begin(); }
+		float3 *	pdPosition( void )	{ return m_dvPosition.begin(); }
+		float3 *	pdSteering( void )	{ return m_dvSteering.begin(); }
+		float *		pdSpeed( void )		{ return m_dvSpeed.begin(); }
+	};
+	typedef vehicle_group_data VehicleGroupData;
+
+
+	class vehicle_group_const
 	{
+		friend class VehicleGroup;
+	private:
+		//
 		// Device data.
-		thrust::device_vector<id_type>		dvId;
+		//
+		dev_vector<id_type>			m_dvId;
 		// SimpleVehicle
-		thrust::device_vector<float>		dvMaxForce;
-		thrust::device_vector<float>		dvMaxSpeed;
-		thrust::device_vector<float>		dvMass;
-		thrust::device_vector<float>		dvRadius;
-		/// Copy the vehicle_group_const_host structure into this one.
-		vehicle_group_const_device & operator=( vehicle_group_const_host const& hvc );
+		dev_vector<float>			m_dvMaxForce;
+		dev_vector<float>			m_dvMaxSpeed;
+		dev_vector<float>			m_dvMass;
+		dev_vector<float>			m_dvRadius;
 
-		void clear( void )
+		//
+		// Host data.
+		//
+		std::vector<id_type>		m_hvId;
+		// SimpleVehicle
+		std::vector<float>			m_hvMaxForce;
+		std::vector<float>			m_hvMaxSpeed;
+		std::vector<float>			m_hvMass;
+		std::vector<float>			m_hvRadius;
+
+		size_t						m_nSize;
+		bool						m_bSyncDevice;
+		bool						m_bSyncHost;
+
+	public:
+		vehicle_group_const( void )
+			:	m_nSize( 0 ),
+				m_bSyncDevice( false ),
+				m_bSyncHost( false )
+		{ }
+
+		~vehicle_group_const( void )	{ }
+
+		std::vector<id_type> const& hvId( void ) const		{ return m_hvId; }
+		std::vector<id_type> hvId( void )						{ m_bSyncDevice = true; return m_hvId; }
+		std::vector<float> const& hvMaxForce( void ) const	{ return m_hvMaxForce; }
+		std::vector<float> hvMaxForce( void )				{ m_bSyncDevice = true; return m_hvMaxForce; }
+		std::vector<float> const& hvMaxSpeed( void ) const	{ return m_hvMaxSpeed; }
+		std::vector<float> hvMaxSpeed( void )				{ m_bSyncDevice = true; return m_hvMaxSpeed; }
+		std::vector<float> const& hvMass( void ) const		{ return m_hvMass; }
+		std::vector<float> hvMass( void )					{ m_bSyncDevice = true; return m_hvMass; }
+		std::vector<float> const& hvRadius( void ) const	{ return m_hvRadius; }
+		std::vector<float> hvRadius( void )					{ m_bSyncDevice = true; return m_hvRadius; }
+
+		size_t size( void ) const	{ return m_nSize; }
+
+		void syncHost( void )
 		{
-			dvId.clear();
-			dvMaxForce.clear();
-			dvMaxSpeed.clear();
-			dvMass.clear();
-			dvRadius.clear();
+			if( m_bSyncHost )
+			{
+				cudaMemcpy( &m_hvId[0], pdId(), m_nSize * sizeof(id_type), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvMaxForce[0], pdMaxForce(), m_nSize * sizeof(float), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvMaxSpeed[0], pdMaxSpeed(), m_nSize * sizeof(float), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvMass[0], pdMass(), m_nSize * sizeof(float), cudaMemcpyDeviceToHost );
+				cudaMemcpy( &m_hvRadius[0], pdRadius(), m_nSize * sizeof(float), cudaMemcpyDeviceToHost );
+
+				m_bSyncHost = false;
+			}
 		}
 
-		// Get raw device pointers to the different data elements.
-		id_type *	dpId( void )		{ return thrust::raw_pointer_cast( &dvId[0] ); }
-		float *		dpMaxForce( void )	{ return thrust::raw_pointer_cast( &dvMaxForce[0] ); }
-		float *		dpMaxSpeed( void )	{ return thrust::raw_pointer_cast( &dvMaxSpeed[0] ); }
-		float *		dpMass( void )		{ return thrust::raw_pointer_cast( &dvMass[0] ); }
-		float *		dpRadius( void )	{ return thrust::raw_pointer_cast( &dvRadius[0] ); }
-	} VehicleGroupConstDevice;
+		void syncDevice( void )
+		{
+			if( m_bSyncDevice )
+			{
+				m_dvId = m_hvId;
+				m_dvMaxForce = m_hvMaxForce;
+				m_dvMaxSpeed = m_hvMaxSpeed;
+				m_dvMass = m_hvMass;
+				m_dvRadius = m_hvRadius;
 
-	typedef struct vehicle_group_const_host
-	{
-		// Host data.
-		thrust::host_vector<id_type>		hvId;
-		// SimpleVehicle
-		thrust::host_vector<float>			hvMaxForce;
-		thrust::host_vector<float>			hvMaxSpeed;
-		thrust::host_vector<float>			hvMass;
-		thrust::host_vector<float>			hvRadius;
-
-		/// Copy the vehicle_group_const_device structure into this one.
-		vehicle_group_const_host & operator=( vehicle_group_const_device const& dvc );
+				m_bSyncDevice = false;
+			}
+		}
 
 		void clear( void )
 		{
-			hvId.clear();
-			hvMaxForce.clear();
-			hvMaxSpeed.clear();
-			hvMass.clear();
-			hvRadius.clear();
+			m_nSize = 0;
+			m_bSyncHost = false;
+			m_bSyncDevice = false;
+
+			m_dvId.clear();
+			m_dvMaxForce.clear();
+			m_dvMaxSpeed.clear();
+			m_dvMass.clear();
+			m_dvRadius.clear();
+
+			m_hvId.clear();
+			m_hvMaxForce.clear();
+			m_hvMaxSpeed.clear();
+			m_hvMass.clear();
+			m_hvRadius.clear();
 		}
 
 		/// Adds a vehicle_const structure.
-		void AddVehicle( vehicle_const const& vc )
+		void addVehicle( vehicle_const const& vc )
 		{
-			hvId.push_back( vc.id );
-			hvMaxForce.push_back( vc.maxForce );
-			hvMaxSpeed.push_back( vc.maxSpeed );
-			hvMass.push_back( vc.mass );
-			hvRadius.push_back( vc.radius );
+			m_hvId.push_back( vc.id );
+			m_hvMaxForce.push_back( vc.maxForce );
+			m_hvMaxSpeed.push_back( vc.maxSpeed );
+			m_hvMass.push_back( vc.mass );
+			m_hvRadius.push_back( vc.radius );
+
+			m_nSize++;
+			m_bSyncDevice = true;
 		}
 		/// Removes the vehicle_const structure at index.
-		void RemoveVehicle( size_t const index )
+		void removeVehicle( size_t const index )
 		{
-			hvId.erase( hvId.begin() + index );
-			hvMaxForce.erase( hvMaxForce.begin() + index );
-			hvMaxSpeed.erase( hvMaxSpeed.begin() + index );
-			hvMass.erase( hvMass.begin() + index );
-			hvRadius.erase( hvRadius.begin() + index );
+			m_hvId.erase( m_hvId.begin() + index );
+			m_hvMaxForce.erase( m_hvMaxForce.begin() + index );
+			m_hvMaxSpeed.erase( m_hvMaxSpeed.begin() + index );
+			m_hvMass.erase( m_hvMass.begin() + index );
+			m_hvRadius.erase( m_hvRadius.begin() + index );
+
+			m_nSize--;
+			m_bSyncDevice = true;
 		}
 		/// Get the data for the vehicle_const structure at index.
-		void GetVehicleData( size_t const index, vehicle_const & vc )
+		void getVehicleData( size_t const index, vehicle_const & vc )
 		{
-			vc.id		= hvId[ index ];
-			vc.mass		= hvMass[ index ];
-			vc.maxForce	= hvMaxForce[ index ];
-			vc.maxSpeed	= hvMaxSpeed[ index ];
-			vc.radius	= hvRadius[ index ];
+			syncHost();
+
+			vc.id		= m_hvId[ index ];
+			vc.mass		= m_hvMass[ index ];
+			vc.maxForce	= m_hvMaxForce[ index ];
+			vc.maxSpeed	= m_hvMaxSpeed[ index ];
+			vc.radius	= m_hvRadius[ index ];
 		}
-	} VehicleGroupConstHost;
 
-	vehicle_group_data_device & vehicle_group_data_device::operator=( vehicle_group_data_host const& hvd )
-	{
-		dvSide		= hvd.hvSide;
-		dvUp		= hvd.hvUp;
-		dvForward	= hvd.hvForward;
-		dvPosition	= hvd.hvPosition;
-		dvSteering	= hvd.hvSteering;
-		dvSpeed		= hvd.hvSpeed;
-		return *this;
-	}
-
-	vehicle_group_data_host & vehicle_group_data_host::operator=( vehicle_group_data_device const& dvd )
-	{
-		hvSide		= dvd.dvSide;
-		hvUp		= dvd.dvUp;
-		hvForward	= dvd.dvForward;
-		hvPosition	= dvd.dvPosition;
-		hvSteering	= dvd.dvSteering;
-		hvSpeed		= dvd.dvSpeed;
-		return *this;
-	}
-
-	vehicle_group_const_device & vehicle_group_const_device::operator=( vehicle_group_const_host const& hvc )
-	{
-		dvId		= hvc.hvId;
-		dvMaxForce	= hvc.hvMaxForce;
-		dvMaxSpeed	= hvc.hvMaxSpeed;
-		dvMass		= hvc.hvMass;
-		dvRadius	= hvc.hvRadius;
-		return *this;
-	}
-
-	vehicle_group_const_host & vehicle_group_const_host::operator=( vehicle_group_const_device const& dvc )
-	{
-		hvId		= dvc.dvId;
-		hvMaxForce	= dvc.dvMaxForce;
-		hvMaxSpeed	= dvc.dvMaxSpeed;
-		hvMass		= dvc.dvMass;
-		hvRadius	= dvc.dvRadius;
-		return *this;
-	}
+		// Get raw device pointers to the different data elements.
+		id_type *	pdId( void )		{ return m_dvId.begin(); }
+		float *		pdMaxForce( void )	{ return m_dvMaxForce.begin(); }
+		float *		pdMaxSpeed( void )	{ return m_dvMaxSpeed.begin(); }
+		float *		pdMass( void )		{ return m_dvMass.begin(); }
+		float *		pdRadius( void )	{ return m_dvRadius.begin(); }
+	};
+	typedef vehicle_group_const VehicleGroupConst;
 
 	/// Compute the velocity of the vehicle at index i.
 	static inline __host__ __device__ float3 velocity( size_t const i, float3 const* pForward, float const* pSpeed )
@@ -297,37 +327,5 @@ namespace OpenSteer
 		return float3_add( pPosition[i], float3_scalar_multiply( velocity( i, pForward, pSpeed ), fPredictionTime ));
 	}
 
-	/*
-	typedef struct vehicle_data {
-		// LocalSpace
-		float3  side;					// Side vector
-		float3  up;						// Up vector
-		float3  forward;				// Forward vector
-		float3  position;				// Current position
-		float3	steering;				// Steering vector
-	    
-		// SimpleVehicle
-		float   speed;					// Current speed
-
-		__host__ __device__ float3 predictFuturePosition(const float predictionTime) const { return float3_add(position, float3_scalar_multiply(velocity(), predictionTime)); }
-		__host__ __device__ float3 velocity(void) const { return float3_scalar_multiply(forward, speed); }
-	} VehicleData;
-
-	typedef struct vehicle_const {
-		unsigned int id;
-
-		// SimpleVehicle
-		float   maxForce;
-		float   maxSpeed;
-		float   mass;
-		float   radius;
-	} VehicleConst;
-
-	typedef std::vector<VehicleData> DataVec;
-	typedef DataVec::iterator DataVecIt;
-
-	typedef std::vector<VehicleConst> ConstVec;
-	typedef ConstVec::iterator ConstVecIt;
-	*/
 }//namespace OpenSteer
 #endif // VEHICLE_DATA_H
