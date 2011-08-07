@@ -78,13 +78,14 @@ class CtfBase;
 // globals
 //const int gEnemyCount					= 10000;
 //const int gEnemyCount					= 1000;
-const int gEnemyCount					= 100000;
+const int gEnemyCount					= 10000;
 const int gMaxObstacleCount				= 100;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
 const float		gHomeBaseRadius			= 1.5f;
-const float3	gWorldDimensions		= make_float3(100.0f, 100.0f, 100.0f);	// Dimensions of the proximity database.
-const float3	gWorldDivisions			= make_float3(20.0f, 1.0f, 20.0f);		// Number of divisions for the proximity database.
+
+const float3 gWorldSize					= make_float3( 100.f, 100.f, 100.f );
+const uint3 gWorldCells					= make_uint3( 20, 1, 20 );
 
 const float gMinStartRadius				= 30.0f;
 const float gMaxStartRadius				= 60.0f;
@@ -189,7 +190,7 @@ class CtfEnemyGroup : public VehicleGroup
 {
 public:
 	CtfEnemyGroup(void)
-		:VehicleGroup()
+		:VehicleGroup( gWorldCells, gWorldSize )
 	{
 		reset();
 	}
@@ -291,6 +292,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	SetSyncHost();
 
 	CUDAGroupSteerLibrary.steerForPursuit(*this, gSeeker->getVehicleData(), maxPredictionTime);
+	CUDAGroupSteerLibrary.steerForFlee( *this, gSeeker->getVehicleData().position );
 
 	//CUDAGroupSteerLibrary.findKNearestNeighbors( *this, 5 );
 
@@ -965,7 +967,7 @@ public:
     {
 		OpenSteerDemo::setAnnotationOff();
 
-		gObstacles = new ObstacleGroup(gHomeBaseCenter, gWorldDimensions, gWorldDivisions);
+		gObstacles = new ObstacleGroup( gHomeBaseCenter, gWorldSize, gWorldCells );
 
 		initializeObstacles();
 

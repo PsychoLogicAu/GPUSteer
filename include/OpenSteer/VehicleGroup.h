@@ -2,6 +2,7 @@
 #define OPENSTEER_VEHICLEGROUP_H
 
 #include "VehicleGroupData.cuh"
+#include "CUDA/VehicleGroupBinData.cuh"
 #include <map>
 
 namespace OpenSteer
@@ -19,17 +20,20 @@ protected:
 	/// Copy the device structures to the host.
 	void	SyncHost( void );
 
-
 	// Vehicle data.
 	VehicleGroupData			m_vehicleGroupData;
 	VehicleGroupConst			m_vehicleGroupConst;
+
+	// Bin data to be used for KNN lookups.
+	BinData						m_binData;
 
 	IDToIndexMap				m_cIDToIndexMap;
 
 	size_t						m_nCount;
 
 public:
-	VehicleGroup( void );
+	//VehicleGroup( void );
+	VehicleGroup( uint3 const& worldCells, float3 const& worldSize );
 	virtual ~VehicleGroup( void );
 
 	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );
@@ -42,7 +46,10 @@ public:
 	}
 
 	/// Get the size of the collection.
-	size_t Size( void ) const { return m_nCount; }
+	size_t Size( void ) const
+	{
+		return m_nCount;
+	}
 
 	VehicleGroupConst &	GetVehicleGroupConst()		{ return m_vehicleGroupConst; }
 	VehicleGroupData &	GetVehicleGroupData()		{ return m_vehicleGroupData; }
@@ -50,7 +57,7 @@ public:
 	/// Use to extract data for an individual vehicle
 	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
 
-	void OutputDataToFile( const char *filename );
+	//void OutputDataToFile( const char *filename );
 };	//class VehicleGroup
 }	//namespace OpenSteer
 #endif

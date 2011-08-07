@@ -25,7 +25,7 @@ namespace OpenSteer
 		//SphericalObstacleDataVec	m_vObstacleData;
 		std::vector<SphericalObstacleData>	m_vObstacleData;
 
-		ObstacleGroup(const float3 &center, const float3 &dimensions, const float3 &divisions);
+		ObstacleGroup(const float3 &center, const float3 &dimensions, const uint3 &divisions);
 
 		~ObstacleGroup(void);
 
@@ -42,7 +42,7 @@ namespace OpenSteer
 
 		//SphericalObstacleDataVec& GetObstacles(void);
 
-		void OutputDataToFile(const char *filename);
+		//void OutputDataToFile(const char *filename);
 	};
 };
 #endif

@@ -16,7 +16,7 @@ protected:
 
 public:
 	KNNBruteForceCUDA( VehicleGroup * pVehicleGroup, size_t const k );
-	~KNNBruteForceCUDA( void ) {}
+	virtual ~KNNBruteForceCUDA( void ) {}
 
 	virtual void init( void );
 	virtual void run( void );

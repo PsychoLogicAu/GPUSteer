@@ -219,16 +219,15 @@ namespace OpenSteer {
         // constructor
         LQProximityDatabase (const float3& center,
                              const float3& dimensions,
-                             const float3& divisions)
+                             const uint3& divisions)
         {
 			const float3 halfsize (float3_scalar_multiply(dimensions, 0.5f));
             const float3 origin (float3_subtract(center, halfsize));
 
-            lq = lqCreateDatabase (origin.x, origin.y, origin.z, 
-                                   dimensions.x, dimensions.y, dimensions.z,  
-                                   (int) round (divisions.x),
-                                   (int) round (divisions.y),
-                                   (int) round (divisions.z));
+            lq = lqCreateDatabase (	origin.x, origin.y, origin.z, 
+									dimensions.x, dimensions.y, dimensions.z,  
+									divisions.x, divisions.y, divisions.z
+									);
         }
 
         // destructor

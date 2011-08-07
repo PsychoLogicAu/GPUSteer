@@ -1,6 +1,8 @@
 #ifndef OPENSTEER_DEV_VECTOR_CUH
 #define OPENSTEER_DEV_VECTOR_CUH
 
+#include <vector>
+
 namespace OpenSteer
 {
 // Internal device vector class. Thrust's one is too bulky, requires everything to be compiled by nvcc, and throws millions of compile warnings.

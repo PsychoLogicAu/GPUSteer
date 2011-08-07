@@ -30,6 +30,7 @@ void SteerForFleeCUDA::run(void)
 	float3 * pdSteering = m_pdVehicleGroupData->pdSteering();
 
 	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdForward, pdSteering, m_target, getNumAgents() );
+	cutilCheckMsg( "SteerForFleeCUDAKernel failed." );
 
 	cudaThreadSynchronize();
 }
