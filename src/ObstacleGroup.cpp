@@ -1,12 +1,12 @@
 #include "OpenSteer/ObstacleGroup.h"
 
-#include <iostream>
-#include <fstream>
-using std::endl;
+//#include <iostream>
+//#include <fstream>
+//using std::endl;
 
 using namespace OpenSteer;
 
-ObstacleGroup::ObstacleGroup(const float3 &center, const float3 &dimensions, const float3 &divisions)
+ObstacleGroup::ObstacleGroup( const float3 &center, const float3 &dimensions, const uint3 &divisions)
 :	m_nCount(0),
 	m_proximityDatabase(NULL),
 	m_lookupToken(NULL)
@@ -104,21 +104,21 @@ unsigned int ObstacleGroup::Size(void)
 	return m_nCount;
 }
 
-void ObstacleGroup::OutputDataToFile(const char *filename)
-{
-	std::ofstream out;
-	out.open(filename);
-	if(out.is_open())
-	{
-		for(unsigned int i = 0; i < Size(); i++)
-		{
-			out << "number: " << i + 1 << endl;
-			out << "center: " << m_vObstacleData[i].center << endl;
-			out << "radius: " << m_vObstacleData[i].radius << endl;
-
-			out << endl;
-		}
-
-		out.close();
-	}
-}
+//void ObstacleGroup::OutputDataToFile(const char *filename)
+//{
+//	std::ofstream out;
+//	out.open(filename);
+//	if(out.is_open())
+//	{
+//		for(unsigned int i = 0; i < Size(); i++)
+//		{
+//			out << "number: " << i + 1 << endl;
+//			out << "center: " << m_vObstacleData[i].center << endl;
+//			out << "radius: " << m_vObstacleData[i].radius << endl;
+//
+//			out << endl;
+//		}
+//
+//		out.close();
+//	}
+//}

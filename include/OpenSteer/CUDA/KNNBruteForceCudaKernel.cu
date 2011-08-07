@@ -1,6 +1,6 @@
 #include "KNNBruteForceCUDA.cuh"
 
-#include "../VehicleGroupData.cuh"
+//#include "../VehicleGroupData.cuh"
 #include "../VectorUtils.cuh"
 
 #include "CUDAKernelGlobals.h"

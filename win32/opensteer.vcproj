@@ -33,9 +33,10 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="$(SolutionDir)opensteer\include"
+				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
 				GPUDebugInfo="true"
 				Arch2="0"
+				Optimization="0"
 				Runtime="3"
 			/>
 			<Tool
@@ -50,7 +51,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(SolutionDir)opensteer\include;$(CUDA_INC_PATH);$(GLUT_ROOT)"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -105,7 +106,7 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="$(SolutionDir)opensteer\include"
+				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
 				Arch2="0"
 				Runtime="2"
 			/>
@@ -122,7 +123,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="$(SolutionDir)opensteer\include;$(CUDA_INC_PATH);$(GLUT_ROOT)"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
@@ -287,7 +288,15 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\dev_vector.cuh"
+					RelativePath="..\include\OpenSteer\CUDA\dev_vector.cuh"
+					>
+				</File>
+				<File
+					RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cu"
+					>
+				</File>
+				<File
+					RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cuh"
 					>
 				</File>
 				<File
@@ -330,6 +339,18 @@
 					RelativePath="..\include\OpenSteer\CUDA\UpdateCUDA.h"
 					>
 				</File>
+				<File
+					RelativePath="..\include\OpenSteer\VectorUtils.cuh"
+					>
+				</File>
+				<File
+					RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cuh"
+					>
+				</File>
+				<File
+					RelativePath="..\include\OpenSteer\VehicleGroupData.cuh"
+					>
+				</File>
 				<Filter
 					Name="Kernels"
 					>
@@ -350,6 +371,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDAKernel.cu"
+						>
+					</File>
+					<File
 						RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCudaKernel.cu"
 						>
 					</File>
@@ -367,6 +392,10 @@
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cu"
 						>
 					</File>
 				</Filter>
@@ -444,19 +473,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OpenSteer\VectorUtils.cuh"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OpenSteer\VehicleData.h"
 				>
 			</File>
 			<File
 				RelativePath="..\include\OpenSteer\VehicleGroup.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OpenSteer\VehicleGroupData.cuh"
 				>
 			</File>
 		</Filter>

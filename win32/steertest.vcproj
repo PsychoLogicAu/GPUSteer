@@ -34,7 +34,7 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="&quot;$(SolutionDir)opensteer\include&quot;"
+				Include="$(SolutionDir)opensteer\include"
 				Arch2="0"
 				Runtime="3"
 			/>
@@ -50,7 +50,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -116,7 +116,7 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="&quot;$(SolutionDir)opensteer\include&quot;"
+				Include="&quot;$(SolutionDir)opensteer\include&quot;;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
 				Arch2="0"
 			/>
 			<Tool
@@ -132,7 +132,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"

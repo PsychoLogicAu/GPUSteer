@@ -11,6 +11,7 @@ extern "C" __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			
 #define USE_THRUST
 
 #ifdef USE_THRUST
+#include <thrust/device_ptr.h>
 #include <thrust/sort.h>
 #endif
 
@@ -25,11 +26,12 @@ void KNNBruteForceCUDA::init( void )
 {
 	size_t numAgents = getNumAgents();
 	size_t numAgentsSquared = numAgents * numAgents;
-	
+
 	// Allocate the temporary device storage.
 	cudaMalloc( &m_pdDistanceMatrix, numAgentsSquared * sizeof(float) );
+	cutilCheckMsg( "cudaMalloc failed." );
 	cudaMalloc( &m_pdIndexMatrix, numAgentsSquared * sizeof(size_t) );
-
+	cutilCheckMsg( "cudaMalloc failed." );
 }
 
 void KNNBruteForceCUDA::run( void )
@@ -44,19 +46,23 @@ void KNNBruteForceCUDA::run( void )
 
 	// Launch the KNNBruteForceCUDAKernel to compute distances to each other vehicle.
 	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, m_k, numAgents );
+	cutilCheckMsg( "KNNBruteForceCUDAKernel failed." );
 
 	// For each agent...
 	for( size_t i = 0; i < numAgents; i++ )
 	{
 		// Pointers to the matrix row start and end for this agent (keys).
-		float * pdPositionStart = m_pdDistanceMatrix + (i * numAgents);
-		float * pdPositionEnd = pdPositionStart + (numAgents);
+		//float * pdPositionStart = m_pdDistanceMatrix + (i * numAgents);
+		thrust::device_ptr< float > pdDistanceStart( m_pdDistanceMatrix + (i * numAgents) );
+		//float * pdPositionEnd = pdPositionStart + (numAgents);
+		thrust::device_ptr< float > pdDistanceEnd( m_pdDistanceMatrix + (i * numAgents) );
 		// Pointer to the index matrix row for this agent (values).
-		size_t * pdIndexBase = m_pdIndexMatrix + (i * numAgents);
+		//size_t * pdIndexBase = m_pdIndexMatrix + (i * numAgents);
+		thrust::device_ptr< size_t > pdIndexStart( m_pdIndexMatrix + (i * numAgents) );
 
 		// Sort the results (using thrust)
 #ifdef USE_THRUST
-		thrust::sort_by_key( pdPositionStart, pdPositionEnd, pdIndexBase );
+		thrust::sort_by_key( pdDistanceStart, pdDistanceEnd, pdIndexStart );
 #endif
 
 	}

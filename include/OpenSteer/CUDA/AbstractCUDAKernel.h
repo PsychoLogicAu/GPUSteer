@@ -6,6 +6,8 @@
 #include "..\AbstractKernel.h"
 #include "CUDAGlobals.h"
 
+#include <cutil_inline.h>
+
 namespace OpenSteer
 {
 	const int THREADSPERBLOCK = 128;

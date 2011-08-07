@@ -6,16 +6,22 @@
 #endif
 
 // For writing the data to an output file.
-#include <iostream>
-#include <fstream>
+//#include <iostream>
+//#include <fstream>
 
 #include "OpenSteer/VectorUtils.cuh"
 #include "OpenSteer/Utilities.h"
 
 using namespace OpenSteer;
 
-VehicleGroup::VehicleGroup(void)
-:	m_nCount( 0 )
+//VehicleGroup::VehicleGroup(void)
+//:	m_nCount( 0 )
+//{
+//}
+
+VehicleGroup::VehicleGroup( uint3 const& worldCells, float3 const& worldSize )
+:	m_nCount( 0 ),
+	m_binData( worldCells, worldSize )
 {
 }
 
@@ -143,70 +149,70 @@ void VehicleGroup::SyncHost( void )
 	m_vehicleGroupConst.syncHost();
 }
 
-
-void VehicleGroup::OutputDataToFile( char const* szFilename )
-{
-	SyncHost();
-
-	using std::endl;
-	std::ofstream out;
-	out.open( szFilename );
-	if( out.is_open() )
-	{
-		VehicleData vd;
-		VehicleConst vc;
-
-		// For each vehicle in the group...
-		for( IDToIndexMap::iterator it = m_cIDToIndexMap.begin(); it != m_cIDToIndexMap.end(); ++it )
-		{
-			// Get the vehicle_data and vehicle_const structures.
-			size_t const& index = it->second;
-			m_vehicleGroupConst.getVehicleData( index, vc );
-			m_vehicleGroupData.getVehicleData( index, vd );
-
-			// Output the data to the stream.
-			out << "id: " << vc.id << endl;
-			out << "Data:" << endl;
-			out << "forward: " << vd.forward << endl;
-			out << "position: " << vd.position << endl;
-			out << "side: " << vd.side << endl;
-			out << "speed: " << vd.speed << endl;
-			out << "steering: " << vd.steering << endl;
-			out << "up: " << vd.up << endl;
-
-			out << "Const:" << endl;
-			out << "id: " << vc.id << endl;
-			out << "mass: " << vc.mass << endl;
-			out << "maxForce: " << vc.maxForce << endl;
-			out << "maxSpeed: " << vc.maxSpeed << endl;
-			out << "radius: " << vc.radius << endl;
-			out << endl;
-		}
-
-		//for(unsigned int i = 0; i < Size(); i++)
-		//{
-		//	GetDataForVehicle( 
-		//	const VehicleData &vdata = m_vehicleData[i];
-		//	const VehicleConst &vconst = m_vehicleConst[i];
-
-		//	out << "id: " << vconst.id << endl;
-		//	out << "Data:" << endl;
-		//	out << "forward: " << vdata.forward << endl;
-		//	out << "position: " << vdata.position << endl;
-		//	out << "side: " << vdata.side << endl;
-		//	out << "speed: " << vdata.speed << endl;
-		//	out << "steering: " << vdata.steering << endl;
-		//	out << "up: " << vdata.up << endl;
-
-		//	out << "Const:" << endl;
-		//	out << "id: " << vconst.id << endl;
-		//	out << "mass: " << vconst.mass << endl;
-		//	out << "maxForce: " << vconst.maxForce << endl;
-		//	out << "maxSpeed: " << vconst.maxSpeed << endl;
-		//	out << "radius: " << vconst.radius << endl;
-		//	out << endl;
-		//}
-
-		out.close();
-	}
-}
+//
+//void VehicleGroup::OutputDataToFile( char const* szFilename )
+//{
+//	SyncHost();
+//
+//	using std::endl;
+//	std::ofstream out;
+//	out.open( szFilename );
+//	if( out.is_open() )
+//	{
+//		VehicleData vd;
+//		VehicleConst vc;
+//
+//		// For each vehicle in the group...
+//		for( IDToIndexMap::iterator it = m_cIDToIndexMap.begin(); it != m_cIDToIndexMap.end(); ++it )
+//		{
+//			// Get the vehicle_data and vehicle_const structures.
+//			size_t const& index = it->second;
+//			m_vehicleGroupConst.getVehicleData( index, vc );
+//			m_vehicleGroupData.getVehicleData( index, vd );
+//
+//			// Output the data to the stream.
+//			out << "id: " << vc.id << endl;
+//			out << "Data:" << endl;
+//			out << "forward: " << vd.forward << endl;
+//			out << "position: " << vd.position << endl;
+//			out << "side: " << vd.side << endl;
+//			out << "speed: " << vd.speed << endl;
+//			out << "steering: " << vd.steering << endl;
+//			out << "up: " << vd.up << endl;
+//
+//			out << "Const:" << endl;
+//			out << "id: " << vc.id << endl;
+//			out << "mass: " << vc.mass << endl;
+//			out << "maxForce: " << vc.maxForce << endl;
+//			out << "maxSpeed: " << vc.maxSpeed << endl;
+//			out << "radius: " << vc.radius << endl;
+//			out << endl;
+//		}
+//
+//		//for(unsigned int i = 0; i < Size(); i++)
+//		//{
+//		//	GetDataForVehicle( 
+//		//	const VehicleData &vdata = m_vehicleData[i];
+//		//	const VehicleConst &vconst = m_vehicleConst[i];
+//
+//		//	out << "id: " << vconst.id << endl;
+//		//	out << "Data:" << endl;
+//		//	out << "forward: " << vdata.forward << endl;
+//		//	out << "position: " << vdata.position << endl;
+//		//	out << "side: " << vdata.side << endl;
+//		//	out << "speed: " << vdata.speed << endl;
+//		//	out << "steering: " << vdata.steering << endl;
+//		//	out << "up: " << vdata.up << endl;
+//
+//		//	out << "Const:" << endl;
+//		//	out << "id: " << vconst.id << endl;
+//		//	out << "mass: " << vconst.mass << endl;
+//		//	out << "maxForce: " << vconst.maxForce << endl;
+//		//	out << "maxSpeed: " << vconst.maxSpeed << endl;
+//		//	out << "radius: " << vconst.radius << endl;
+//		//	out << endl;
+//		//}
+//
+//		out.close();
+//	}
+//}

@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 
+#include <cutil_inline.h>
+
 #include <cuda_runtime.h>
 #pragma comment(lib, "cudart.lib")
 

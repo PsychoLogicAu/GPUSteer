@@ -1,6 +1,8 @@
 #ifndef KERNELGLOBALSCUDA_H
 #define KERNELGLOBALSCUDA_H
 
+#include "CUDAGlobals.h"
+
 #include "../VectorUtils.cuh"
 #include "../VehicleGroupData.cuh"
 //
