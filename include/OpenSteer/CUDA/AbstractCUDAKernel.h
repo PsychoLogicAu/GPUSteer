@@ -4,7 +4,7 @@
 #include <cuda_runtime.h>
 
 #include "..\AbstractKernel.h"
-#include "CUDAGlobals.h"
+#include "CUDAGlobals.cuh"
 
 #include <cutil_inline.h>
 
@@ -18,16 +18,16 @@ namespace OpenSteer
 		int m_threadsPerBlock;
 
 		// Structures containing device pointers.
-		VehicleGroupData *	m_pdVehicleGroupData;
-		VehicleGroupConst *	m_pdVehicleGroupConst;
+		VehicleGroupData *	m_pVehicleGroupData;
+		VehicleGroupConst *	m_pVehicleGroupConst;
 
 	public:
 		AbstractCUDAKernel( VehicleGroup * pVehicleGroup )
 		:	AbstractKernel( pVehicleGroup ),
 			m_threadsPerBlock( THREADSPERBLOCK )
 		{
-			m_pdVehicleGroupData = &m_pVehicleGroup->GetVehicleGroupData();
-			m_pdVehicleGroupConst = &m_pVehicleGroup->GetVehicleGroupConst();
+			m_pVehicleGroupData = &m_pVehicleGroup->GetVehicleGroupData();
+			m_pVehicleGroupConst = &m_pVehicleGroup->GetVehicleGroupConst();
 		}
 
 		virtual void init( void ) = 0;

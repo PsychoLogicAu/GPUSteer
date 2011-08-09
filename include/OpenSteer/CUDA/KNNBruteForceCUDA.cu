@@ -40,7 +40,7 @@ void KNNBruteForceCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 const*	pdPosition = m_pdVehicleGroupData->pdPosition();
+	float3 const*	pdPosition = m_pVehicleGroupData->pdPosition();
 
 	size_t numAgents = getNumAgents();
 

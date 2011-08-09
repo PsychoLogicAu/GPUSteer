@@ -84,7 +84,8 @@ void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup
 
 void CUDAGroupSteerLibrarySingleton::findKNearestNeighbors( VehicleGroup & vehicleGroup, size_t const k )
 {
-	KNNBruteForceCUDA kernel( &vehicleGroup, k );
+	//KNNBruteForceCUDA kernel( &vehicleGroup, k );
+	KNNBinningCUDA kernel( &vehicleGroup, k );
 
 	kernel.init();
 	kernel.run();

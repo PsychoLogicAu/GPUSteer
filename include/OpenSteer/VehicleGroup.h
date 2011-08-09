@@ -51,8 +51,9 @@ public:
 		return m_nCount;
 	}
 
-	VehicleGroupConst &	GetVehicleGroupConst()		{ return m_vehicleGroupConst; }
-	VehicleGroupData &	GetVehicleGroupData()		{ return m_vehicleGroupData; }
+	VehicleGroupConst &	GetVehicleGroupConst( void )	{ return m_vehicleGroupConst; }
+	VehicleGroupData &	GetVehicleGroupData( void )		{ return m_vehicleGroupData; }
+	BinData & GetBinData( void )						{ return m_binData; }
 	
 	/// Use to extract data for an individual vehicle
 	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
