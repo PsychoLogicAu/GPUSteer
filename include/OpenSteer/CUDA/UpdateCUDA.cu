@@ -30,16 +30,16 @@ void UpdateCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gather pointers to the required data...
-	float3 * pdSide = m_pdVehicleGroupData->pdSide();
-	float3 * pdUp = m_pdVehicleGroupData->pdUp();
-	float3 * pdForward = m_pdVehicleGroupData->pdForward();
-	float3 * pdPosition = m_pdVehicleGroupData->pdPosition();
-	float3 * pdSteering = m_pdVehicleGroupData->pdSteering();
-	float * pdSpeed = m_pdVehicleGroupData->pdSpeed();
+	float3 * pdSide = m_pVehicleGroupData->pdSide();
+	float3 * pdUp = m_pVehicleGroupData->pdUp();
+	float3 * pdForward = m_pVehicleGroupData->pdForward();
+	float3 * pdPosition = m_pVehicleGroupData->pdPosition();
+	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
+	float * pdSpeed = m_pVehicleGroupData->pdSpeed();
 
-	float const* pdMaxForce = m_pdVehicleGroupConst->pdMaxForce();
-	float const* pdMaxSpeed = m_pdVehicleGroupConst->pdMaxSpeed();
-	float const* pdMass = m_pdVehicleGroupConst->pdMass();
+	float const* pdMaxForce = m_pVehicleGroupConst->pdMaxForce();
+	float const* pdMaxSpeed = m_pVehicleGroupConst->pdMaxSpeed();
+	float const* pdMass = m_pVehicleGroupConst->pdMass();
 
 	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdForward, pdPosition, pdSteering, pdSpeed,
 											pdMaxForce, pdMaxSpeed, pdMass,

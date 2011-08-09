@@ -276,7 +276,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\CUDAGlobals.h"
+					RelativePath="..\include\OpenSteer\CUDA\CUDAGlobals.cuh"
 					>
 				</File>
 				<File
@@ -344,6 +344,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cu"
+					>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cuh"
 					>
 				</File>
@@ -392,10 +396,6 @@
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
-						>
-					</File>
-					<File
-						RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cu"
 						>
 					</File>
 				</Filter>

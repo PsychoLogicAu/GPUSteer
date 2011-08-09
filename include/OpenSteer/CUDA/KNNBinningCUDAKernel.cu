@@ -6,42 +6,65 @@
 
 using namespace OpenSteer;
 
-texture< knn_bin_data > texBins;
+// Define the texture reference to access the appropriate bin_cell's index.
+texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndices;
 
-
+// Fetch the bin from texBinCells at a given world {x,y,z} position.
+#define CELLINDEX( pos ) ( tex3D( texCellIndices, pos.x, pos.z, pos.y ) )
 
 // Kernel declarations.
 extern "C"
 {
-	// TODO: this might be better being done offline, once per map.
-	__global__ void KNNBinningCreateBins(	knn_bin_data * pdBinData,
-											float const fWorldSizeX,
-											float const fWorldSizeY,
-											size_t const numBinsX,
-											size_t const numBinsY
-											);
-
-	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,
-										size_t *		pdVehicleIndices,
-										size_t const*	pdVehicleBinIDs,
-										size_t const	numAgents
+	// Kernel to set initial bin indices of vehicles in the simulation.
+	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each vehicle.
+										size_t *		pdAgentIndices,			// Out:	Indices of each vehicle.
+										size_t *		pdAgentBinIndices,		// Out:	Indices of the bin each vehicle is in.
+										size_t const	numAgents				// In:	Number of agents in the simulation.
 										);
 
+	// Bind texCellIndices to the cudaArray.
+	__host__ void KNNBinningCUDABindTexture( cudaArray * pCudaArray );
+	__host__ void KNNBinningCUDAUnbindTexture( void );
 }
 
-__global__ void KNNBinningCreateBins(	knn_bin_data * pdBinData,
-										float const fWorldSizeX,
-										float const fWorldSizeY,
-										size_t const numBinsX,
-										size_t const numBinsY
-										)
+__host__ void KNNBinningCUDABindTexture( cudaArray * pdCudaArray )
 {
-	// X and Y coords of this bin.
-	int x = threadIdx.x + blockIdx.x * blockDim.x;
-	int y = threadIdx.y + blockIdx.y * blockDim.y;
+	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<uint>();
 
-	// Compute the offset of this bin in the array.
-	int offset = x + y * blockDim.x * gridDim.x;
+	texCellIndices.normalized = true;
+	texCellIndices.filterMode = cudaFilterModePoint;
+	texCellIndices.addressMode[0] = cudaAddressModeClamp;
+	texCellIndices.addressMode[1] = cudaAddressModeClamp;
+	texCellIndices.addressMode[2] = cudaAddressModeClamp;
 
-	// Declare shared memory to hold the 
+	CUDA_SAFE_CALL( cudaBindTextureToArray( texCellIndices, pdCudaArray, channelDesc ) );
+}
+
+__host__ void KNNBinningCUDAUnbindTexture( void )
+{
+	CUDA_SAFE_CALL( cudaUnbindTexture( texCellIndices ) );
+}
+
+__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each vehicle.
+									size_t *		pdAgentIndices,			// Out:	Indices of each vehicle.
+									size_t *		pdAgentBinIndices,		// Out:	Indices of the bin each vehicle is in.
+									size_t const	numAgents				// In:	Number of agents in the simulation.
+									)
+{
+	// Offset of this agent in the global array.
+	int offset = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+	// Check bounds.
+	if( offset >= numAgents )
+		return;
+
+	// Copy the positions to shared memory.
+	__shared__ float3 shPosition[THREADSPERBLOCK];
+	POSITION_SH( threadIdx.x ) = POSITION( offset );
+
+	// Write the agent's bin index out to global memory.
+	pdAgentBinIndices[offset] = CELLINDEX( POSITION_SH( threadIdx.x ) );
+
+	// Write the vehicle's index out to global memory.
+	pdAgentIndices[offset] = offset;
 }

@@ -62,7 +62,7 @@
 #include "OpenSteer/VehicleGroup.h"
 
 #include "OpenSteer/CUDA/CUDAGroupSteerLibrary.h"
-#include "OpenSteer/CUDA/CUDAGlobals.h"
+#include "OpenSteer/CUDA/CUDAGlobals.cuh"
 
 #include "OpenSteer/VehicleData.h"
  
@@ -292,9 +292,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	SetSyncHost();
 
 	CUDAGroupSteerLibrary.steerForPursuit(*this, gSeeker->getVehicleData(), maxPredictionTime);
-	CUDAGroupSteerLibrary.steerForFlee( *this, gSeeker->getVehicleData().position );
 
-	//CUDAGroupSteerLibrary.findKNearestNeighbors( *this, 5 );
+	CUDAGroupSteerLibrary.findKNearestNeighbors( *this, 5 );
 
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
 
@@ -976,7 +975,7 @@ public:
 
 		// TODO: more intelligent selection of the CUDA device.
 
-		HANDLE_ERROR(cudaSetDevice(1));
+		CUDA_SAFE_CALL( cudaSetDevice( 1 ) );
 
         // create the seeker ("hero"/"attacker")
         ctfSeeker = new CtfSeeker;

@@ -27,9 +27,9 @@ void SteerForSeekCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 * pdSteering = m_pdVehicleGroupData->pdSteering();
-	float3 const* pdPosition = m_pdVehicleGroupData->pdPosition();
-	float3 const* pdForward = m_pdVehicleGroupData->pdForward();
+	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
+	float3 const* pdPosition = m_pVehicleGroupData->pdPosition();
+	float3 const* pdForward = m_pVehicleGroupData->pdForward();
 
 	SteerForSeekCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, m_target, getNumAgents() );
 

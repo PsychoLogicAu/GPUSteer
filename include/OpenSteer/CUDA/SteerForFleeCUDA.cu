@@ -25,9 +25,9 @@ void SteerForFleeCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gather required device pointers.
-	float3 const* pdPosition = m_pdVehicleGroupData->pdPosition();
-	float3 const* pdForward = m_pdVehicleGroupData->pdForward();
-	float3 * pdSteering = m_pdVehicleGroupData->pdSteering();
+	float3 const* pdPosition = m_pVehicleGroupData->pdPosition();
+	float3 const* pdForward = m_pVehicleGroupData->pdForward();
+	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
 
 	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdForward, pdSteering, m_target, getNumAgents() );
 	cutilCheckMsg( "SteerForFleeCUDAKernel failed." );
