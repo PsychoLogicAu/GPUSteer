@@ -288,6 +288,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\include\OpenSteer\CUDA\CUDAUtils.cuh"
+					>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\dev_vector.cuh"
 					>
 				</File>

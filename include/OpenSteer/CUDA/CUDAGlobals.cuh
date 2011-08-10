@@ -13,6 +13,8 @@
 #include <cuda_runtime.h>
 #pragma comment(lib, "cudart.lib")
 
+#include "CUDAUtils.cuh"
+
 typedef unsigned int uint;
 
 #endif
