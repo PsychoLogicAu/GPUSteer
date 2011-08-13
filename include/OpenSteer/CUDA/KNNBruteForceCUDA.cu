@@ -1,5 +1,8 @@
 #include "KNNBruteForceCUDA.cuh"
 
+#include <iostream>
+#include <fstream>
+
 extern "C"
 {
 	__global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
@@ -57,6 +60,15 @@ void KNNBruteForceCUDA::run( void )
 	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, m_k, numAgents );
 	cutilCheckMsg( "KNNBruteForceCUDAKernel failed." );
 
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+	// Events for timing the sort operations.
+	cudaEvent_t start, stop;
+	cudaEventCreate( &start );
+	cudaEventCreate( &stop );
+	cudaEventRecord( start, 0 );
+
+
 	// For each agent...
 	for( size_t i = 0; i < numAgents; i++ )
 	{
@@ -75,6 +87,21 @@ void KNNBruteForceCUDA::run( void )
 #endif
 
 	}
+
+	
+	cudaEventRecord( stop, 0 );
+	cudaEventSynchronize( stop );
+	
+	float elapsedTime;
+	cudaEventElapsedTime( &elapsedTime, start, stop );
+	char szString[128] = {0};
+	sprintf_s( szString, "%f\n", elapsedTime );
+	OutputDebugString( szString );
+
+
+	// Destroy the events.
+	cudaEventDestroy( start );
+	cudaEventDestroy( stop );
 }
 
 void KNNBruteForceCUDA::close( void )
@@ -97,7 +124,7 @@ KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup, size_t c
 void KNNBruteForceCUDAV2::init( void )
 {
 	// Allocate m_pdKNNIndices...
-	cudaMalloc( &m_pdKNNIndices, m_k * sizeof(uint) );
+	CUDA_SAFE_CALL( cudaMalloc( &m_pdKNNIndices, getNumAgents() * m_k * sizeof(uint) ) );
 }
 
 void KNNBruteForceCUDAV2::run( void )
@@ -110,9 +137,10 @@ void KNNBruteForceCUDAV2::run( void )
 	size_t			numAgents = getNumAgents();
 
 	// Compute the size of shared memory needed for each block.
-	size_t shMemSize = m_k * numAgents * 4;
+	size_t shMemSize = 2 * m_k * THREADSPERBLOCK * sizeof(float);
 
 	KNNBruteForceCUDAKernelV2<<< grid, block, shMemSize >>>( pdPosition, m_pdKNNIndices, m_k, numAgents );
+	cutilCheckMsg( "KNNBruteForceCUDAKernelV2 failed." );
 
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }

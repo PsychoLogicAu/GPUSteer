@@ -78,7 +78,7 @@ class CtfBase;
 // globals
 //const int gEnemyCount					= 10000;
 //const int gEnemyCount					= 1000;
-const int gEnemyCount					= 10000;
+const int gEnemyCount					= 1000;
 const int gMaxObstacleCount				= 100;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);

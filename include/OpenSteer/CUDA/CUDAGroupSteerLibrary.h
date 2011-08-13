@@ -9,7 +9,7 @@
 #include "AvoidObstacleCUDA.h"
 #include "SteerForFleeCUDA.h"
 #include "SteerForPursuitCUDA.h"
-//#include "KNNBruteForceCUDA.cuh"
+#include "KNNBruteForceCUDA.cuh"
 #include "KNNBinningCUDA.cuh"
 
 #include <vector>
