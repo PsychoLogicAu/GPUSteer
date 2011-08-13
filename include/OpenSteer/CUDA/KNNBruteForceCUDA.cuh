@@ -32,7 +32,6 @@ protected:
 	// Device storage for kernel output.
 	uint *		m_pdKNNIndices;
 
-
 public:
 	KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup, size_t const k );
 	virtual ~KNNBruteForceCUDAV2( void ) {}
@@ -41,8 +40,6 @@ public:
 	virtual void run( void );
 	virtual void close( void );
 };
-
-
 }	// namespace OpenSteer
 
 #endif

@@ -41,51 +41,63 @@ __global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// Agent 
 		return;
 
 	// Shared memory for local computations.
-	extern __shared__ float	shDist[];
-	extern __shared__ uint	shInd[];
+	extern __shared__ float shDist[];					// First half will be treated as the distance values.
+	uint * shInd = (uint*)shDist + blockDim.x * k;		// Second half will be treated as the index values.
 
-	// Set all elements of shDist to FLT_MAX.
+	// Set all elements of shDist to FLT_MAX and shInd to UINT_MAX.
 	for( uint i = 0; i < k; i++ )
-		shDist[threadIdx.x + i] = FLT_MAX;
+	{
+		shDist[(threadIdx.x * k) + i] = FLT_MAX;
+		shInd[(threadIdx.x * k) + i] = UINT_MAX;
+	}
 
-	// TODO: Do we have enough shared memory to do this? Use registers?
+	// Store the positions locally.
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	POSITION_SH( threadIdx.x ) = POSITION( offset );
+
+	__syncthreads();
 
 	// For each of the agents...
 	for( uint i = 0; i < numAgents; i++ )
 	{
-		/*	// Test this... will likely be slower than computing k+1 and discarding the shortest...
+		// Test this... will likely be slower than computing k+1 and discarding the shortest...
 		if( i == offset )
 			continue;
-		*/
+		
 
 		// Compute the distance between this agent and the one at i.
-		float dist = float3_distance( POSITION_SH( threadIdx.x ), pdPosition[i] );
+		float const dist = float3_distance( POSITION_SH( threadIdx.x ), POSITION( i ) );
 
-		if( shDist[threadIdx.x + (k - 1)] > dist )	// Distance of the kth closest agent.
+		if( shDist[(threadIdx.x * k) + (k - 1)] > dist )	// Distance of the kth closest agent.
 		{
-			// Set the distance and index.
-			shDist[threadIdx.x + (k - 1)] = dist;
-			shInd[threadIdx.x + (k - 1)] = i;
+			// Agent at index i is the new kth closest. Set the distance and index in shared mem.
+			shDist[(threadIdx.x * k) + (k - 1)] = dist;
+			shInd[(threadIdx.x * k) + (k - 1)] = i;
 
 			// Bubble the values up...
-			for( int slot = (k - 2); slot >= 0; slot-- )
+			for( int slot = k - 2; slot >= 0; slot-- )
 			{
-				if( shDist[threadIdx.x + slot] > shDist[threadIdx.x + (slot + 1)] )
+				if( shDist[(threadIdx.x * k) + slot] > shDist[(threadIdx.x * k) + (slot + 1)] )
 				{
-					swap( shDist[threadIdx.x + slot], shDist[threadIdx.x + (slot + 1)] );
-					swap( shInd[threadIdx.x + slot], shInd[threadIdx.x + (slot + 1)] );
+					swap( shDist[(threadIdx.x * k) + slot], shDist[(threadIdx.x * k) + (slot + 1)] );
+					swap( shInd[(threadIdx.x * k) + slot], shInd[(threadIdx.x * k) + (slot + 1)] );
 				}
 			}
 		}
 	}
-
-	// Write the shDist values out to global memory (TODO: coalesce the writes!).
+	//__syncthreads();
+	//// Write the shDist values out to global memory (TODO: coalesce the writes!).
+	//for( uint i = 0; i < k; i++ )
+	//{
+	//	pdKNNIndices[offset + i] = shInd[threadIdx.x + i];
+	//}
+	__syncthreads();
+	// This should be the coalesced version of the above...
 	for( uint i = 0; i < k; i++ )
 	{
-		pdKNNIndices[offset + i] = shInd[threadIdx.x + i];
+		pdKNNIndices[blockIdx.x * blockDim.x + threadIdx.x * i] = shInd[threadIdx.x * i];
 	}
+	//__syncthreads();
 }
 
 __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
