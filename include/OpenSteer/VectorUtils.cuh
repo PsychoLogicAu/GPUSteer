@@ -83,7 +83,7 @@ static __inline__ __host__ __device__  bool float3_equals(const float3& lhs, con
 	return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
 }
 
-// distance TODO: required?
+// Compute the euclidean distance between two points.
 static __inline__ __host__ __device__  float float3_distance(const float3& lhs, const float3& rhs)
 {
 	return float3_length(float3_subtract(lhs, rhs));
