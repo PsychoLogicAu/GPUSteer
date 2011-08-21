@@ -3,7 +3,7 @@
 #include "../VehicleGroupData.cuh"
 #include "../VectorUtils.cuh"
 
-#include "CUDAKernelGlobals.h"
+#include "CUDAKernelGlobals.cuh"
 
 using namespace OpenSteer;
 
@@ -25,11 +25,13 @@ extern "C"
 		__shared__ float3 shForward[THREADSPERBLOCK];
 		__shared__ float shSpeed[THREADSPERBLOCK];
 
-		// Copy global memory for this block to shared memory.
-		STEERING_SH( threadIdx.x ) = STEERING( offset );
-		POSITION_SH( threadIdx.x ) = POSITION( offset );
-		FORWARD_SH( threadIdx.x ) = FORWARD( offset );
+		FLOAT3_COALESCED_READ( shSteering, pdSteering );
+		FLOAT3_COALESCED_READ( shPosition, pdPosition );
+		FLOAT3_COALESCED_READ( shForward, pdForward );
+		
 		SPEED_SH( threadIdx.x ) = SPEED( offset );
+		
+		__syncthreads();
 
 		// If we already have a steering vector set, do nothing.
 		if( ! float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
@@ -59,7 +61,8 @@ extern "C"
 			STEERING_SH( threadIdx.x ) = float3_subtract( desiredVelocity, FORWARD_SH( threadIdx.x ) );
 		}
 
-		// Copy the steering vectors back to global memory.
-		STEERING( offset ) = STEERING_SH( threadIdx.x );
+		__syncthreads();
+
+		FLOAT3_COALESCED_WRITE( pdSteering, shSteering );
 	}
 }

@@ -47,7 +47,7 @@ void CPUGroupSteerLibrary::steerForEvasion(VehicleGroup &vehicleGroup, const Veh
 
 }
 
-void CPUGroupSteerLibrary::findKNearestNeighbors( VehicleGroup & vehicleGroup, size_t const k )
+void CPUGroupSteerLibrary::findKNearestNeighbors( VehicleGroup & vehicleGroup )
 {
 
 }

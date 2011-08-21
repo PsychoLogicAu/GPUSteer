@@ -2,7 +2,7 @@
 
 #include "AvoidObstaclesCUDA.h"
 
-#include "CUDAKernelGlobals.h"
+#include "CUDAKernelGlobals.cuh"
 
 using namespace OpenSteer;
 

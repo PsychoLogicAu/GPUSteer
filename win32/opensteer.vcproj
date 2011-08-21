@@ -296,22 +296,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cu"
-					>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cuh"
-					>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cu"
-					>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cuh"
-					>
-				</File>
-				<File
 					RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cu"
 					>
 				</File>
@@ -375,15 +359,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\CUDAKernelGlobals.h"
-						>
-					</File>
-					<File
-						RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDAKernel.cu"
-						>
-					</File>
-					<File
-						RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCudaKernel.cu"
+						RelativePath="..\include\OpenSteer\CUDA\CUDAKernelGlobals.cuh"
 						>
 					</File>
 					<File
@@ -402,6 +378,42 @@
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
 						>
 					</File>
+				</Filter>
+				<Filter
+					Name="NearestNeighbor"
+					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cuh"
+						>
+					</File>
+					<Filter
+						Name="Kernels"
+						>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDAKernel.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCudaKernel.cu"
+							>
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 		</Filter>

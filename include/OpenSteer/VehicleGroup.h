@@ -3,6 +3,7 @@
 
 #include "VehicleGroupData.cuh"
 #include "CUDA/VehicleGroupBinData.cuh"
+#include "CUDA/NearestNeighborData.cuh"
 #include <map>
 
 namespace OpenSteer
@@ -23,6 +24,10 @@ protected:
 	// Vehicle data.
 	VehicleGroupData			m_vehicleGroupData;
 	VehicleGroupConst			m_vehicleGroupConst;
+
+	// Nearest neighbor data.
+	NearestNeighborData			m_nearestNeighbors;
+	NearestNeighborData			m_nearestObstacles;
 
 	// Bin data to be used for KNN lookups.
 	BinData						m_binData;
@@ -51,9 +56,11 @@ public:
 		return m_nCount;
 	}
 
-	VehicleGroupConst &	GetVehicleGroupConst( void )	{ return m_vehicleGroupConst; }
-	VehicleGroupData &	GetVehicleGroupData( void )		{ return m_vehicleGroupData; }
-	BinData & GetBinData( void )						{ return m_binData; }
+	NearestNeighborData &	GetNearestNeighborData( void )	{ return m_nearestNeighbors; }
+	NearestNeighborData &	GetNearestObstacleData( void )	{ return m_nearestNeighbors; }
+	VehicleGroupConst &		GetVehicleGroupConst( void )	{ return m_vehicleGroupConst; }
+	VehicleGroupData &		GetVehicleGroupData( void )		{ return m_vehicleGroupData; }
+	BinData &				GetBinData( void )				{ return m_binData; }
 	
 	/// Use to extract data for an individual vehicle
 	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);

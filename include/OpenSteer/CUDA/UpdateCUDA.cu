@@ -44,8 +44,9 @@ void UpdateCUDA::run(void)
 	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdForward, pdPosition, pdSteering, pdSpeed,
 											pdMaxForce, pdMaxSpeed, pdMass,
 											m_fElapsedTime, getNumAgents() );
+	cutilCheckMsg( "UpdateCUDAKernel failed." );
 
-	cudaThreadSynchronize();
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void UpdateCUDA::close(void)
