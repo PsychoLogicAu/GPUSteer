@@ -46,7 +46,7 @@ public:
 	virtual void steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
 
 	// KNN search
-	virtual void findKNearestNeighbors( VehicleGroup & vehicleGroup, size_t const k );
+	virtual void findKNearestNeighbors( VehicleGroup & vehicleGroup );
 
 	// Update
 	virtual void update( VehicleGroup &vehicleGroup, const float elapsedTime );

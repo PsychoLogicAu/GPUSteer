@@ -53,6 +53,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 #include <list>
 #include "OpenSteer/SimpleVehicle.h"
 #include "OpenSteer/OpenSteerDemo.h"
@@ -76,8 +77,6 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-//const int gEnemyCount					= 10000;
-//const int gEnemyCount					= 1000;
 const int gEnemyCount					= 1000;
 const int gMaxObstacleCount				= 100;
 
@@ -215,7 +214,6 @@ void CtfEnemyGroup::randomizeHeadingOnXZPlane(VehicleData &vehicleData)
 void CtfEnemyGroup::reset(void)
 {
 	//static unsigned int id = 0;
-
 	// Add the required number of enemies.
 	while(Size() < gEnemyCount)
 	{
@@ -293,7 +291,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 
 	CUDAGroupSteerLibrary.steerForPursuit(*this, gSeeker->getVehicleData(), maxPredictionTime);
 
-	CUDAGroupSteerLibrary.findKNearestNeighbors( *this, 5 );
+	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
 
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
 

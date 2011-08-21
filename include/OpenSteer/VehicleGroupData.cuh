@@ -58,6 +58,15 @@ public:
 	{ }
 	~vehicle_group_data( void )	{ }
 
+	// Accessors for the device data.
+	float3 *	pdSide( void )		{ return m_dvSide.begin(); }
+	float3 *	pdUp( void )		{ return m_dvUp.begin(); }
+	float3 *	pdForward( void )	{ return m_dvForward.begin(); }
+	float3 *	pdPosition( void )	{ return m_dvPosition.begin(); }
+	float3 *	pdSteering( void )	{ return m_dvSteering.begin(); }
+	float *		pdSpeed( void )		{ return m_dvSpeed.begin(); }
+
+	// Accessors for the host data.
 	std::vector<float3> const& hvSide( void ) const			{ return m_hvSide; }
 	std::vector<float3> & hvSide( void )					{ m_bSyncDevice = true; return m_hvSide; }
 	std::vector<float3> const& hvUp( void ) const			{ return m_hvUp; }
@@ -73,7 +82,7 @@ public:
 
 	size_t size( void ) const	{ return m_nSize; }
 
-			/// Adds a vehicle_data structure to this structure.
+	/// Adds an agent from a vehicle_data structure.
 	void addVehicle( vehicle_data const& vd )
 	{
 		m_hvSide.push_back( vd.side );
@@ -89,27 +98,33 @@ public:
 	/// Removes the vehicle_data structure at index.
 	void removeVehicle( size_t const index )
 	{
-		m_hvSide.erase( m_hvSide.begin() + index );
-		m_hvUp.erase( m_hvUp.begin() + index );
-		m_hvForward.erase( m_hvForward.begin() + index );
-		m_hvPosition.erase( m_hvPosition.begin() + index );
-		m_hvSteering.erase( m_hvSteering.begin() + index );
-		m_hvSpeed.erase( m_hvSpeed.begin() + index );
-		
-		m_nSize--;
-		m_bSyncDevice = true;
+		if( index < m_nSize )
+		{
+			m_hvSide.erase( m_hvSide.begin() + index );
+			m_hvUp.erase( m_hvUp.begin() + index );
+			m_hvForward.erase( m_hvForward.begin() + index );
+			m_hvPosition.erase( m_hvPosition.begin() + index );
+			m_hvSteering.erase( m_hvSteering.begin() + index );
+			m_hvSpeed.erase( m_hvSpeed.begin() + index );
+			
+			m_nSize--;
+			m_bSyncDevice = true;
+		}
 	}
 	/// Get the data for the vehicle_const structure at index.
 	void getVehicleData( size_t const index, vehicle_data & vd )
 	{
-		syncHost();
+		if( index < m_nSize )
+		{
+			syncHost();
 
-		vd.side		= m_hvSide[ index ];
-		vd.up		= m_hvUp[ index ];
-		vd.forward	= m_hvForward[ index ];
-		vd.position	= m_hvPosition[ index ];
-		vd.steering	= m_hvSteering[ index ];
-		vd.speed	= m_hvSpeed[ index ];
+			vd.side		= m_hvSide[ index ];
+			vd.up		= m_hvUp[ index ];
+			vd.forward	= m_hvForward[ index ];
+			vd.position	= m_hvPosition[ index ];
+			vd.steering	= m_hvSteering[ index ];
+			vd.speed	= m_hvSpeed[ index ];
+		}
 	}
 
 	void syncHost( void )
@@ -162,14 +177,6 @@ public:
 		m_hvSteering.clear();
 		m_hvSpeed.clear();
 	}
-
-	// Get device pointers to the different data elements.
-	float3 *	pdSide( void )		{ return m_dvSide.begin(); }
-	float3 *	pdUp( void )		{ return m_dvUp.begin(); }
-	float3 *	pdForward( void )	{ return m_dvForward.begin(); }
-	float3 *	pdPosition( void )	{ return m_dvPosition.begin(); }
-	float3 *	pdSteering( void )	{ return m_dvSteering.begin(); }
-	float *		pdSpeed( void )		{ return m_dvSpeed.begin(); }
 };
 typedef vehicle_group_data VehicleGroupData;
 

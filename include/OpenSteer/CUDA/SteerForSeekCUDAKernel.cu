@@ -3,7 +3,7 @@
 #include "../VehicleGroupData.cuh"
 #include "../VectorUtils.cuh"
 
-#include "CUDAKernelGlobals.h"
+#include "CUDAKernelGlobals.cuh"
 
 using namespace OpenSteer;
 

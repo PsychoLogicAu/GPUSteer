@@ -3,6 +3,8 @@
 
 #include "AbstractCUDAKernel.h"
 
+#include "NearestNeighborData.cuh"
+
 namespace OpenSteer
 {
 class KNNBruteForceCUDA : public AbstractCUDAKernel
@@ -27,19 +29,28 @@ public:
 class KNNBruteForceCUDAV2 : public AbstractCUDAKernel
 {
 protected:
-	uint		m_k;
-
-	// Device storage for kernel output.
-	uint *		m_pdKNNIndices;
-
+	NearestNeighborData *	m_pNearestNeighborData;
 public:
-	KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup, size_t const k );
+	KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup );
 	virtual ~KNNBruteForceCUDAV2( void ) {}
 
 	virtual void init( void );
 	virtual void run( void );
 	virtual void close( void );
-};
+};	// class KNNBruteForceCUDAV2
+
+class KNNBruteForceCUDAV3 : public AbstractCUDAKernel
+{
+protected:
+	NearestNeighborData *	m_pNearestNeighborData;
+public:
+	KNNBruteForceCUDAV3( VehicleGroup * pVehicleGroup );
+	virtual ~KNNBruteForceCUDAV3( void ) {}
+
+	virtual void init( void );
+	virtual void run( void );
+	virtual void close( void );
+};	// class KNNBruteForceCUDAV3
 }	// namespace OpenSteer
 
 #endif

@@ -5,13 +5,12 @@
 
 #include "..\AbstractKernel.h"
 #include "CUDAGlobals.cuh"
+#include "CUDAKernelGlobals.cuh"
 
 #include <cutil_inline.h>
 
 namespace OpenSteer
 {
-	const int THREADSPERBLOCK = 128;
-
 	class AbstractCUDAKernel : public AbstractKernel
 	{
 	protected:
