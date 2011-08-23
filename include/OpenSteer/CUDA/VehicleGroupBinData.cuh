@@ -39,6 +39,8 @@ private:
 	uint3		m_worldCells;
 	// worldSize, extent of the world in each dimension. z is up!
 	float3		m_worldSize;
+	// total number of cells.
+	uint		m_nCells;
 
 	dev_vector<bin_cell>	m_dvCells;
 	// Host vector used while creating the bin_cell structures..
@@ -61,6 +63,7 @@ public:
 	// Get methods for the number of cells and the world size.
 	uint3 const& WorldCells( void ) const	{ return m_worldCells; }
 	float3 const& WorldSize( void ) const	{ return m_worldSize; }
+	uint getNumCells( void ) const			{ return m_nCells; }
 };	// class bin_data
 typedef bin_data BinData;
 
