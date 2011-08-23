@@ -44,7 +44,18 @@ void KNNBinningCUDA::run( void )
 
 	// Call the kernel.
 	KNNBinningBuildDB<<< grid, block >>>( pdPosition, m_pdAgentIndices, m_pdAgentCellIndices, getNumAgents() );
+	cutilCheckMsg( "KNNBinningBuildDB failed." );
 
+	// Wait for the kernel to complete.
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+	// Sort <m_pdAgentCellIndices, m_pdAgentIndices>.
+	
+
+	KNNBinningKernel<<< grid, block >>>(  )
+	cutilCheckMsg( "KNNBinningBuildDB failed." );
+
+	// Wait for the kernel to complete.
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
