@@ -10,6 +10,8 @@ bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize )
 {
 	// Create the cells.
 	CreateCells();
+
+	m_nCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
 }
 
 void bin_data::CreateCells( void )

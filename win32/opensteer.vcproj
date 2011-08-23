@@ -106,7 +106,7 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
+				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(CUDA_INC_PATH)"
 				Arch2="0"
 				Runtime="2"
 			/>
@@ -332,14 +332,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cu"
-					>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cuh"
-					>
-				</File>
-				<File
 					RelativePath="..\include\OpenSteer\VehicleGroupData.cuh"
 					>
 				</File>
@@ -400,6 +392,14 @@
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cuh"
 						>
 					</File>
 					<Filter
