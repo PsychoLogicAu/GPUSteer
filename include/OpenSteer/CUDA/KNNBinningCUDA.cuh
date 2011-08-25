@@ -3,29 +3,31 @@
 
 #include "AbstractCUDAKernel.h"
 
-#include "VehicleGroupBinData.cuh"
+#include "KNNBinData.cuh"
 
 namespace OpenSteer
 {
 class KNNBinningCUDA : public AbstractCUDAKernel
 {
 protected:
-	size_t			m_k;				// Number of nearest neighbors to search for.
 	size_t			m_nCells;
 
 	// The following are used as key/value to sort vehicles into bins.
-	uint *			m_pdCellIndices;	// Key: Index of the cell this agent is in.
-	uint *			m_pdAgentIndices;	// Value: Index of this agent in the group.
+	// Moved to NearestNeighborData
+	//uint *			m_pdCellIndices;	// Key: Index of the cell this agent is in.
+	//uint *			m_pdAgentIndices;	// Value: Index of this agent in the group.
 
 	uint *			m_pdCellStart;
 	uint *			m_pdCellEnd;
 
 	// Passed in from externally.
-	bin_data *		m_pdBinData;			// Device bin data.
+	//bin_data *		m_pdBinData;			// Device bin data.
+
+	NearestNeighborData *	m_pNearestNeighborData;
 
 
 public:
-	KNNBinningCUDA( VehicleGroup * pVehicleGroup, size_t const k );
+	KNNBinningCUDA( VehicleGroup * pVehicleGroup );
 	virtual ~KNNBinningCUDA( void ) {}
 
 	virtual void init( void );

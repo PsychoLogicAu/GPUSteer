@@ -1,4 +1,4 @@
-#include "VehicleGroupBinData.cuh"
+#include "KNNBinData.cuh"
 
 #include "CUDAGlobals.cuh"
 
@@ -75,25 +75,22 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 	// Transfer the bin_cell structures to the device memory.
 	m_dvCells = m_hvCells;
 
-	// Prepare bin_cell index lookup texture.
-
-	// Set the extents for the 3D texture memory.
-	cudaExtent const worldSize = make_cudaExtent( m_worldCells.x, m_worldCells.y, m_worldCells.z );
-
-	// Create the channel desc.
-	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc< uint >();
+	// Prepare the bin_cell index lookup texture.
+	cudaExtent const extent = make_cudaExtent( m_worldCells.x, m_worldCells.y, m_worldCells.z );
+	cudaChannelFormatDesc const desc = cudaCreateChannelDesc< uint >();
+	cudaPitchedPtr srcPtr = make_cudaPitchedPtr( (void*)phCellIndices, m_worldCells.x * sizeof(uint), m_worldCells.x, m_worldCells.y );
 
 	// Allocate m_pdCellIndexArray.
-	CUDA_SAFE_CALL( cudaMalloc3DArray( &m_pdCellIndexArray, &channelDesc, worldSize ) );
+	CUDA_SAFE_CALL( cudaMalloc3DArray( &m_pdCellIndexArray, &desc, extent, cudaArrayDefault ) );
 
 	// Copy data to 3D array.
 	cudaMemcpy3DParms copyParms = {0};
-	copyParms.srcPtr = make_cudaPitchedPtr( (void*)phCellIndices, worldSize.width*sizeof(uint), worldSize.width, worldSize.height );
+	copyParms.srcPtr = srcPtr;
 	copyParms.dstArray = m_pdCellIndexArray;
-	copyParms.extent = worldSize;
+	copyParms.extent = extent;
 	copyParms.kind = cudaMemcpyHostToDevice;
 	CUDA_SAFE_CALL( cudaMemcpy3D( &copyParms ) );
 
-	// Free dynamic memory.
+	// Free host memory.
 	free( phCellIndices );
 }

@@ -69,6 +69,10 @@
  
 using namespace OpenSteer;
 
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 // ----------------------------------------------------------------------------
 // forward declarations
 class CtfEnemyGroup;
@@ -77,17 +81,21 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 100000;
+const int gEnemyCount					= 1000000;
+const float gDim						= 4000.f;
+const int gCells						= 300;
+
 const int gMaxObstacleCount				= 100;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
 const float		gHomeBaseRadius			= 1.5f;
 
-const float3 gWorldSize					= make_float3( 100.f, 100.f, 100.f );
-const uint3 gWorldCells					= make_uint3( 20, 1, 20 );
+const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
+const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
 
 const float gMinStartRadius				= 30.0f;
-const float gMaxStartRadius				= 60.0f;
+//const float gMaxStartRadius				= 60.0f;
+const float gMaxStartRadius				= 0.5f * min( gWorldSize.x, gWorldSize.z );
 
 const float gBrakingRate				= 0.75f;
 
@@ -292,6 +300,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	CUDAGroupSteerLibrary.steerForPursuit(*this, gSeeker->getVehicleData(), maxPredictionTime);
 
 	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
+
+	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, 2.f );
 
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
 

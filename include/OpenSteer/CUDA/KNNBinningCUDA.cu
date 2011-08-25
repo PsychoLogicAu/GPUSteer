@@ -12,10 +12,11 @@ extern "C"
 	__host__ void KNNBinningCUDAUnbindTexture( void );
 
 	// Kernel to set initial bin indices of vehicles in the simulation.
-	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each vehicle.
-										size_t *		pdAgentIndices,			// Out:	Indices of each vehicle.
-										size_t *		pdAgentBinIndices,		// Out:	Indices of the bin each vehicle is in.
-										size_t const	numAgents				// In:	Number of agents in the simulation.
+	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
+										size_t *		pdAgentIndices,			// Out:	Indices of each agent.
+										size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
+										size_t const	numAgents,				// In:	Number of agents in the simulation.
+										float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
 										);
 
 	// Kernel to sort position/direction/speed based on pdAgentIndices, and to compute start and end indices of cells.
@@ -35,13 +36,29 @@ extern "C"
 
 											size_t const	numAgents
 											);
+
+	__global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted) Agent positions.
+
+										uint const*		pdAgentIndices,		// In:	(sorted) Indices of each agent.
+										uint const*		pdCellIndices,		// In:	(sorted) Indices of the cell each agent is in.
+									
+										uint const*		pdCellStart,		// In:	Start index of each cell in pdCellIndices.
+										uint const*		pdCellEnd,			// In:	End index of each cell in pdCellIndices.
+
+										uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
+										float *			pdKNNDistances,		// Out:	Distances of the K Nearest Neighbors in pdPosition.
+
+										size_t const	k,					// In:	Number of neighbors to consider.
+										size_t const	radius,				// In:	Maximum radius (in cells) to consider.
+										size_t const	numAgents			// In:	Number of agents in the simulation.
+										);
 }
 
-KNNBinningCUDA::KNNBinningCUDA( VehicleGroup * pVehicleGroup, size_t const k )
-:	AbstractCUDAKernel( pVehicleGroup ),
-	m_k( k )
+KNNBinningCUDA::KNNBinningCUDA( VehicleGroup * pVehicleGroup )
+:	AbstractCUDAKernel( pVehicleGroup )
 {
 	m_nCells = m_pVehicleGroup->GetBinData().getNumCells();
+	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
 }
 
 void KNNBinningCUDA::init( void )
@@ -50,8 +67,8 @@ void KNNBinningCUDA::init( void )
 	KNNBinningCUDABindTexture( m_pVehicleGroup->GetBinData().pdCellIndexArray() );
 
 	// Allocate temporary device storage.
-	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellIndices, getNumAgents() * sizeof(uint) ) );
-	CUDA_SAFE_CALL( cudaMalloc( &m_pdAgentIndices, getNumAgents() * sizeof(uint) ) );
+	//CUDA_SAFE_CALL( cudaMalloc( &m_pdCellIndices, getNumAgents() * sizeof(uint) ) );
+	//CUDA_SAFE_CALL( cudaMalloc( &m_pdAgentIndices, getNumAgents() * sizeof(uint) ) );
 
 	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellStart, m_nCells * sizeof(uint) ) );
 	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellEnd, m_nCells * sizeof(uint) ) );
@@ -62,7 +79,9 @@ void KNNBinningCUDA::run( void )
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	size_t const	numAgents = getNumAgents();
+	size_t const&	numAgents = getNumAgents();
+	uint const&		k = m_pNearestNeighborData->k();
+	float3 const&	worldSize = m_pVehicleGroup->GetBinData().WorldSize();
 
 	// Gather the required device pointers.
 	float3 const*	pdPosition = m_pVehicleGroupData->pdPosition();
@@ -70,29 +89,47 @@ void KNNBinningCUDA::run( void )
 	float const*	pdSpeed = m_pVehicleGroupData->pdSpeed();
 
 	// Pointers to output data.
-	uint *			pdKNNIndices = m_pVehicleGroup->GetNearestNeighborData().pdKNNIndices();
-	float *			pdKNNDistances = m_pVehicleGroup->GetNearestNeighborData().pdKNNDistances();
+	uint *			pdKNNIndices = m_pNearestNeighborData->pdKNNIndices();
+	float *			pdKNNDistances = m_pNearestNeighborData->pdKNNDistances();
 
-	float3 *		pdPositionSorted = m_pVehicleGroup->GetNearestNeighborData().pdKNNPositions();
-	float3 *		pdDirectionSorted = m_pVehicleGroup->GetNearestNeighborData().pdKNNDirections();
-	float *			pdSpeedSorted = m_pVehicleGroup->GetNearestNeighborData().pdKNNSpeeds();
+	// TODO: this data can be local.
+	uint *			pdAgentIndices = m_pNearestNeighborData->pdAgentIndices();
+	uint *			pdCellIndices = m_pNearestNeighborData->pdCellIndices();
 
-	// Call the kernel.
-	KNNBinningBuildDB<<< grid, block >>>( pdPosition, m_pdAgentIndices, m_pdCellIndices, numAgents );
+	// TODO: I don't see a need for this data.
+	float3 *		pdPositionSorted = m_pNearestNeighborData->pdPositionSorted();
+	float3 *		pdDirectionSorted = m_pNearestNeighborData->pdDirectionSorted();
+	float *			pdSpeedSorted = m_pNearestNeighborData->pdSpeedSorted();
+
+
+	//
+	//	TIMING:
+	//
+	// Events for timing the complete operation.
+	cudaEvent_t start, stop;
+	cudaEventCreate( &start );
+	cudaEventCreate( &stop );
+	cudaEventRecord( start, 0 );
+
+
+
+
+	// Build the database (get the bin indices for the agents).
+	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndices, pdCellIndices, numAgents, worldSize );
 	cutilCheckMsg( "KNNBinningBuildDB failed." );
 	// Wait for the kernel to complete.
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Sort m_pAgentIndices on m_pdCellIndices using thrust.
-	thrust::sort_by_key(	thrust::device_ptr<uint>( m_pdCellIndices ),
-							thrust::device_ptr<uint>( m_pdCellIndices + numAgents ),
-							thrust::device_ptr<uint>( m_pdAgentIndices ) );
+	thrust::sort_by_key(	thrust::device_ptr<uint>( pdCellIndices ),
+							thrust::device_ptr<uint>( pdCellIndices + numAgents ),
+							thrust::device_ptr<uint>( pdAgentIndices ) );
 
 	// Set all cells to empty.
 	CUDA_SAFE_CALL( cudaMemset( m_pdCellStart, 0xffffffff, m_nCells * sizeof(uint) ) );
 
 	KNNBinningReorderData<<< grid, block >>>(	pdPosition, pdDirection, pdSpeed,
-												m_pdAgentIndices, m_pdCellIndices,
+												pdAgentIndices, pdCellIndices,
 												pdPositionSorted, pdDirectionSorted, pdSpeedSorted,
 												m_pdCellStart, m_pdCellEnd,
 												numAgents
@@ -101,14 +138,35 @@ void KNNBinningCUDA::run( void )
 	// Wait for the kernel to complete.
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
+	// Compute the size of shared memory needed for each block.
+	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
+
+	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted,
+													pdAgentIndices, pdCellIndices,
+													m_pdCellStart, m_pdCellEnd,
+													pdKNNIndices, pdKNNDistances,
+													k, 1, numAgents
+											);
+	cutilCheckMsg( "KNNBinningKernel failed." );
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 
+	//
+	//	TIMING:
+	//
+	cudaEventRecord( stop, 0 );
+	cudaEventSynchronize( stop );
+	
+	float elapsedTime;
+	cudaEventElapsedTime( &elapsedTime, start, stop );
+	char szString[128] = {0};
+	sprintf_s( szString, "%f\n", elapsedTime );
+	OutputDebugString( szString );
 
-	//KNNBinningKernel<<< grid, block >>>(  )
-	//cutilCheckMsg( "KNNBinningBuildDB failed." );
 
-	//// Wait for the kernel to complete.
-	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	// Destroy the events.
+	cudaEventDestroy( start );
+	cudaEventDestroy( stop );
 }
 
 void KNNBinningCUDA::close( void )
@@ -116,8 +174,8 @@ void KNNBinningCUDA::close( void )
 	// Unbind the texture.
 	KNNBinningCUDAUnbindTexture();
 
-	CUDA_SAFE_CALL( cudaFree( m_pdCellIndices ) );
-	CUDA_SAFE_CALL( cudaFree( m_pdAgentIndices ) );
+	//CUDA_SAFE_CALL( cudaFree( m_pdCellIndices ) );
+	//CUDA_SAFE_CALL( cudaFree( m_pdAgentIndices ) );
 
 	CUDA_SAFE_CALL( cudaFree( m_pdCellStart ) );
 	CUDA_SAFE_CALL( cudaFree( m_pdCellEnd ) );

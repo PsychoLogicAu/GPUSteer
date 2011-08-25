@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <cutil_inline.h>
+
 namespace OpenSteer
 {
 // Internal device vector class. Thrust's one is too bulky, requires everything to be compiled by nvcc, and throws millions of compile warnings.
@@ -20,12 +22,14 @@ private:
 	{
 		// Allocate device memory to hold nSize elements of type T.
 		T * pdMem;
-		cudaMalloc( (void**)&pdMem, nSize * sizeof(T) );
+		CUDA_SAFE_CALL( cudaMalloc( (void**)&pdMem, nSize * sizeof(T) ) );
 		return pdMem;
 	}
 	cudaError_t free( T * pdMem )
 	{
-		return cudaFree( pdMem );
+		cudaError_t error;
+		CUDA_SAFE_CALL( error = cudaFree( pdMem ) );
+		return error;
 	}
 
 public:
@@ -52,7 +56,7 @@ public:
 			m_pdMem = allocate( m_nSize );
 		}
 		
-		cudaMemcpy( m_pdMem, other.m_pdMem, m_nSize * sizeof(T), cudaMemcpyDeviceToDevice );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pdMem, other.m_pdMem, m_nSize * sizeof(T), cudaMemcpyDeviceToDevice ) );
 	}
 
 	dev_vector<T>( std::vector<T> & stlVec )	// Copy constructor.
@@ -64,7 +68,7 @@ public:
 			m_pdMem = allocate( m_nSize );
 		}
 
-		cudaMemcpy( m_pdMem, &stlVec[0], m_nSize * sizeof(T), cudaMemcpyHostToDevice );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pdMem, &stlVec[0], m_nSize * sizeof(T), cudaMemcpyHostToDevice ) );
 	}
 
 	dev_vector<T> & operator=( const dev_vector<T> & other )	// Assignment from other dev_vector<T>
@@ -76,7 +80,7 @@ public:
 			m_pdMem = allocate( m_nSize );
 		}
 		
-		cudaMemcpy( m_pdMem, other.m_pdMem, m_nSize * sizeof(T), cudaMemcpyDeviceToDevice );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pdMem, other.m_pdMem, m_nSize * sizeof(T), cudaMemcpyDeviceToDevice ) );
 		return *this;
 	}
 
@@ -89,7 +93,7 @@ public:
 			m_pdMem = allocate( m_nSize );
 		}
 
-		cudaMemcpy( m_pdMem, &stlVec[0], m_nSize * sizeof(T), cudaMemcpyHostToDevice );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pdMem, &stlVec[0], m_nSize * sizeof(T), cudaMemcpyHostToDevice ) );
 		return *this;
 	}
 
@@ -101,7 +105,7 @@ public:
 		// Allocate device memory.
 		T * pdNewMem = allocate( nSize );
 		// Copy old to new.
-		cudaMemcpy( pdNewMem, m_pdMem, m_nSize * sizeof(T), cudeMemcpyDeviceToDevice );
+		CUDA_SAFE_CALL( cudaMemcpy( pdNewMem, m_pdMem, m_nSize * sizeof(T), cudeMemcpyDeviceToDevice ) );
 		// Set new size.
 		m_nSize = nSize;
 		// Free old.
