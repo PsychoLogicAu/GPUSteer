@@ -36,6 +36,7 @@
 				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
 				GPUDebugInfo="true"
 				Arch2="0"
+				PtxAsOptionV="true"
 				Optimization="0"
 				Runtime="3"
 			/>
@@ -320,6 +321,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu"
+					>
+				</File>
+				<File
+					RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh"
+					>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\UpdateCUDA.cu"
 					>
 				</File>
@@ -367,6 +376,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsKernel.cu"
+						>
+					</File>
+					<File
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
 						>
 					</File>
@@ -374,6 +387,14 @@
 				<Filter
 					Name="NearestNeighbor"
 					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBinData.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNBinData.cuh"
+						>
+					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cu"
 						>
@@ -394,14 +415,6 @@
 						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cuh"
 						>
 					</File>
-					<File
-						RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cu"
-						>
-					</File>
-					<File
-						RelativePath="..\include\OpenSteer\CUDA\VehicleGroupBinData.cuh"
-						>
-					</File>
 					<Filter
 						Name="Kernels"
 						>
@@ -410,7 +423,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCudaKernel.cu"
+							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDAKernel.cu"
 							>
 						</File>
 					</Filter>

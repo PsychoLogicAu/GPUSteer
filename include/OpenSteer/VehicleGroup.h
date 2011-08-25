@@ -2,7 +2,7 @@
 #define OPENSTEER_VEHICLEGROUP_H
 
 #include "VehicleGroupData.cuh"
-#include "CUDA/VehicleGroupBinData.cuh"
+#include "CUDA/KNNBinData.cuh"
 #include "CUDA/NearestNeighborData.cuh"
 #include <map>
 

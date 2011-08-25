@@ -11,6 +11,7 @@
 #include "SteerForPursuitCUDA.h"
 #include "KNNBruteForceCUDA.cuh"
 #include "KNNBinningCUDA.cuh"
+#include "SteerToAvoidNeighborsCUDA.cuh"
 
 #include <vector>
 
@@ -39,7 +40,7 @@ public:
 	virtual void steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles );
 
 	// Unaligned collision avoidance
-	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others );
+	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision );
 
 	// Pursuit/ Evasion
 	virtual void steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );

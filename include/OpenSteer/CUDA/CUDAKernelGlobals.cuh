@@ -35,7 +35,8 @@ static __inline__ __device__ void float3_CoalescedWrite( float3 * pdDest, float3
 #define SPEED(i)		pdSpeed[i]
 #define VELOCITY(i)		velocity( i, pdForward[i], pdSpeed[i] )
 #define POSITION(i)		pdPosition[i]
-#define FORWARD(i)		pdForward[i]
+#define FORWARD(i)		pdForward[i]		// TODO: remove all references to this and replace with DIRECTION.
+#define DIRECTION(i)	pdDirection[i]
 #define UP(i)			pdUp[i]
 #define SIDE(i)			pdSide[i]
 
@@ -55,6 +56,7 @@ static __inline__ __device__ void float3_CoalescedWrite( float3 * pdDest, float3
 #define POSITION_SH(i)		shPosition[i]
 
 #define FORWARD_SH(i)		shForward[i]
+#define DIRECTION_SH(i)		shDirection[i]
 #define UP_SH(i)			shUp[i]
 #define SIDE_SH(i)			shSide[i]
 

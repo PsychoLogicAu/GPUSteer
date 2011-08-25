@@ -69,8 +69,13 @@ void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( VehicleGroup &vehicl
 	//kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others )
+void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision )
 {
+	//SteerToAvoidNeighborsCUDA kernel( &vehicleGroup, 2.f );
+
+	//kernel.init();
+	//kernel.run();
+	//kernel.close();
 }
 
 void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime )
@@ -85,7 +90,7 @@ void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup
 void CUDAGroupSteerLibrarySingleton::findKNearestNeighbors( VehicleGroup & vehicleGroup )
 {
 	
-	KNNBinningCUDA kernel( &vehicleGroup, 5 );
+	KNNBinningCUDA kernel( &vehicleGroup );
 
 	//KNNBruteForceCUDA kernel( &vehicleGroup, k );
 	//KNNBruteForceCUDAV2 kernel( &vehicleGroup, k );

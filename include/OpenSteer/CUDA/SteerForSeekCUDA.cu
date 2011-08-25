@@ -32,8 +32,8 @@ void SteerForSeekCUDA::run(void)
 	float3 const* pdForward = m_pVehicleGroupData->pdForward();
 
 	SteerForSeekCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, m_target, getNumAgents() );
-
-	cudaThreadSynchronize();
+	cutilCheckMsg( "SteerForSeekCUDAKernel failed." );
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerForSeekCUDA::close(void)
