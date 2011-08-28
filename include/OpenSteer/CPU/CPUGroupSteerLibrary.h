@@ -22,7 +22,7 @@ public:
 	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles); // TODO: implement
 
 	//Unaligned collision avoidance
-	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others); // TODO: implement
+	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance );
 
 	//Pursuit/ Evasion
 	virtual void steerForPursuit(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime); // TODO: implement

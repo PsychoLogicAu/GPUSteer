@@ -5,11 +5,11 @@
 
 using namespace OpenSteer;
 
-VehicleGroup::VehicleGroup( uint3 const& worldCells, float3 const& worldSize )
+VehicleGroup::VehicleGroup( uint3 const& worldCells, float3 const& worldSize, uint const knn, uint const kno )
 :	m_nCount( 0 ),
 	m_binData( worldCells, worldSize ),
-	m_nearestNeighbors( 5 ),				// Keep track of the 5 nearest neighbors.
-	m_nearestObstacles( 2 )					// Keep track of the 2 nearest obstacles.
+	m_nearestNeighbors( knn ),
+	m_nearestObstacles( kno )
 {
 }
 

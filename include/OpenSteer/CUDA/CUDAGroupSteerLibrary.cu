@@ -69,13 +69,13 @@ void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( VehicleGroup &vehicl
 	//kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision )
+void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance )
 {
-	//SteerToAvoidNeighborsCUDA kernel( &vehicleGroup, 2.f );
+	SteerToAvoidNeighborsCUDA kernel( &vehicleGroup, fMinTimeToCollision, fMinSeparationDistance );
 
-	//kernel.init();
-	//kernel.run();
-	//kernel.close();
+	kernel.init();
+	kernel.run();
+	kernel.close();
 }
 
 void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime )
@@ -89,13 +89,10 @@ void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup
 
 void CUDAGroupSteerLibrarySingleton::findKNearestNeighbors( VehicleGroup & vehicleGroup )
 {
-	
 	KNNBinningCUDA kernel( &vehicleGroup );
 
-	//KNNBruteForceCUDA kernel( &vehicleGroup, k );
-	//KNNBruteForceCUDAV2 kernel( &vehicleGroup, k );
-
-
+	//KNNBruteForceCUDA kernel( &vehicleGroup );
+	//KNNBruteForceCUDAV2 kernel( &vehicleGroup );
 	//KNNBruteForceCUDAV3 kernel( &vehicleGroup );
 
 	kernel.init();
@@ -104,6 +101,25 @@ void CUDAGroupSteerLibrarySingleton::findKNearestNeighbors( VehicleGroup & vehic
 }
 
 void CUDAGroupSteerLibrarySingleton::steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime )
+{
+
+}
+
+void CUDAGroupSteerLibrarySingleton::steerForSeparation( VehicleGroup &vehicleGroup, float const fWeight )
+{
+	SteerForSeparationCUDA kernel( &vehicleGroup, fWeight );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
+
+void CUDAGroupSteerLibrarySingleton::steerForAlignment( VehicleGroup &vehicleGroup, float const fWeight )
+{
+
+}
+
+void CUDAGroupSteerLibrarySingleton::steerForCohesion( VehicleGroup &vehicleGroup, float const fWeight )
 {
 
 }

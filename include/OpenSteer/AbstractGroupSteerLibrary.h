@@ -23,9 +23,6 @@ public:
 	virtual void steerToAvoidObstacle(VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle) = 0;
 	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles) = 0;
 
-	//Unaligned collision avoidance
-	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float fMinTimeToCollision ) = 0;
-
 	//Pursuit/ Evasion
 	virtual void steerForPursuit(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime) = 0;
 	virtual void steerForEvasion(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime) = 0;
@@ -35,6 +32,16 @@ public:
 
 	// Update
 	virtual void update(VehicleGroup &vehicleGroup, const float elapsedTime) = 0;
+
+	// Neighborhood based behaviors.
+	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance ) = 0;
+
+	// Flocking behaviors.
+	virtual void steerForSeparation( VehicleGroup &vehicleGroup, float const fWeight ) = 0;
+	virtual void steerForAlignment( VehicleGroup &vehicleGroup, float const fWeight ) = 0;
+	virtual void steerForCohesion( VehicleGroup &vehicleGroup, float const fWeight ) = 0;
+
+	// 
 };	// class AbstractGroupSteerLibrary
 }	// namespace OpenSteer
 #endif //COMMON_STEERLIBRARY_H

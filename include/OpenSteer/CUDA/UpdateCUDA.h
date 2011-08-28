@@ -1,7 +1,7 @@
 #ifndef UPDATECUDA_H
 #define UPDATECUDA_H
 
-#include "AbstractCUDAKernel.h"
+#include "AbstractCUDAKernel.cuh"
 
 namespace OpenSteer
 {

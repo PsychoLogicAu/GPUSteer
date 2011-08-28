@@ -11,6 +11,7 @@ namespace OpenSteer
 	{
 	protected:
 		VehicleGroup *	m_pVehicleGroup;
+		float			m_fWeight;
 
 		inline size_t getNumAgents( void )
 		{
@@ -20,9 +21,15 @@ namespace OpenSteer
 			return 0;
 		}
 
+		inline float getWeight( void )
+		{
+			return m_fWeight;
+		}
+
 	public:
-		AbstractKernel( VehicleGroup * pVehicleGroup )
-			: m_pVehicleGroup( pVehicleGroup )
+		AbstractKernel( VehicleGroup * pVehicleGroup, float const fWeight = 1.f )
+		:	m_pVehicleGroup( pVehicleGroup ),
+			m_fWeight( fWeight )
 		{ }
 
 		virtual void init(void) = 0;

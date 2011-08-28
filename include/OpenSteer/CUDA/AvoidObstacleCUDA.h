@@ -1,7 +1,7 @@
 #ifndef AVOIDOBSTACLECUDA_H
 #define AVOIDOBSTACLECUDA_H
 
-#include "AbstractCUDAKernel.h"
+#include "AbstractCUDAKernel.cuh"
 #include "../Obstacle.h"
 
 namespace OpenSteer
