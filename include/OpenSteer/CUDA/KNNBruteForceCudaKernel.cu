@@ -19,13 +19,14 @@ extern "C"
 												//size_t *		pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
 												size_t const	k,					// Number of neighbors to consider.
 												size_t const	numAgents			// Number of agents in the simulation.
-											);
+												);
 
-	__global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// Agent positions.
-												uint *			pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
-												size_t const	k,					// Number of neighbors to consider.
-												size_t const	numAgents			// Number of agents in the simulation.
-											);
+	__global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Agent positions.
+												uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
+												float *			pdKNNDistances,		// Out:	Distances of each of the neighbors in pdKNNIndices.
+												size_t const	k,					// In:	Number of neighbors to consider.
+												size_t const	numAgents			// In:	Number of agents in the simulation.
+												);
 
 	__global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent positions.
 												uint *			pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
@@ -33,7 +34,7 @@ extern "C"
 												size_t const	k,					// Number of neighbors to consider.
 												size_t const	numAgents,			// Number of agents in the simulation.
 												bool const		bSeed = false
-											);
+												);
 	
 }
 
@@ -45,22 +46,28 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 											bool const		bSeed
 										)
 {
-	int offset = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	// Check bounds.
-	if( offset >= numAgents )
+	if( index >= numAgents )
 		return;
 
 	// Shared memory for local priority queue computations.
-	extern __shared__ float shDist[];				// First half will be treated as the distance values.
-	uint * shInd = (uint*)shDist + blockDim.x * k;	// Second half will be treated as the index values.
+	extern __shared__ float shKNNDistances[];				// First half will be treated as the distance values.
+	uint * shKNNIndices = (uint*)(shKNNDistances + blockDim.x * k);	// Second half will be treated as the index values.
 	
-	// Store this thread's agent position in registers.  // TODO: page this read for the block and coalesce.
-	float3 position = POSITION( offset );
+	__shared__ float3 shPosition[THREADSPERBLOCK];
+	FLOAT3_COALESCED_READ( shPosition, pdPosition );
+	
+	// Store this thread's agent position in registers.
+	float3 position = POSITION_SH( threadIdx.x );
 
-	// Set all elements of shDist to FLT_MAX.
+	// Set all elements of shKNNDistances to FLT_MAX.
 	for( uint i = 0; i < k; i++ )
-		shDist[(threadIdx.x * k) + i] = FLT_MAX;
+	{
+		shKNNIndices[(threadIdx.x * k) + i] = UINT_MAX;
+		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
+	}
 
 	__syncthreads();
 	
@@ -72,22 +79,25 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 			// Get the index of the ith closest agent from the last frame.
 			uint const ind = pdKNNIndices[(blockIdx.x * blockDim.x) + (threadIdx.x * k) + i];
 
+			if( UINT_MAX == ind )
+				continue;
+
 			// Compute the distance between this agent and the one at index.
 			float const dist = float3_distance( position, POSITION( ind ) );
 
-			if( dist < shDist[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
+			if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 			{
 				// Agent at index i is the new kth closest. Set the distance and index in shared mem.
-				shDist[(threadIdx.x * k) + (k - 1)] = dist;
-				shInd[(threadIdx.x * k) + (k - 1)] = ind;
+				shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
+				shKNNIndices[(threadIdx.x * k) + (k - 1)] = ind;
 
 				// Bubble the values up... this is necessary as their positions may have changed relative to each other since the last update.
 				for( int slot = k - 2; slot >= 0; slot-- )
 				{
-					if( shDist[(threadIdx.x * k) + slot] > shDist[(threadIdx.x * k) + (slot + 1)] )
+					if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
 					{
-						swap( shDist[(threadIdx.x * k) + slot], shDist[(threadIdx.x * k) + (slot + 1)] );
-						swap( shInd[(threadIdx.x * k) + slot], shInd[(threadIdx.x * k) + (slot + 1)] );
+						swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
+						swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
 					}
 				}
 			}
@@ -99,26 +109,25 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 	// For each of the agents...
 	for( uint i = 0; i < numAgents; i++ )
 	{
-		// Test this... will likely be slower than computing k+1 and discarding the shortest...
-		if( i == offset )
+		if( index == i )
 			continue;
 
 		// Compute the distance between this agent and the one at i.
 		float const dist = float3_distance( position, POSITION( i ) );
 
-		if( dist < shDist[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
+		if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 		{
 			// Agent at index i is the new (at least) kth closest. Set the distance and index in shared mem.
-			shDist[(threadIdx.x * k) + (k - 1)] = dist;
-			shInd[(threadIdx.x * k) + (k - 1)] = i;
+			shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
+			shKNNIndices[(threadIdx.x * k) + (k - 1)] = i;
 
 			// Bubble the values up...
 			for( int slot = k - 2; slot >= 0; slot-- )
 			{
-				if( shDist[(threadIdx.x * k) + slot] > shDist[(threadIdx.x * k) + (slot + 1)] )
+				if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
 				{
-					swap( shDist[(threadIdx.x * k) + slot], shDist[(threadIdx.x * k) + (slot + 1)] );
-					swap( shInd[(threadIdx.x * k) + slot], shInd[(threadIdx.x * k) + (slot + 1)] );
+					swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
+					swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
 				}
 				else
 					break;
@@ -128,93 +137,89 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 	
 	__syncthreads();
 
-	// Write the shInd and shDist values out to global memory (TODO: coalesce the writes!).
+	// Write the shKNNIndices and shKNNDistances values out to global memory (TODO: coalesce the writes!).
 	for( uint i = 0; i < k; i++ )
 	{
-		pdKNNIndices[offset + i] = shInd[threadIdx.x + i];
-		pdKNNDistances[offset + i] = shDist[threadIdx.x + i];
+		//pdKNNIndices[index + i] = shKNNIndices[threadIdx.x + i];
+		//pdKNNDistances[index + i] = shKNNDistances[threadIdx.x + i];
+		pdKNNIndices[index + (THREADSPERBLOCK*i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK*i)];
+		pdKNNDistances[index + (THREADSPERBLOCK*i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK*i)];
 	}
-
-	// Write the shInd and shDist values out to global memory.
-	//int index = k * blockIdx.x * blockDim.x + threadIdx.x;
-	//for( uint i = 0; i < k; i++ )
-	//{
-	//	pdKNNIndices[index+i*THREADSPERBLOCK] = shInd[threadIdx.x+i*THREADSPERBLOCK];
-	//}
 
 	__syncthreads();
 }
 
-__global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// Agent positions.
-											uint *			pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
-											size_t const	k,					// Number of neighbors to consider.
-											size_t const	numAgents			// Number of agents in the simulation.
+__global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Agent positions.
+											
+											uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
+											float *			pdKNNDistances,		// Out:	Distances of each of the neighbors in pdKNNIndices.
+											size_t const	k,					// In:	Number of neighbors to consider.
+
+											size_t const	numAgents			// In:	Number of agents in the simulation.
 										)
 {
-	int offset = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	// Check bounds.
-	if( offset >= numAgents )
+	if( index >= numAgents )
 		return;
 
 	// Shared memory for local computations.
-	extern __shared__ float shDist[];					// First half will be treated as the distance values.
-	uint * shInd = (uint*)shDist + blockDim.x * k;		// Second half will be treated as the index values.
+	extern __shared__ float shKNNDistances[];					// First half will be treated as the distance values.
+	uint * shKNNIndices = (uint*)(shKNNDistances + blockDim.x * k);		// Second half will be treated as the index values.
 
-	// Set all elements of shDist to FLT_MAX and shInd to UINT_MAX.
+	__shared__ float3 shPosition[THREADSPERBLOCK];
+
+	// Copy required data from global memory.
+	FLOAT3_COALESCED_READ( shPosition, pdPosition );
+
+	// Set all elements of shKNNDistances to FLT_MAX and shKNNIndices to UINT_MAX.
 	for( uint i = 0; i < k; i++ )
 	{
-		shDist[(threadIdx.x * k) + i] = FLT_MAX;
-		shInd[(threadIdx.x * k) + i] = UINT_MAX;
+		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
+		shKNNIndices[(threadIdx.x * k) + i] = UINT_MAX;
 	}
-
-	// Store the positions locally.
-	__shared__ float3 shPosition[THREADSPERBLOCK];
-	POSITION_SH( threadIdx.x ) = POSITION( offset );
-
 	__syncthreads();
 
 	// For each of the agents...
 	for( uint i = 0; i < numAgents; i++ )
 	{
 		// Test this... will likely be slower than computing k+1 and discarding the shortest...
-		if( i == offset )
+		if( i == index )
 			continue;
-		
 
 		// Compute the distance between this agent and the one at i.
 		float const dist = float3_distance( POSITION_SH( threadIdx.x ), POSITION( i ) );
 
-		if( shDist[(threadIdx.x * k) + (k - 1)] > dist )	// Distance of the kth closest agent.
+		if( shKNNDistances[(threadIdx.x * k) + (k - 1)] > dist )	// Distance of the kth closest agent.
 		{
 			// Agent at index i is the new kth closest. Set the distance and index in shared mem.
-			shDist[(threadIdx.x * k) + (k - 1)] = dist;
-			shInd[(threadIdx.x * k) + (k - 1)] = i;
+			shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
+			shKNNIndices[(threadIdx.x * k) + (k - 1)] = i;
 
 			// Bubble the values up...
 			for( int slot = k - 2; slot >= 0; slot-- )
 			{
-				if( shDist[(threadIdx.x * k) + slot] > shDist[(threadIdx.x * k) + (slot + 1)] )
+				if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
 				{
-					swap( shDist[(threadIdx.x * k) + slot], shDist[(threadIdx.x * k) + (slot + 1)] );
-					swap( shInd[(threadIdx.x * k) + slot], shInd[(threadIdx.x * k) + (slot + 1)] );
+					swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
+					swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
 				}
+				else
+					break;
 			}
 		}
 	}
-	//__syncthreads();
-	//// Write the shDist values out to global memory (TODO: coalesce the writes!).
-	//for( uint i = 0; i < k; i++ )
-	//{
-	//	pdKNNIndices[offset + i] = shInd[threadIdx.x + i];
-	//}
+
 	__syncthreads();
-	// This should be the coalesced version of the above...
+	
+	// Write the KNN indices and distances out to global memory.
 	for( uint i = 0; i < k; i++ )
 	{
-		pdKNNIndices[blockIdx.x * blockDim.x + threadIdx.x * i] = shInd[threadIdx.x * i];
+		pdKNNIndices[ index + (THREADSPERBLOCK * i) ] = shKNNIndices[ threadIdx.x + (THREADSPERBLOCK * i) ];
+		pdKNNDistances[ index + (THREADSPERBLOCK * i) ] = shKNNDistances[ threadIdx.x + (THREADSPERBLOCK * i) ];
 	}
-	//__syncthreads();
+	__syncthreads();
 }
 
 __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.

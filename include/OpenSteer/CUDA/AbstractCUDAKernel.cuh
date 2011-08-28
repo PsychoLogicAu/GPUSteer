@@ -21,8 +21,8 @@ namespace OpenSteer
 		VehicleGroupConst *	m_pVehicleGroupConst;
 
 	public:
-		AbstractCUDAKernel( VehicleGroup * pVehicleGroup )
-		:	AbstractKernel( pVehicleGroup ),
+		AbstractCUDAKernel( VehicleGroup * pVehicleGroup, float const fWeight = 1.f )
+		:	AbstractKernel( pVehicleGroup, fWeight ),
 			m_threadsPerBlock( THREADSPERBLOCK )
 		{
 			m_pVehicleGroupData = &m_pVehicleGroup->GetVehicleGroupData();

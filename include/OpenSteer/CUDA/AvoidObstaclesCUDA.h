@@ -1,7 +1,7 @@
 #ifndef AVOIDOBSTACLESCUDA_H
 #define AVOIDOBSTACLESCUDA_H
 
-#include "AbstractCUDAKernel.h"
+#include "AbstractCUDAKernel.cuh"
 #include "../ObstacleGroup.h"
 
 namespace OpenSteer

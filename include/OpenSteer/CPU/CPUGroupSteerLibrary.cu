@@ -32,7 +32,7 @@ void CPUGroupSteerLibrary::steerToAvoidObstacles(VehicleGroup &vehicleGroup, con
 
 }
 
-void CPUGroupSteerLibrary::steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float minTimeToCollision, const AVGroup &others)
+void CPUGroupSteerLibrary::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision )
 {
 
 }

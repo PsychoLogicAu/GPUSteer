@@ -81,9 +81,20 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 1000000;
-const float gDim						= 4000.f;
-const int gCells						= 300;
+const int gEnemyCount					= 100000;
+const float gDim						= 1500;
+const int gCells						= 100;
+
+uint const	g_knn						= 3;
+uint const	g_kno						= 2;
+
+float const g_fMaxPursuitPredictionTime	= 20.0f;
+float const g_fMinSeparationDistance	= 2.f;
+float const g_fMinTimeToCollision		= 3.f;
+
+// Weights for certain behaviors.
+float const g_fSeparationWeight			= 1.f;
+
 
 const int gMaxObstacleCount				= 100;
 
@@ -197,7 +208,7 @@ class CtfEnemyGroup : public VehicleGroup
 {
 public:
 	CtfEnemyGroup(void)
-		:VehicleGroup( gWorldCells, gWorldSize )
+		:VehicleGroup( gWorldCells, gWorldSize, g_knn, g_kno )
 	{
 		reset();
 	}
@@ -293,20 +304,25 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// This should be accomplished with a pursuit kernel instead.
 	//CUDAGroupSteerLibrary.steerForSeek(*this, gSeeker->position());
 
-	const float maxPredictionTime = 20.0f;
 	SyncDevice();
+	// Force the host to pull data on next call to SyncHost().
 	SetSyncHost();
-
-	CUDAGroupSteerLibrary.steerForPursuit(*this, gSeeker->getVehicleData(), maxPredictionTime);
 
 	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
 
-	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, 2.f );
+	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance );
+
+
+	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime );
+
+	CUDAGroupSteerLibrary.steerForSeparation( *this, g_fSeparationWeight );
+
+
 
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
 
+	// Pull the data back to the host so we can render the next frame.
 	SyncHost();
-	// TODO: implement
 
 	/*
 {
@@ -983,7 +999,7 @@ public:
 
 		// TODO: more intelligent selection of the CUDA device.
 
-		CUDA_SAFE_CALL( cudaSetDevice( 1 ) );
+		CUDA_SAFE_CALL( cudaSetDevice( 0 ) );
 
         // create the seeker ("hero"/"attacker")
         ctfSeeker = new CtfSeeker;

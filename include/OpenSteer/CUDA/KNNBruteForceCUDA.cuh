@@ -1,7 +1,7 @@
 #ifndef OPENSTEER_KNNBRUTEFORCECUDA_CUH
 #define OPENSTEER_KNNBRUTEFORCECUDA_CUH
 
-#include "AbstractCUDAKernel.h"
+#include "AbstractCUDAKernel.cuh"
 
 #include "NearestNeighborData.cuh"
 
@@ -10,14 +10,12 @@ namespace OpenSteer
 class KNNBruteForceCUDA : public AbstractCUDAKernel
 {
 protected:
-	size_t		m_k;
-
 	// Temporary device storage.
 	float *		m_pdDistanceMatrix;
 	size_t *	m_pdIndexMatrix;
 
 public:
-	KNNBruteForceCUDA( VehicleGroup * pVehicleGroup, size_t const k );
+	KNNBruteForceCUDA( VehicleGroup * pVehicleGroup );
 	virtual ~KNNBruteForceCUDA( void ) {}
 
 	virtual void init( void );

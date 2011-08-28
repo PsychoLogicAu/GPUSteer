@@ -38,8 +38,8 @@ void SteerForPursuitCUDA::run(void)
 	float const* pdSpeed = m_pVehicleGroupData->pdSpeed();
 
 	SteerForPursuitCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, pdSpeed, m_targetPosition, m_targetForward, m_targetVelocity, m_targetSpeed, getNumAgents(), m_fMaxPredictionTime );
-
-	cudaThreadSynchronize();
+	cutilCheckMsg( "SteerForPursuitCUDAKernel failed." );
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerForPursuitCUDA::close(void)

@@ -22,10 +22,10 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
 										float const elapsedTime, size_t const numAgents )
 {
-	int offset = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	// Check bounds.
-	if( offset >= numAgents )
+	if( index >= numAgents )
 		return;
 
 	// Copy the vehicleData and vehicleConst values to shared memory.
@@ -47,12 +47,13 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	FLOAT3_COALESCED_READ( shPosition, pdPosition );
 	FLOAT3_COALESCED_READ( shSteering, pdSteering );
 	
-	SPEED_SH( threadIdx.x ) = SPEED( offset );
-
-	MAXFORCE_SH( threadIdx.x ) = MAXFORCE( offset );
-	MAXSPEED_SH( threadIdx.x ) = MAXSPEED( offset );
-	MASS_SH( threadIdx.x ) = MASS( offset );
-
+	SPEED_SH( threadIdx.x ) = SPEED( index );
+	__syncthreads();
+	MAXFORCE_SH( threadIdx.x ) = MAXFORCE( index );
+	__syncthreads();
+	MAXSPEED_SH( threadIdx.x ) = MAXSPEED( index );
+	__syncthreads();
+	MASS_SH( threadIdx.x ) = MASS( index );
 	__syncthreads();
 
 	// If we don't have a steering vector set, do nothing.
@@ -101,5 +102,6 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	FLOAT3_COALESCED_WRITE( pdPosition, shPosition );
 	FLOAT3_COALESCED_WRITE( pdSteering, shSteering );
 
-	SPEED( offset ) = SPEED_SH( threadIdx.x );
+	__syncthreads();
+	SPEED( index ) = SPEED_SH( threadIdx.x );
 }

@@ -30,7 +30,6 @@ extern "C"
 		FLOAT3_COALESCED_READ( shForward, pdForward );
 		
 		SPEED_SH( threadIdx.x ) = SPEED( offset );
-		
 		__syncthreads();
 
 		// If we already have a steering vector set, do nothing.

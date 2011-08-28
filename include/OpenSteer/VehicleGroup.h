@@ -38,7 +38,7 @@ protected:
 
 public:
 	//VehicleGroup( void );
-	VehicleGroup( uint3 const& worldCells, float3 const& worldSize );
+	VehicleGroup( uint3 const& worldCells, float3 const& worldSize, uint const knn, uint const kno = 2 );
 	virtual ~VehicleGroup( void );
 
 	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );

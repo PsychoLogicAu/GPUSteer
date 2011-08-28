@@ -117,7 +117,6 @@ void KNNBinningCUDA::run( void )
 	// Build the database (get the bin indices for the agents).
 	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndices, pdCellIndices, numAgents, worldSize );
 	cutilCheckMsg( "KNNBinningBuildDB failed." );
-	// Wait for the kernel to complete.
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Sort m_pAgentIndices on m_pdCellIndices using thrust.
@@ -135,7 +134,6 @@ void KNNBinningCUDA::run( void )
 												numAgents
 												);
 	cutilCheckMsg( "KNNBinningReorderData failed" );
-	// Wait for the kernel to complete.
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Compute the size of shared memory needed for each block.

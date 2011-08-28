@@ -12,6 +12,7 @@
 #include "KNNBruteForceCUDA.cuh"
 #include "KNNBinningCUDA.cuh"
 #include "SteerToAvoidNeighborsCUDA.cuh"
+#include "SteerForSeparationCUDA.cuh"
 
 #include <vector>
 
@@ -39,9 +40,6 @@ public:
 	virtual void steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle );
 	virtual void steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles );
 
-	// Unaligned collision avoidance
-	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision );
-
 	// Pursuit/ Evasion
 	virtual void steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
 	virtual void steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
@@ -51,6 +49,14 @@ public:
 
 	// Update
 	virtual void update( VehicleGroup &vehicleGroup, const float elapsedTime );
+
+	// Neighborhood based behaviors.
+	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance );
+
+	// Flocking behaviors.
+	virtual void steerForSeparation( VehicleGroup &vehicleGroup, float const fWeight );
+	virtual void steerForAlignment( VehicleGroup &vehicleGroup, float const fWeight );
+	virtual void steerForCohesion( VehicleGroup &vehicleGroup, float const fWeight );
 };	// class CUDAGroupSteerLibrarySingleton
 }	// namespace OpenSteer
 #endif // GPU_STEER_LIBRARY_H

@@ -1,7 +1,7 @@
 #ifndef OPENSTEER_KNNBINNING_CUH
 #define OPENSTEER_KNNBINNING_CUH
 
-#include "AbstractCUDAKernel.h"
+#include "AbstractCUDAKernel.cuh"
 
 #include "KNNBinData.cuh"
 

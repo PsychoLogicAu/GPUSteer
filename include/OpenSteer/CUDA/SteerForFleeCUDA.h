@@ -1,7 +1,7 @@
 #ifndef STEERFORFLEECUDA_H
 #define STEERFORFLEECUDA_H
 
-#include "AbstractCUDAKernel.h"
+#include "AbstractCUDAKernel.cuh"
 
 namespace OpenSteer
 {

@@ -35,6 +35,7 @@
 				Name="Cudart Build Rule"
 				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
 				GPUDebugInfo="true"
+				Arch1="21"
 				Arch2="0"
 				PtxAsOptionV="true"
 				Optimization="0"
@@ -108,6 +109,7 @@
 			<Tool
 				Name="Cudart Build Rule"
 				Include="$(SolutionDir)opensteer\include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(CUDA_INC_PATH)"
+				Arch1="21"
 				Arch2="0"
 				Runtime="2"
 			/>
@@ -293,10 +295,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\dev_vector.cuh"
-					>
-				</File>
-				<File
 					RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cu"
 					>
 				</File>
@@ -321,14 +319,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu"
-					>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh"
-					>
-				</File>
-				<File
 					RelativePath="..\include\OpenSteer\CUDA\UpdateCUDA.cu"
 					>
 				</File>
@@ -348,7 +338,7 @@
 					Name="Kernels"
 					>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\AbstractCUDAKernel.h"
+						RelativePath="..\include\OpenSteer\CUDA\AbstractCUDAKernel.cuh"
 						>
 					</File>
 					<File
@@ -376,16 +366,12 @@
 						>
 					</File>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsKernel.cu"
-						>
-					</File>
-					<File
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
 						>
 					</File>
 				</Filter>
 				<Filter
-					Name="NearestNeighbor"
+					Name="Neighborhood"
 					>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\KNNBinData.cu"
@@ -415,6 +401,22 @@
 						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cuh"
 						>
 					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh"
+						>
+					</File>
 					<Filter
 						Name="Kernels"
 						>
@@ -426,7 +428,23 @@
 							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDAKernel.cu"
 							>
 						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDAKernel.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsKernel.cu"
+							>
+						</File>
 					</Filter>
+				</Filter>
+				<Filter
+					Name="Utils"
+					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\dev_vector.cuh"
+						>
+					</File>
 				</Filter>
 			</Filter>
 		</Filter>
