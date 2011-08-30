@@ -12,6 +12,7 @@ namespace OpenSteer
 
 class nearest_neighbor_data
 {
+	friend class VehicleGroup;
 private:
 	// Number of nearest neighbors per agent.
 	uint				m_nK;

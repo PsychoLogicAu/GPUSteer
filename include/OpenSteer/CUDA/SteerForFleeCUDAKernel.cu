@@ -27,9 +27,9 @@ extern "C"
 		__shared__ float3 shDesiredVelocity[THREADSPERBLOCK];
 
 		// Copy the required data to shared memory.
-		FLOAT3_COALESCED_READ( shSteering, pdSteering );
-		FLOAT3_COALESCED_READ( shPosition, pdPosition );
-		FLOAT3_COALESCED_READ( shForward, pdForward );
+		FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+		FLOAT3_GLOBAL_READ( shPosition, pdPosition );
+		FLOAT3_GLOBAL_READ( shForward, pdForward );
 
 		// If we already have a steering vector set, do nothing.
 		if( !float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
@@ -44,6 +44,6 @@ extern "C"
 		__syncthreads();
 
 		// Copy the steering vectors back to global memory.
-		FLOAT3_COALESCED_WRITE( pdSteering, shSteering );
+		FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 	}
 }

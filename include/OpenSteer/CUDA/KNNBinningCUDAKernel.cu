@@ -172,8 +172,11 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted
 	// Write the shKNNIndices and shKNNDistances values out to global memory.
 	for( uint i = 0; i < k; i++ )
 	{
-		pdKNNIndices[index + (THREADSPERBLOCK * i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK * i)];
-		pdKNNDistances[index + (THREADSPERBLOCK * i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK * i)];
+		//pdKNNIndices[index + (THREADSPERBLOCK * i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK * i)];
+		//pdKNNDistances[index + (THREADSPERBLOCK * i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK * i)];
+
+		pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
+		pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
 	}
 	__syncthreads();
 }
@@ -248,11 +251,11 @@ __global__ void KNNBinningReorderData(	float3 const*	pdPosition,			// In: Agent 
 	shDirectionSorted[ threadIdx.x ] = pdDirection[ iSortedIndex ];
 
 	__syncthreads();
-	
 	// Write to global memory.
 	pdSpeedSorted[ index ] = pdSpeed[ iSortedIndex ];
-	FLOAT3_COALESCED_WRITE( pdPositionSorted, shPositionSorted );
-	FLOAT3_COALESCED_WRITE( pdDirectionSorted, shDirectionSorted );
+	__syncthreads();
+	FLOAT3_GLOBAL_WRITE( pdPositionSorted, shPositionSorted );
+	FLOAT3_GLOBAL_WRITE( pdDirectionSorted, shDirectionSorted );
 }
 
 __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
@@ -272,7 +275,7 @@ __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions
 	// Copy the positions to shared memory.
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 
-	FLOAT3_COALESCED_READ( shPosition, pdPosition );
+	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 
 	__syncthreads();
 

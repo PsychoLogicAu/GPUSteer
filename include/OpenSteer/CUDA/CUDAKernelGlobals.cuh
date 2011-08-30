@@ -6,30 +6,45 @@
 #include "../VectorUtils.cuh"
 #include "../VehicleGroupData.cuh"
 
+//#define COALESCE
+
+
 #define THREADSPERBLOCK 128
 
-#define FLOAT3_COALESCED_READ( shDest, pdSource )		{																						\
-															if(blockIdx.x < gridDim.x-1)														\
-															{																					\
-																float3_coalescedRead( shDest, pdSource, blockIdx.x, blockDim.x, threadIdx.x );	\
-															}																					\
-															else																				\
-															{																					\
-																shDest[threadIdx.x] = pdSource[(blockIdx.x * blockDim.x) + threadIdx.x];		\
-															}																					\
-															__syncthreads();																	\
+#if defined COALESCE
+	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
+																if(blockIdx.x < gridDim.x-1)														\
+																{																					\
+																	float3_coalescedRead( shDest, pdSource, blockIdx.x, blockDim.x, threadIdx.x );	\
+																}																					\
+																else																				\
+																{																					\
+																	shDest[threadIdx.x] = pdSource[(blockIdx.x * blockDim.x) + threadIdx.x];		\
+																}																					\
+																__syncthreads();																	\
+															}
+	#define FLOAT3_GLOBAL_WRITE( pdDest, shSource )		{																							\
+																__syncthreads();																	\
+																if(blockIdx.x < gridDim.x-1)														\
+																{																					\
+																	float3_CoalescedWrite( pdDest, shSource, blockIdx.x, blockDim.x, threadIdx.x );	\
+																}																					\
+																else																				\
+																{																					\
+																	pdDest[(blockIdx.x * blockDim.x) + threadIdx.x] = shSource[threadIdx.x];		\
+																}																					\
+															}
+#else
+	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
+															shDest[threadIdx.x] = pdSource[(blockIdx.x * blockDim.x) + threadIdx.x];				\
+															__syncthreads();																		\
 														}
-#define FLOAT3_COALESCED_WRITE( pdDest, shSource )		{																						\
-															__syncthreads();																	\
-															if(blockIdx.x < gridDim.x-1)														\
-															{																					\
-																float3_CoalescedWrite( pdDest, shSource, blockIdx.x, blockDim.x, threadIdx.x );	\
-															}																					\
-															else																				\
-															{																					\
-																pdDest[(blockIdx.x * blockDim.x) + threadIdx.x] = shSource[threadIdx.x];		\
-															}																					\
+	#define FLOAT3_GLOBAL_WRITE( pdDest, shSource )		{																							\
+															__syncthreads();																		\
+															pdDest[(blockIdx.x * blockDim.x) + threadIdx.x] = shSource[threadIdx.x];				\
 														}
+#endif
+
 
 static __inline__ __device__ void float3_coalescedRead( float3 * shDest, float3 const* pdSource, uint const bid, uint const bdim, uint const tid )
 {

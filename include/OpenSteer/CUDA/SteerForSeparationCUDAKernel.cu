@@ -37,8 +37,8 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 
 	// Copy required from global memory.
-	FLOAT3_COALESCED_READ( shSteering, pdSteering );
-	FLOAT3_COALESCED_READ( shPosition, pdPosition );
+	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 	for( uint i = 0; i < k; i++ )
 		shKNNIndices[threadIdx.x + (THREADSPERBLOCK*i)] = pdKNNIndices[index + (THREADSPERBLOCK*i)];
 	__syncthreads();
@@ -76,5 +76,5 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
-	FLOAT3_COALESCED_WRITE( pdSteering, shSteering );
+	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 }
