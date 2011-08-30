@@ -48,6 +48,8 @@ public:
 	void SetSyncHost( void )
 	{
 		m_vehicleGroupData.m_bSyncHost = true;
+		m_nearestNeighbors.m_bSyncHost = true;
+		m_nearestObstacles.m_bSyncHost = true;
 	}
 
 	/// Get the size of the collection.

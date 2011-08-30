@@ -81,9 +81,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 100000;
-const float gDim						= 1500;
-const int gCells						= 100;
+const int gEnemyCount					= 10000;
+const float gDim						= 200;
+const int gCells						= 1;
 
 uint const	g_knn						= 3;
 uint const	g_kno						= 2;
@@ -93,10 +93,10 @@ float const g_fMinSeparationDistance	= 2.f;
 float const g_fMinTimeToCollision		= 3.f;
 
 // Weights for certain behaviors.
-float const g_fSeparationWeight			= 1.f;
+float const g_fSeparationWeight			= 0.f;
 
 
-const int gMaxObstacleCount				= 100;
+const int gMaxObstacleCount				= 20;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
 const float		gHomeBaseRadius			= 1.5f;
@@ -189,7 +189,7 @@ public:
     // is there a clear path to the goal?
     bool clearPathToGoal (void);
 
-    float3 steeringForSeeker (void);
+    float3 steeringForSeeker (float const elapsedTime);
     void updateState (const float currentTime);
     void draw (void);
     float3 steerToEvadeAllDefenders (void);
@@ -309,14 +309,14 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	SetSyncHost();
 
 	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
-
+//SetSyncHost();SyncHost();
 	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance );
-
+//SetSyncHost();SyncHost();
 
 	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime );
-
+//SetSyncHost();SyncHost();
 	CUDAGroupSteerLibrary.steerForSeparation( *this, g_fSeparationWeight );
-
+//SetSyncHost();SyncHost();
 
 
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
@@ -751,7 +751,7 @@ float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
 
 // ----------------------------------------------------------------------------
 
-float3 CtfSeeker::steeringForSeeker (void)
+float3 CtfSeeker::steeringForSeeker (float const elapsedTime)
 {
     // determine if obstacle avodiance is needed
     const bool clearPath = clearPathToGoal();
@@ -766,6 +766,13 @@ float3 CtfSeeker::steeringForSeeker (void)
         // use pure obstacle avoidance if needed
         return obstacleAvoidance;
     }
+	else
+	{
+		float3 wander = steerForWander( *this, elapsedTime );
+		wander.y = 0.f;
+		return wander;
+	}
+	/*
     else
     {
         // otherwise seek home base and perhaps evade defenders
@@ -808,6 +815,7 @@ float3 CtfSeeker::steeringForSeeker (void)
             }
         }
     }
+	*/
 }
 
 
@@ -916,7 +924,7 @@ void CtfSeeker::update (const float currentTime, const float elapsedTime)
     float3 steer = make_float3(0, 0, 0);
     if (state == running)
     {
-        steer = steeringForSeeker ();
+        steer = steeringForSeeker (elapsedTime);
     }
     else
     {

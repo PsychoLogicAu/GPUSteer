@@ -189,10 +189,26 @@
 				<File
 					RelativePath="..\include\OpenSteer\CPU\CPUGroupSteerLibrary.cu"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CPU\CPUGroupSteerLibrary.h"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter

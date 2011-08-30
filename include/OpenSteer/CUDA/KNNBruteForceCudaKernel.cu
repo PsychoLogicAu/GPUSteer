@@ -53,11 +53,11 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 		return;
 
 	// Shared memory for local priority queue computations.
-	extern __shared__ float shKNNDistances[];				// First half will be treated as the distance values.
-	uint * shKNNIndices = (uint*)(shKNNDistances + blockDim.x * k);	// Second half will be treated as the index values.
+	extern __shared__ float shKNNDistances[];						// First half will be treated as the distance values.
+	uint * shKNNIndices = (uint*)shKNNDistances + blockDim.x * k;	// Second half will be treated as the index values.
 	
 	__shared__ float3 shPosition[THREADSPERBLOCK];
-	FLOAT3_COALESCED_READ( shPosition, pdPosition );
+	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 	
 	// Store this thread's agent position in registers.
 	float3 position = POSITION_SH( threadIdx.x );
@@ -135,17 +135,26 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 		}
 	}
 	
-	__syncthreads();
+	//__syncthreads();
 
-	// Write the shKNNIndices and shKNNDistances values out to global memory (TODO: coalesce the writes!).
+	//// Write the shKNNIndices and shKNNDistances values out to global memory (TODO: coalesce the writes!).
+	//for( uint i = 0; i < k; i++ )
+	//{
+	//	//pdKNNIndices[index + i] = shKNNIndices[threadIdx.x + i];
+	//	//pdKNNDistances[index + i] = shKNNDistances[threadIdx.x + i];
+	//	pdKNNIndices[index + (THREADSPERBLOCK*i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK*i)];
+	//	pdKNNDistances[index + (THREADSPERBLOCK*i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK*i)];
+	//}
+	//__syncthreads();
+	
+	__syncthreads();
+	
+	// Write the KNN indices and distances out to global memory.
 	for( uint i = 0; i < k; i++ )
 	{
-		//pdKNNIndices[index + i] = shKNNIndices[threadIdx.x + i];
-		//pdKNNDistances[index + i] = shKNNDistances[threadIdx.x + i];
-		pdKNNIndices[index + (THREADSPERBLOCK*i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK*i)];
-		pdKNNDistances[index + (THREADSPERBLOCK*i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK*i)];
+		pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
+		pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
 	}
-
 	__syncthreads();
 }
 
@@ -166,12 +175,12 @@ __global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Ag
 
 	// Shared memory for local computations.
 	extern __shared__ float shKNNDistances[];					// First half will be treated as the distance values.
-	uint * shKNNIndices = (uint*)(shKNNDistances + blockDim.x * k);		// Second half will be treated as the index values.
+	uint * shKNNIndices = (uint*)&shKNNDistances[THREADSPERBLOCK * k];		// Second half will be treated as the index values.
 
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 
 	// Copy required data from global memory.
-	FLOAT3_COALESCED_READ( shPosition, pdPosition );
+	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 
 	// Set all elements of shKNNDistances to FLT_MAX and shKNNIndices to UINT_MAX.
 	for( uint i = 0; i < k; i++ )
@@ -211,13 +220,23 @@ __global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Ag
 		}
 	}
 
+	//__syncthreads();
+	//
+	//// Write the KNN indices and distances out to global memory.
+	//for( uint i = 0; i < k; i++ )
+	//{
+	//	pdKNNDistances[index + (THREADSPERBLOCK*i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK*i)];
+	//	pdKNNIndices[index + (THREADSPERBLOCK*i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK*i)];
+	//}
+	//__syncthreads();
+
 	__syncthreads();
 	
 	// Write the KNN indices and distances out to global memory.
 	for( uint i = 0; i < k; i++ )
 	{
-		pdKNNIndices[ index + (THREADSPERBLOCK * i) ] = shKNNIndices[ threadIdx.x + (THREADSPERBLOCK * i) ];
-		pdKNNDistances[ index + (THREADSPERBLOCK * i) ] = shKNNDistances[ threadIdx.x + (THREADSPERBLOCK * i) ];
+		pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
+		pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
 	}
 	__syncthreads();
 }

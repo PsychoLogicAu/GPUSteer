@@ -25,9 +25,9 @@ extern "C"
 		__shared__ float3 shForward[THREADSPERBLOCK];
 		__shared__ float shSpeed[THREADSPERBLOCK];
 
-		FLOAT3_COALESCED_READ( shSteering, pdSteering );
-		FLOAT3_COALESCED_READ( shPosition, pdPosition );
-		FLOAT3_COALESCED_READ( shForward, pdForward );
+		FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+		FLOAT3_GLOBAL_READ( shPosition, pdPosition );
+		FLOAT3_GLOBAL_READ( shForward, pdForward );
 		
 		SPEED_SH( threadIdx.x ) = SPEED( offset );
 		__syncthreads();
@@ -62,6 +62,6 @@ extern "C"
 
 		__syncthreads();
 
-		FLOAT3_COALESCED_WRITE( pdSteering, shSteering );
+		FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 	}
 }

@@ -41,11 +41,11 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	__shared__ float shMass[THREADSPERBLOCK];
 
 	// Copy the required global memory variables to shared mem.
-	FLOAT3_COALESCED_READ( shSide, pdSide );
-	FLOAT3_COALESCED_READ( shUp, pdUp );
-	FLOAT3_COALESCED_READ( shForward, pdForward );
-	FLOAT3_COALESCED_READ( shPosition, pdPosition );
-	FLOAT3_COALESCED_READ( shSteering, pdSteering );
+	FLOAT3_GLOBAL_READ( shSide, pdSide );
+	FLOAT3_GLOBAL_READ( shUp, pdUp );
+	FLOAT3_GLOBAL_READ( shForward, pdForward );
+	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
+	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
 	
 	SPEED_SH( threadIdx.x ) = SPEED( index );
 	__syncthreads();
@@ -96,11 +96,11 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	__syncthreads();
 
 	// Copy the shared memory back to global.
-	FLOAT3_COALESCED_WRITE( pdSide, shSide );
-	FLOAT3_COALESCED_WRITE( pdUp, shUp );
-	FLOAT3_COALESCED_WRITE( pdForward, shForward );
-	FLOAT3_COALESCED_WRITE( pdPosition, shPosition );
-	FLOAT3_COALESCED_WRITE( pdSteering, shSteering );
+	FLOAT3_GLOBAL_WRITE( pdSide, shSide );
+	FLOAT3_GLOBAL_WRITE( pdUp, shUp );
+	FLOAT3_GLOBAL_WRITE( pdForward, shForward );
+	FLOAT3_GLOBAL_WRITE( pdPosition, shPosition );
+	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 
 	__syncthreads();
 	SPEED( index ) = SPEED_SH( threadIdx.x );
