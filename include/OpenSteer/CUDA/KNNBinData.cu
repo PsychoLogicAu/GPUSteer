@@ -33,22 +33,25 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 	// Allocate host memory to temporarily store the 3D texture data.
 	uint * phCellIndices = (uint*)malloc( m_worldCells.x * m_worldCells.y * m_worldCells.z * sizeof(uint) );
 
-	uint offset = 0;
+	uint index = 0;
 
-	for( size_t z = 0; z < m_worldCells.z; z++ )			// height - z axis
+	//for( size_t z = 0; z < m_worldCells.z; z++ )
+	for( size_t z = 0; z < m_worldCells.y; z++ )			// height - texture z axis, world y axis
 	{
-		for( size_t y = 0; y < m_worldCells.y; y++ )		// depth - y axis
+		//for( size_t y = 0; y < m_worldCells.y; y++ )
+		for( size_t y = 0; y < m_worldCells.z; y++ )		// depth - texture y axis, world z axis
 		{
-			for( size_t x = 0; x < m_worldCells.x; x++ )	// width - x axis
+			for( size_t x = 0; x < m_worldCells.x; x++ )	// width - texture x axis, world x axis
 			{
 				// Make a bin_cell structure.
 				bin_cell bc;
 
 				//bc.iBinIndex = iBinIndex;
-				bc.iCellIndex = x + (y * m_worldCells.x) + (z * m_worldCells.y * m_worldCells.x);
+				// FIXME: check these values, should be right now :)
+				bc.iCellIndex = x + (y * m_worldCells.x) + (z * m_worldCells.z * m_worldCells.x);
 
 				// Set the offset value for the cell lookup texture.
-				phCellIndices[offset++] = bc.iCellIndex;
+				phCellIndices[index++] = bc.iCellIndex;
 
 				// TODO: set uint3 indices of m_neighborPosMin & m_neighborPosMax (?)
 
