@@ -83,9 +83,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 10000;
-const float gDim						= 500;
-const int gCells						= 50;
+const int gEnemyCount					= 2000000;
+const float gDim						= 4000;
+const int gCells						= 450;
 
 uint const	g_knn						= 5;
 uint const	g_kno						= 2;
@@ -98,7 +98,7 @@ float const g_fMinTimeToCollision		= 3.f;
 float const g_fSeparationWeight			= 0.1f;
 
 
-const int gMaxObstacleCount				= 20;
+const int gMaxObstacleCount				= 0;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
 const float		gHomeBaseRadius			= 1.5f;
@@ -332,18 +332,18 @@ void CtfEnemyGroup::draw(void)
 		draw2dTextAt3dLocation (annote, textOrigin, gWhite);
 		*/
 
-		if( i % 5 == 0 )
-		{
+		//if( i % 5 == 0 )
+		//{
 			// Draw the KNN links.
 			for( uint j = 0; j < g_knn; j++ )
 			{
 				if( KNNIndices[j] < gEnemies->Size() )
 				{
 					vgd.getVehicleData( KNNIndices[j], vdOther );
-					drawLine( vd.position, vdOther.position, make_float3( i / (float)gEnemyCount, i / (float)gEnemyCount, i / (float)gEnemyCount ) );
+					drawLine( vd.position, vdOther.position, make_float3( 1.f, 1.f, 1.f ) );
 				}
 			}
-		}
+		//}
 #endif
 	}
 
