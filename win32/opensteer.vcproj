@@ -438,6 +438,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cu"
+						>
+					</File>
+					<File
 						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cuh"
 						>
 					</File>
@@ -481,6 +485,10 @@
 				<Filter
 					Name="Utils"
 					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\DebugUtils.h"
+						>
+					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\dev_vector.cuh"
 						>

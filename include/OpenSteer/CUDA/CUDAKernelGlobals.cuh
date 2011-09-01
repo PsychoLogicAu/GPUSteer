@@ -6,11 +6,12 @@
 #include "../VectorUtils.cuh"
 #include "../VehicleGroupData.cuh"
 
-//#define COALESCE
+
 
 
 #define THREADSPERBLOCK 128
 
+#define COALESCE
 #if defined COALESCE
 	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
 																if(blockIdx.x < gridDim.x-1)														\

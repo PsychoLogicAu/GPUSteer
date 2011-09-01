@@ -87,7 +87,7 @@ OpenSteer::Camera::reset (void)
     fixedDistVOffset = 0;
 
     // "look straight down at vehicle" camera mode parameters
-    lookdownDistance = 30;
+    lookdownDistance = 100;
 
     // "static" camera mode parameters
 	fixedPosition = make_float3(75,75,75);
