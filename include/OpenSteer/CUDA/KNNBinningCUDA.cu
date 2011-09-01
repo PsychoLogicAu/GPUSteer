@@ -4,6 +4,8 @@ using namespace OpenSteer;
 
 #include <thrust/sort.h>
 
+#include "DebugUtils.h"
+
 // Kernel file function prototypes.
 extern "C"
 {
@@ -66,10 +68,6 @@ void KNNBinningCUDA::init( void )
 	// Bind the cell indices texture.
 	KNNBinningCUDABindTexture( m_pVehicleGroup->GetBinData().pdCellIndexArray() );
 
-	// Allocate temporary device storage.
-	//CUDA_SAFE_CALL( cudaMalloc( &m_pdCellIndices, getNumAgents() * sizeof(uint) ) );
-	//CUDA_SAFE_CALL( cudaMalloc( &m_pdAgentIndices, getNumAgents() * sizeof(uint) ) );
-
 	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellStart, m_nCells * sizeof(uint) ) );
 	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellEnd, m_nCells * sizeof(uint) ) );
 }
@@ -92,18 +90,17 @@ void KNNBinningCUDA::run( void )
 	uint *			pdKNNIndices = m_pNearestNeighborData->pdKNNIndices();
 	float *			pdKNNDistances = m_pNearestNeighborData->pdKNNDistances();
 
-	// TODO: this data can be local.
-	uint *			pdAgentIndices = m_pNearestNeighborData->pdAgentIndices();
 	uint *			pdCellIndices = m_pNearestNeighborData->pdCellIndices();
 
-	// TODO: I don't see a need for this data.
+	uint *			pdCellIndicesSorted = m_pNearestNeighborData->pdCellIndicesSorted();
+	uint *			pdAgentIndicesSorted = m_pNearestNeighborData->pdAgentIndicesSorted();
+
 	float3 *		pdPositionSorted = m_pNearestNeighborData->pdPositionSorted();
 	float3 *		pdDirectionSorted = m_pNearestNeighborData->pdDirectionSorted();
 	float *			pdSpeedSorted = m_pNearestNeighborData->pdSpeedSorted();
 
-
 	//
-	//	TIMING:
+	//	TIMING: hard to get exact times with profiling, too many operations.
 	//
 	// Events for timing the complete operation.
 	cudaEvent_t start, stop;
@@ -111,24 +108,24 @@ void KNNBinningCUDA::run( void )
 	cudaEventCreate( &stop );
 	cudaEventRecord( start, 0 );
 
-
-
-
 	// Build the database (get the bin indices for the agents).
-	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndices, pdCellIndices, numAgents, worldSize );
+	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndicesSorted, pdCellIndices, numAgents, worldSize );
 	cutilCheckMsg( "KNNBinningBuildDB failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
-	// Sort m_pAgentIndices on m_pdCellIndices using thrust.
-	thrust::sort_by_key(	thrust::device_ptr<uint>( pdCellIndices ),
-							thrust::device_ptr<uint>( pdCellIndices + numAgents ),
-							thrust::device_ptr<uint>( pdAgentIndices ) );
+	// Copy pdCellIndices to pdCellIndicesSorted.
+	CUDA_SAFE_CALL( cudaMemcpy( pdCellIndicesSorted, pdCellIndices, numAgents * sizeof(uint), cudaMemcpyDeviceToDevice ) );
+
+	// Sort m_pAgentIndices on m_pdCellIndicesSorted using thrust.
+	thrust::sort_by_key(	thrust::device_ptr<uint>( pdCellIndicesSorted ),
+							thrust::device_ptr<uint>( pdCellIndicesSorted + numAgents ),
+							thrust::device_ptr<uint>( pdAgentIndicesSorted ) );
 
 	// Set all cells to empty.
 	CUDA_SAFE_CALL( cudaMemset( m_pdCellStart, 0xffffffff, m_nCells * sizeof(uint) ) );
 
 	KNNBinningReorderData<<< grid, block >>>(	pdPosition, pdDirection, pdSpeed,
-												pdAgentIndices, pdCellIndices,
+												pdAgentIndicesSorted, pdCellIndicesSorted,
 												pdPositionSorted, pdDirectionSorted, pdSpeedSorted,
 												m_pdCellStart, m_pdCellEnd,
 												numAgents
@@ -140,14 +137,13 @@ void KNNBinningCUDA::run( void )
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
 	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted,
-													pdAgentIndices, pdCellIndices,
+													pdAgentIndicesSorted, pdCellIndicesSorted,
 													m_pdCellStart, m_pdCellEnd,
 													pdKNNIndices, pdKNNDistances,
 													k, 1, numAgents
 											);
 	cutilCheckMsg( "KNNBinningKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
-
 
 	//
 	//	TIMING:

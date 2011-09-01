@@ -11,9 +11,9 @@ texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndicesNormal
 texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndices;
 
 // Fetch the cell index from texCellIndicesNormalized at a given world {x,y,z} position.
-#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.z, pos.y ) )
+#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
 // Fetch the cell index from texCellIndices at a given texel (x,y,z) coordinate.
-#define CELL_INDEX( x, y, z )			( tex3D( texCellIndices, x, z, y ) )
+#define CELL_INDEX( x, y, z )			( tex3D( texCellIndices, x, y, z ) )
 
 // Kernel declarations.
 extern "C"
@@ -118,17 +118,21 @@ __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions
 	//											(POSITION_SH( threadIdx.x ).y + 0.5f * worldSize.y) / worldSize.y,
 	//											(POSITION_SH( threadIdx.x ).z + 0.5f * worldSize.z) / worldSize.z );
 
+	// Normalize the positions.
 	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * worldSize.x) / worldSize.x;
-	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * worldSize.y) / worldSize.y;
+	//POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * worldSize.y) / worldSize.y;
 	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * worldSize.z) / worldSize.z;
 
 	// Write the agent's cell index out to global memory.
 	// TESTME: is this getting the right cell index?
-	pdCellIndices[index] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
+	//pdCellIndices[index] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
+
+	pdCellIndices[index] = tex3D( texCellIndicesNormalized, POSITION_SH( threadIdx.x ).x, POSITION_SH( threadIdx.x ).y, POSITION_SH( threadIdx.x ).z );
 	__syncthreads();
 
 	// Write the agent's index out to global memory.
 	pdAgentIndices[index] = index;
+	__syncthreads();
 }
 
 
@@ -158,13 +162,14 @@ __global__ void KNNBinningReorderData(	float3 const*	pdPosition,			// In: Agent 
 
 	__shared__ uint shCellIndices[THREADSPERBLOCK+1];
 
-	// Shared memory so we can coalesce the writes of sorted data back to global memory.
+	// Shared memory so we can coalesce the writes of sorted data to global memory.
 	__shared__ float3 shPositionSorted[THREADSPERBLOCK];
 	__shared__ float3 shDirectionSorted[THREADSPERBLOCK];
 	__shared__ float shSpeedSorted[THREADSPERBLOCK];
 
 	// Read the cell index of this agent.
 	uint iCellIndex = pdCellIndices[ index ];
+	__syncthreads();
 	
 	// Store cell index data in shared memory so that we can look 
 	// at the neighboring agent's value without two reads per thread.
@@ -240,44 +245,43 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted
 		return;
 
 	// Shared memory for local priority queue computations.
-	extern __shared__ float shKNNDistances[];						// First half will be treated as the distance values.
-	uint * shKNNIndices = (uint*)(shKNNDistances + blockDim.x * k);	// Second half will be treated as the index values.
+	extern __shared__ uint shKNNIndices[];
+	float * shKNNDistances = (float*)shKNNIndices + THREADSPERBLOCK * k;
 
 	// Set all elements of shKNNDistances to FLT_MAX, shKNNIndices to UINT_MAX.
 	for( uint i = 0; i < k; i++ )
 	{
-		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
 		shKNNIndices[(threadIdx.x * k) + i] = UINT_MAX;
+		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
 	}
-	
-	// Store this thread's agent position & cell in registers.
-	float3 const	position = pdPositionSorted[ index ];
-	uint const		cell = pdCellIndices[ index ];
+
+	// Store this thread's agent index and cell index in registers.
+	uint const		agentIndex = pdAgentIndices[ index ];
+	uint const		cellIndex = pdCellIndices[ index ];
+	float3 const	agentPosition = pdPositionSorted[ index ];
 
 	//
 	// TODO: for each surrounding cell within radius...
 	//
 
 	// For each agent in the cell...
-	for( uint i = pdCellStart[ cell ]; i < pdCellEnd[ cell ]; i++ )
+	for( uint otherIndexSorted = pdCellStart[ cellIndex ]; otherIndexSorted < pdCellEnd[ cellIndex ]; otherIndexSorted++ )
 	{
-		// TESTME: is pdCellIndices[i] == cell ?
-
-		uint const otherIndex = pdAgentIndices[ i ];
+		// Get the index of the other agent (unsorted).
+		uint const otherIndex = pdAgentIndices[ otherIndexSorted ];
 		
 		// Do not include self.
-		if( index == otherIndex )
+		if( agentIndex == otherIndex )
 			continue;
 
 		// Compute the distance between this agent and the one at i.
 		// TODO: texture memory....
-		float const dist = float3_distance( position, pdPositionSorted[ otherIndex ] );
+		float const dist = float3_distance( agentPosition, pdPositionSorted[ otherIndexSorted ] );
 
 		if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 		{
 			// Agent at index i is the new (at least) kth closest. Set the distance and index in shared mem.
 			shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
-			//shKNNIndices[(threadIdx.x * k) + (k - 1)] = i; <-- looks like a dumb mistake...
 			shKNNIndices[(threadIdx.x * k) + (k - 1)] = otherIndex;
 
 			// Bubble the values up...
@@ -299,11 +303,8 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted
 	// Write the shKNNIndices and shKNNDistances values out to global memory.
 	for( uint i = 0; i < k; i++ )
 	{
-		//pdKNNIndices[index + (THREADSPERBLOCK * i)] = shKNNIndices[threadIdx.x + (THREADSPERBLOCK * i)];
-		//pdKNNDistances[index + (THREADSPERBLOCK * i)] = shKNNDistances[threadIdx.x + (THREADSPERBLOCK * i)];
-
-		pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
-		pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
+		pdKNNIndices[agentIndex*k + i] = shKNNIndices[threadIdx.x*k + i];
+		pdKNNDistances[agentIndex*k + i] = shKNNDistances[threadIdx.x*k + i];
 	}
 	__syncthreads();
 }

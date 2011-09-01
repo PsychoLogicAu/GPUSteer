@@ -194,8 +194,8 @@ void KNNBruteForceCUDAV3::run( void )
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
 	// FIXME: there is a bug in the seeding part of KNNBruteForceV3
-	//KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, m_pNearestNeighborData->seedable() );
-	KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, false );
+	KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, m_pNearestNeighborData->seedable() );
+	//KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, false );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV3 failed." );
 	// Data will now be seedable.
 	m_pNearestNeighborData->seedable( true );
