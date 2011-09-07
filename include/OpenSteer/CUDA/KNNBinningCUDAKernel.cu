@@ -10,6 +10,13 @@ using namespace OpenSteer;
 texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndicesNormalized;
 texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndices;
 
+// Constant memory used to hold the worldSize and worldCells values.
+__constant__ float3 constWorldSize;
+__constant__ float3 constWorldStep;
+__constant__ uint3 constWorldCells;
+__constant__ float3 constWorldMin;
+__constant__ float3 constWorldMax;
+
 // Fetch the cell index from texCellIndicesNormalized at a given world {x,y,z} position.
 #define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
 // Fetch the cell index from texCellIndices at a given texel (x,y,z) coordinate.
@@ -27,8 +34,8 @@ extern "C"
 	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
 										size_t *		pdAgentIndices,			// Out:	Indices of each agent.
 										size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
-										size_t const	numAgents,				// In:	Number of agents in the simulation.
-										float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
+										size_t const	numAgents//,				// In:	Number of agents in the simulation.
+										//float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
 										);
 
 	__global__ void KNNBinningReorderData(	float3 const*	pdPosition,			// In: Agent positions.
@@ -93,11 +100,87 @@ __host__ void KNNBinningCUDAUnbindTexture( void )
 	CUDA_SAFE_CALL( cudaUnbindTexture( texCellIndices ) );
 }
 
+__inline__ __device__ bool WithinBounds( float3 const* point )
+{
+	return !(	point->x < constWorldMin.x || point->x > constWorldMax.x ||
+				point->y < constWorldMin.y || point->y > constWorldMax.y ||
+				point->z < constWorldMin.z || point->z > constWorldMax.z
+				);
+}
+
+__device__ void GetNeighboringCells3D(	float3 const&	position,	// In:	Position to find neighbors for.
+										uint *			pdCells,	// Out:	Array of cell indices.
+										uint const&		r			// In:	Radius.
+													)
+{
+	float3	queryPosition;
+	uint	cellIndex = UINT_MAX;
+
+	for( int dz = -r, iz = 0; dz <= r; dz++, iz++ )
+	{
+		for( int dy = -r, iy = 0; dy <= r; dy++, iy++ )
+		{
+			for( int dx = -r, ix = 0; dx <= r; dx++, ix++ )
+			{
+				queryPosition.x = position.x + dx * constWorldStep.x;
+				queryPosition.y = position.y + dy * constWorldStep.y;
+				queryPosition.z = position.z + dz * constWorldStep.z;
+
+				if( WithinBounds( &queryPosition ) )
+				{
+					// Normalize the position.
+					queryPosition.x = (queryPosition.x + 0.5f * constWorldSize.x) / constWorldSize.x;
+					queryPosition.y = (queryPosition.y + 0.5f * constWorldSize.y) / constWorldSize.y;
+					queryPosition.z = (queryPosition.z + 0.5f * constWorldSize.z) / constWorldSize.z;
+
+					cellIndex = CELL_INDEX_NORMALIZED( queryPosition );
+				}
+
+				// Write the cell index to the output array.
+				pdCells[iz*iy*r + iy*r + ix] = cellIndex;
+			}
+		}
+	}
+}
+
+__device__ void GetNeighboringCells2D(	float3 const&	position,	// In:	Position to find neighbors for.
+										uint *			pdCells,	// Out:	Array of cell indices.
+										uint const&		r			// In:	Radius.
+										)
+{
+	float3	queryPosition;
+	uint	cellIndex = UINT_MAX;
+
+	queryPosition.z = position.z;
+	queryPosition.z = (queryPosition.z + 0.5f * constWorldSize.z) / constWorldSize.z;
+
+	for( int dy = -r, iy = 0; dy <= r; dy++, iy++ )
+	{
+		for( int dx = -r, ix = 0; dx <= r; dx++, ix++ )
+		{
+			queryPosition.x = position.x + dx * constWorldStep.x;
+			queryPosition.y = position.y + dy * constWorldStep.y;
+
+			if( WithinBounds( &queryPosition ) )
+			{
+				// Normalize the position.
+				queryPosition.x = (queryPosition.x + 0.5f * constWorldSize.x) / constWorldSize.x;
+				queryPosition.y = (queryPosition.y + 0.5f * constWorldSize.y) / constWorldSize.y;
+
+				cellIndex = CELL_INDEX_NORMALIZED( queryPosition );
+			}
+
+			// Write the cell index to the output array.
+			pdCells[iy*r + ix] = cellIndex;
+		}
+	}
+}
+
 __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
 									size_t *		pdAgentIndices,			// Out:	Indices of each agent.
 									size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
-									size_t const	numAgents,				// In:	Number of agents in the simulation.
-									float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
+									size_t const	numAgents//,				// In:	Number of agents in the simulation.
+									//float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
 									)
 {
 	// Offset of this agent in the global array.
@@ -119,9 +202,9 @@ __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions
 	//											(POSITION_SH( threadIdx.x ).z + 0.5f * worldSize.z) / worldSize.z );
 
 	// Normalize the positions.
-	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * worldSize.x) / worldSize.x;
-	//POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * worldSize.y) / worldSize.y;
-	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * worldSize.z) / worldSize.z;
+	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * constWorldSize.x) / constWorldSize.x;
+	//POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
+	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
 
 	// Write the agent's cell index out to global memory.
 	// TESTME: is this getting the right cell index?
@@ -263,6 +346,9 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted
 	//
 	// TODO: for each surrounding cell within radius...
 	//
+	__shared__ uint shNeighboringCells[9*THREADSPERBLOCK];
+
+	GetNeighboringCells2D( agentPosition, &shNeighboringCells[threadIdx.x*9], 1 );
 
 	// For each agent in the cell...
 	for( uint otherIndexSorted = pdCellStart[ cellIndex ]; otherIndexSorted < pdCellEnd[ cellIndex ]; otherIndexSorted++ )

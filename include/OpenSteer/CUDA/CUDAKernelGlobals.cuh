@@ -9,7 +9,7 @@
 
 
 
-#define THREADSPERBLOCK 128
+#define THREADSPERBLOCK 256
 
 #define COALESCE
 #if defined COALESCE
