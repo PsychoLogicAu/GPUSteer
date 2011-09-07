@@ -94,6 +94,14 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 	copyParms.kind = cudaMemcpyHostToDevice;
 	CUDA_SAFE_CALL( cudaMemcpy3D( &copyParms ) );
 
+	// Copy the m_worldSize and m_worldCells values to constant memory.
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSize", &m_worldSize, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+
 	// Free host memory.
 	free( phCellIndices );
 }

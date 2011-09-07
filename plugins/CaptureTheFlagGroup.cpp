@@ -83,9 +83,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 2000000;
-const float gDim						= 4000;
-const int gCells						= 450;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 31;
 
 uint const	g_knn						= 5;
 uint const	g_kno						= 2;
@@ -298,6 +298,7 @@ void CtfEnemyGroup::draw(void)
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
+	//for( size_t i = 0; i < gEnemies->Size(); i += 100 )
 	{
 		// Get its varialbe and constant data.
 		vgc.getVehicleData( i, vc );

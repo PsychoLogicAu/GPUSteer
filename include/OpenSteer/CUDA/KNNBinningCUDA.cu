@@ -17,8 +17,8 @@ extern "C"
 	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
 										size_t *		pdAgentIndices,			// Out:	Indices of each agent.
 										size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
-										size_t const	numAgents,				// In:	Number of agents in the simulation.
-										float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
+										size_t const	numAgents//,				// In:	Number of agents in the simulation.
+										//float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).
 										);
 
 	// Kernel to sort position/direction/speed based on pdAgentIndices, and to compute start and end indices of cells.
@@ -109,7 +109,7 @@ void KNNBinningCUDA::run( void )
 	cudaEventRecord( start, 0 );
 
 	// Build the database (get the bin indices for the agents).
-	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndicesSorted, pdCellIndices, numAgents, worldSize );
+	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndicesSorted, pdCellIndices, numAgents/*, worldSize*/ );
 	cutilCheckMsg( "KNNBinningBuildDB failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
