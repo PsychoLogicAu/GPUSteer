@@ -73,7 +73,8 @@ using namespace OpenSteer;
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-#define ANNOTATION
+#define ANNOTATION_LINES
+//#define ANNOTATION_TEXT
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -83,9 +84,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 31;
+const int gEnemyCount					= 2000000;
+const float gDim						= 9000;
+const int gCells						= 1315;
 
 uint const	g_knn						= 5;
 uint const	g_kno						= 2;
@@ -95,7 +96,7 @@ float const g_fMinSeparationDistance	= 2.f;
 float const g_fMinTimeToCollision		= 3.f;
 
 // Weights for certain behaviors.
-float const g_fSeparationWeight			= 0.1f;
+float const g_fSeparationWeight			= 0.01f;
 
 
 const int gMaxObstacleCount				= 0;
@@ -279,6 +280,8 @@ void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData
 
 void CtfEnemyGroup::draw(void)
 {
+	return;
+
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
@@ -288,11 +291,10 @@ void CtfEnemyGroup::draw(void)
 	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
 	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
 
-#if defined ANNOTATION
+#if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 	// Temporary storage used for annotation.
 	uint * KNNIndices = (uint*)malloc( g_knn * sizeof(uint) );
 	float * KNNDistances = (float*)malloc( g_knn * sizeof(float) );
-	VehicleData vdOther;
 	uint cellIndex;
 #endif
 
@@ -307,15 +309,16 @@ void CtfEnemyGroup::draw(void)
 		// Draw the agent.
 		drawBasic2dCircularVehicle( vc.radius, vd.position, vd.forward, vd.side, bodyColor );
 
-#if defined ANNOTATION
+#if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 		//
 		// Annotation
 		//
 
 		// Pull the KNN data for this agent from the nearest neighbor database.
 		m_nearestNeighbors.getAgentData( i, KNNIndices, KNNDistances, cellIndex );
+#endif
 
-		/*
+#if defined ANNOTATION_TEXT
 		// annotate the agent with useful data.
 		const float3 textOrigin = float3_add( vd.position, make_float3( 0, 0.25, 0 ) );
 		std::ostringstream annote;
@@ -331,24 +334,24 @@ void CtfEnemyGroup::draw(void)
 		annote << std::ends;
 
 		draw2dTextAt3dLocation (annote, textOrigin, gWhite);
-		*/
+#endif
 
-		//if( i % 5 == 0 )
-		//{
-			// Draw the KNN links.
-			for( uint j = 0; j < g_knn; j++ )
+#if defined ANNOTATION_LINES
+		VehicleData vdOther;
+
+		// Draw the KNN links.
+		for( uint j = 0; j < g_knn; j++ )
+		{
+			if( KNNIndices[j] < gEnemies->Size() )
 			{
-				if( KNNIndices[j] < gEnemies->Size() )
-				{
-					vgd.getVehicleData( KNNIndices[j], vdOther );
-					drawLine( vd.position, vdOther.position, make_float3( 1.f, 1.f, 1.f ) );
-				}
+				vgd.getVehicleData( KNNIndices[j], vdOther );
+				drawLine( vd.position, vdOther.position, make_float3( 1.f, 1.f, 1.f ) );
 			}
-		//}
+		}
 #endif
 	}
 
-#if defined ANNOTATION
+#if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 	// Clean up the temp data.
 	free( KNNIndices );
 	free( KNNDistances );
