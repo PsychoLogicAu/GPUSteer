@@ -11,11 +11,11 @@ texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndicesNormal
 texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndices;
 
 // Constant memory used to hold the worldSize and worldCells values.
-__constant__ float3 constWorldSize;
-__constant__ float3 constWorldStep;
-__constant__ uint3 constWorldCells;
-__constant__ float3 constWorldMin;
-__constant__ float3 constWorldMax;
+__constant__ float3		constWorldSize;
+__constant__ float3		constWorldStep;
+__constant__ uint3		constWorldCells;
+__constant__ float3		constWorldMin;
+__constant__ float3		constWorldMax;
 
 // Fetch the cell index from texCellIndicesNormalized at a given world {x,y,z} position.
 #define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
@@ -170,8 +170,19 @@ __device__ void GetNeighboringCells2D(	float3 const&	position,	// In:	Position t
 				cellIndex = CELL_INDEX_NORMALIZED( queryPosition );
 			}
 
+			// Don't add the same cell twice. Necessary check if the cell sizes are non-uniform.
+			bool bContained = false;
+			int const index = iy*r + ix;
+			for( uint i = 0; i < index; i++ )
+			{
+				if( pdCells[i] == cellIndex )
+					bContained = true;
+			}
+			if( bContained )
+				continue;
+
 			// Write the cell index to the output array.
-			pdCells[iy*r + ix] = cellIndex;
+			pdCells[ index ] = cellIndex;
 		}
 	}
 }
@@ -340,46 +351,55 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted
 
 	// Store this thread's agent index and cell index in registers.
 	uint const		agentIndex = pdAgentIndices[ index ];
-	uint const		cellIndex = pdCellIndices[ index ];
+	//uint const		cellIndex = pdCellIndices[ index ];
 	float3 const	agentPosition = pdPositionSorted[ index ];
 
 	//
 	// TODO: for each surrounding cell within radius...
 	//
-	__shared__ uint shNeighboringCells[9*THREADSPERBLOCK];
 
+	// TODO: support for varying radius.
+	__shared__ uint shNeighboringCells[9*THREADSPERBLOCK];
 	GetNeighboringCells2D( agentPosition, &shNeighboringCells[threadIdx.x*9], 1 );
 
-	// For each agent in the cell...
-	for( uint otherIndexSorted = pdCellStart[ cellIndex ]; otherIndexSorted < pdCellEnd[ cellIndex ]; otherIndexSorted++ )
+	uint cellIndex = UINT_MAX;
+	for( uint i = 0; i < 9; i++ )
 	{
-		// Get the index of the other agent (unsorted).
-		uint const otherIndex = pdAgentIndices[ otherIndexSorted ];
-		
-		// Do not include self.
-		if( agentIndex == otherIndex )
+		cellIndex = shNeighboringCells[threadIdx.x*9+i];
+		if( UINT_MAX == cellIndex )
 			continue;
 
-		// Compute the distance between this agent and the one at i.
-		// TODO: texture memory....
-		float const dist = float3_distance( agentPosition, pdPositionSorted[ otherIndexSorted ] );
-
-		if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
+		// For each agent in the cell...
+		for( uint otherIndexSorted = pdCellStart[ cellIndex ]; otherIndexSorted < pdCellEnd[ cellIndex ]; otherIndexSorted++ )
 		{
-			// Agent at index i is the new (at least) kth closest. Set the distance and index in shared mem.
-			shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
-			shKNNIndices[(threadIdx.x * k) + (k - 1)] = otherIndex;
+			// Get the index of the other agent (unsorted).
+			uint const otherIndex = pdAgentIndices[ otherIndexSorted ];
+			
+			// Do not include self.
+			if( agentIndex == otherIndex )
+				continue;
 
-			// Bubble the values up...
-			for( int slot = k - 2; slot >= 0; slot-- )
+			// Compute the distance between this agent and the one at i.
+			// TODO: texture memory....
+			float const dist = float3_distance( agentPosition, pdPositionSorted[ otherIndexSorted ] );
+
+			if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 			{
-				if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
+				// Agent at index i is the new (at least) kth closest. Set the distance and index in shared mem.
+				shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
+				shKNNIndices[(threadIdx.x * k) + (k - 1)] = otherIndex;
+
+				// Bubble the values up...
+				for( int slot = k - 2; slot >= 0; slot-- )
 				{
-					swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
-					swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
+					if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
+					{
+						swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
+						swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
+					}
+					else
+						break;
 				}
-				else
-					break;
 			}
 		}
 	}
