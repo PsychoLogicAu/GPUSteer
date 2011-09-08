@@ -17,6 +17,8 @@ protected:
 	//uint *			m_pdCellIndices;	// Key: Index of the cell this agent is in.
 	//uint *			m_pdAgentIndices;	// Value: Index of this agent in the group.
 
+	float3 *		m_pdPositionNormalized;
+
 	uint *			m_pdCellStart;
 	uint *			m_pdCellEnd;
 
@@ -33,9 +35,6 @@ public:
 	virtual void init( void );
 	virtual void run( void );
 	virtual void close( void );
-
-
-
 
 };	// class KNNBinningCUDA
 }	// namespace OpenSteer

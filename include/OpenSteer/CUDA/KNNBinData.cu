@@ -18,8 +18,13 @@ void bin_data::CreateCells( void )
 {
 	float3 const step = make_float3(	m_worldSize.x / m_worldCells.x,		// width
 										m_worldSize.y / m_worldCells.y,		// depth
-										m_worldSize.z / m_worldCells.z );	// height
+										m_worldSize.z / m_worldCells.z		// height
+										);
 
+	float3 const stepNormalized = make_float3(	step.x / m_worldSize.x,
+												step.y / m_worldSize.y,
+												step.z / m_worldSize.z
+												);
 /*
 Texture addressing in CUDA operates as follows. The binning representation should match it internally.
    z|
@@ -96,11 +101,12 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 
 	// Copy the m_worldSize and m_worldCells values to constant memory.
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSize", &m_worldSize, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &stepNormalized, sizeof(float3) ) );
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
 
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+	//CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldMin", &step, sizeof(float3) ) );
+	//CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldMax", &step, sizeof(float3) ) );
 
 	// Free host memory.
 	free( phCellIndices );
