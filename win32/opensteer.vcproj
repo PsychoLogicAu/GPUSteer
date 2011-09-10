@@ -477,7 +477,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsKernel.cu"
+							RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDAKernel.cu"
 							>
 						</File>
 					</Filter>
