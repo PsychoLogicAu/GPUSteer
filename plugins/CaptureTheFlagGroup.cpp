@@ -74,7 +74,7 @@ using namespace OpenSteer;
 #endif
 
 #define ANNOTATION_LINES
-//#define ANNOTATION_TEXT
+#define ANNOTATION_TEXT
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -84,19 +84,23 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 2000000;
-const float gDim						= 9000;
-const int gCells						= 1315;
+const int gEnemyCount					= 1000;
+const float gDim						= 200;
+const int gCells						= 15;
+
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 47;
 
 uint const	g_knn						= 5;
 uint const	g_kno						= 2;
 
-float const g_fMaxPursuitPredictionTime	= 20.0f;
-float const g_fMinSeparationDistance	= 2.f;
-float const g_fMinTimeToCollision		= 3.f;
+float const g_fMaxPursuitPredictionTime	= 20.0f;	// Look-ahead time for pursuit.
+float const g_fMinSeparationDistance	= 1.f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
+float const g_fMinTimeToCollision		= 1.f;		// Look-ahead time for neighbor avoidance.
 
 // Weights for certain behaviors.
-float const g_fSeparationWeight			= 0.01f;
+float const g_fSeparationWeight			= 1.f;
 
 
 const int gMaxObstacleCount				= 0;
@@ -280,8 +284,6 @@ void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData
 
 void CtfEnemyGroup::draw(void)
 {
-	return;
-
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
@@ -371,15 +373,10 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	SetSyncHost();
 
 	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
-//SetSyncHost();SyncHost();
 	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance );
-//SetSyncHost();SyncHost();
 
 	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime );
-//SetSyncHost();SyncHost();
 	CUDAGroupSteerLibrary.steerForSeparation( *this, g_fSeparationWeight );
-//SetSyncHost();SyncHost();
-
 
 	CUDAGroupSteerLibrary.update(*this, elapsedTime);
 
