@@ -75,6 +75,7 @@ using namespace OpenSteer;
 
 //#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
+#define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -97,11 +98,11 @@ uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
 uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
 
 float const g_fMaxPursuitPredictionTime	= 20.0f;	// Look-ahead time for pursuit.
-float const g_fMinSeparationDistance	= 1.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
+float const g_fMinSeparationDistance	= 1.f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 1.f;		// Look-ahead time for neighbor avoidance.
 
 // Weights for certain behaviors.
-float const g_fSeparationWeight			= 10.f;
+float const g_fSeparationWeight			= 1.f;
 
 
 const int gMaxObstacleCount				= 0;
