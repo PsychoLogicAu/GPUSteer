@@ -105,7 +105,7 @@ public:
 		// Allocate device memory.
 		T * pdNewMem = allocate( nSize );
 		// Copy old to new.
-		CUDA_SAFE_CALL( cudaMemcpy( pdNewMem, m_pdMem, m_nSize * sizeof(T), cudeMemcpyDeviceToDevice ) );
+		CUDA_SAFE_CALL( cudaMemcpy( pdNewMem, m_pdMem, m_nSize * sizeof(T), cudaMemcpyDeviceToDevice ) );
 		// Set new size.
 		m_nSize = nSize;
 		// Free old.

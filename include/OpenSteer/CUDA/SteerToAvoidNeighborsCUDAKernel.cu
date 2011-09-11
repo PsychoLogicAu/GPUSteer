@@ -267,11 +267,14 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		// Check for a 'close' neighbor.
 		if( otherDistance < (minSeparationDistance + sumOfRadii) && otherDistance < threatDistance )
 		{
-			minTime = 0;
+			minTime = 0.f;
 			threatIndex = otherIndex;
 			threatDistance = otherDistance;
-			break;
+			continue;
 		}
+
+		if( minTime == 0.f )
+			continue;
 
 		// predicted time until nearest approach of "this" and "other"
 		float const time = predictNearestApproachTime(	POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), SPEED_SH( threadIdx.x ),

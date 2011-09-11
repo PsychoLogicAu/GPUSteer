@@ -14,6 +14,7 @@
 #define COALESCE
 #if defined COALESCE
 	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
+																__syncthreads();																	\
 																if(blockIdx.x < gridDim.x-1)														\
 																{																					\
 																	float3_coalescedRead( shDest, pdSource, blockIdx.x, blockDim.x, threadIdx.x );	\
@@ -34,15 +35,18 @@
 																{																					\
 																	pdDest[(blockIdx.x * blockDim.x) + threadIdx.x] = shSource[threadIdx.x];		\
 																}																					\
+																__syncthreads();																	\
 															}
 #else
 	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
+															__syncthreads();																		\
 															shDest[threadIdx.x] = pdSource[(blockIdx.x * blockDim.x) + threadIdx.x];				\
 															__syncthreads();																		\
 														}
 	#define FLOAT3_GLOBAL_WRITE( pdDest, shSource )		{																							\
 															__syncthreads();																		\
 															pdDest[(blockIdx.x * blockDim.x) + threadIdx.x] = shSource[threadIdx.x];				\
+															__syncthreads();																		\
 														}
 #endif
 
@@ -61,6 +65,20 @@ static __inline__ __device__ void float3_CoalescedWrite( float3 * pdDest, float3
 	((float*)pdDest)[index] = ((float*)shSource)[tid];
 	((float*)pdDest)[index+THREADSPERBLOCK] = ((float*)shSource)[tid+THREADSPERBLOCK];
 	((float*)pdDest)[index+2*THREADSPERBLOCK] = ((float*)shSource)[tid+2*THREADSPERBLOCK];
+}
+
+static __inline__ __device__ __host__ int ipow( int base, int exp )
+{
+    int result = 1;
+    while (exp)
+    {
+        if (exp & 1)
+            result *= base;
+        exp >>= 1;
+        base *= base;
+    }
+
+    return result;
 }
 
 //

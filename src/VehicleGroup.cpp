@@ -5,9 +5,9 @@
 
 using namespace OpenSteer;
 
-VehicleGroup::VehicleGroup( uint3 const& worldCells, float3 const& worldSize, uint const knn, uint const kno )
+VehicleGroup::VehicleGroup( uint3 const& worldCells, float3 const& worldSize, uint const knn, uint const kno, uint const searchRadius )
 :	m_nCount( 0 ),
-	m_binData( worldCells, worldSize ),
+	m_binData( worldCells, worldSize, searchRadius ),
 	m_nearestNeighbors( knn ),
 	m_nearestObstacles( kno )
 {
