@@ -38,12 +38,12 @@ extern "C"
 													
 
 	// Kernel to set initial bin indices of vehicles in the simulation.
-	__global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
-										size_t *		pdAgentIndices,			// Out:	Indices of each agent.
-										size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
-										size_t const	numAgents/*,				// In:	Number of agents in the simulation.
-										float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).*/
-										);
+	__global__ void KNNBinningBuildDB(		float3 const*	pdPosition,				// In:	Positions of each agent.
+											//float3 *		pdPositionNormalized,	// Out:	Normalized positions of each agent.
+											size_t *		pdAgentIndices,			// Out:	Indices of each agent.
+											size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
+											size_t const	numAgents
+											);
 
 	__global__ void KNNBinningReorderData(	float3 const*	pdPosition,			// In: Agent positions.
 											float3 const*	pdDirection,		// In: Agent directions.
@@ -62,21 +62,25 @@ extern "C"
 											size_t const	numAgents
 											);
 
-	__global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted) Agent positions.
+	__global__ void KNNBinningKernel(		float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
+											//float3 const*	pdPositionNormalizedSorted,	// In:	Sorted normalized positions of the agents.
 
-										uint const*		pdAgentIndices,		// In:	(sorted) Indices of each agent.
-										uint const*		pdCellIndices,		// In:	(sorted) Indices of the cell each agent is in.
-									
-										uint const*		pdCellStart,		// In:	Start index of each cell in pdCellIndices.
-										uint const*		pdCellEnd,			// In:	End index of each cell in pdCellIndices.
+											uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
+											uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
 
-										uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
-										float *			pdKNNDistances,		// Out:	Distances of the K Nearest Neighbors in pdPosition.
+											uint const*		pdCellStart,				// In:	Start index of each cell in pdCellIndices.
+											uint const*		pdCellEnd,					// In:	End index of each cell in pdCellIndices.
 
-										size_t const	k,					// In:	Number of neighbors to consider.
-										size_t const	radius,				// In:	Maximum radius (in cells) to consider.
-										size_t const	numAgents			// In:	Number of agents in the simulation.
-										);
+											uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
+											size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
+
+											uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
+											float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
+
+											size_t const	k,							// In:	Number of neighbors to consider.
+											size_t const	radius,						// In:	Maximum radius (in cells) to consider.
+											size_t const	numAgents					// In:	Number of agents in the simulation.
+											);
 }
 
 __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
@@ -145,7 +149,7 @@ __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// 
 	__syncthreads();
 	for( int i = 0; i < neighborsPerCell; i++ )
 	{
-		pdCellNeighbors[ index * neighborsPerCell + i ] = shNeighboringCells[ i ];
+		pdCellNeighbors[ index * neighborsPerCell + i ] = shNeighboringCells[ offset + i ];
 	}
 }
 
@@ -180,8 +184,7 @@ __host__ void KNNBinningCUDAUnbindTexture( void )
 __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
 									size_t *		pdAgentIndices,			// Out:	Indices of each agent.
 									size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
-									size_t const	numAgents/*,				// In:	Number of agents in the simulation.
-									//float3 const	worldSize				// In:	Extents of the world (for normalizing the positions).*/
+									size_t const	numAgents
 									)
 {
 	// Offset of this agent in the global array.
@@ -198,21 +201,13 @@ __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions
 	__syncthreads();
 
 	// Normalize the positions.
-	//POSITION_SH( threadIdx.x ) = make_float3(	(POSITION_SH( threadIdx.x ).x + 0.5f * worldSize.x) / worldSize.x, 
-	//											(POSITION_SH( threadIdx.x ).y + 0.5f * worldSize.y) / worldSize.y,
-	//											(POSITION_SH( threadIdx.x ).z + 0.5f * worldSize.z) / worldSize.z );
-
-	// Normalize the positions.
 	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * constWorldSize.x) / constWorldSize.x;
 	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
 	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
-
-	// Write the agent's cell index out to global memory.
-	// TESTME: is this getting the right cell index?
-	//pdCellIndices[index] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
-
-	pdCellIndices[index] = tex3D( texCellIndicesNormalized, POSITION_SH( threadIdx.x ).x, POSITION_SH( threadIdx.x ).y, POSITION_SH( threadIdx.x ).z );
 	__syncthreads();
+	// Write the agent's cell index out to global memory.
+	pdCellIndices[index] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
+	//pdCellIndices[index] = tex3D( texCellIndicesNormalized, POSITION_SH( threadIdx.x ).x, POSITION_SH( threadIdx.x ).y, POSITION_SH( threadIdx.x ).z );
 
 	// Write the agent's index out to global memory.
 	pdAgentIndices[index] = index;
@@ -305,28 +300,34 @@ __global__ void KNNBinningReorderData(	float3 const*	pdPosition,			// In: Agent 
 	FLOAT3_GLOBAL_WRITE( pdDirectionSorted, shDirectionSorted );
 }
 
-__global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted) Agent positions.
+__global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
+									//float3 const*	pdPositionNormalizedSorted,	// In:	Sorted normalized positions of the agents.
 
-									uint const*		pdAgentIndices,		// In:	(sorted) Indices of each agent.
-									uint const*		pdCellIndices,		// In:	(sorted) Indices of the cell each agent is currently in.
+									uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
+									uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
 
-									uint const*		pdCellStart,		// In:	Start index of each cell in pdCellIndices.
-									uint const*		pdCellEnd,			// In:	End index of each cell in pdCellIndices.
+									uint const*		pdCellStart,				// In:	Start index of each cell in pdCellIndices.
+									uint const*		pdCellEnd,					// In:	End index of each cell in pdCellIndices.
 
-									uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
-									float *			pdKNNDistances,		// Out:	Distances of the K Nearest Neighbors in pdPosition.
+									uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
+									size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
 
-									size_t const	k,					// In:	Number of neighbors to consider.
-									size_t const	radius,				// In:	Maximum radius (in cells) to consider.
-									size_t const	numAgents			// In:	Number of agents in the simulation.
+									uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
+									float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
+
+									size_t const	k,							// In:	Number of neighbors to consider.
+									size_t const	radius,						// In:	Maximum radius (in cells) to consider.
+									size_t const	numAgents					// In:	Number of agents in the simulation.
 									)
 {
-	// Offset of this agent.
+	// Index of this agent.
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	// Check bounds.
 	if( index >= numAgents )
 		return;
+
+	__shared__ float3 shPosition[THREADSPERBLOCK];
 
 	// Shared memory for local priority queue computations.
 	extern __shared__ uint shKNNIndices[];
@@ -339,45 +340,57 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,	// In:	(sorted
 		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
 	}
 
-	// Store this thread's agent index and cell index in registers.
-	uint const		agentIndex = pdAgentIndices[ index ];
-	uint const		cellIndex = pdCellIndices[ index ];
-	float3 const	agentPosition = pdPositionSorted[ index ];
+	// Coalesce read the agent positions.
+	FLOAT3_GLOBAL_READ( shPosition, pdPositionSorted );
+	
+	// Store this thread's agent index and cell index in registers. TODO: texture memory.
+	uint const		agentIndex				= pdAgentIndices[ index ];
+	uint			cellIndex				= pdCellIndices[ index ];
+	// Debugging:
+	float3 const	agentPosition			= POSITION_SH( threadIdx.x );
 
-	//
-	// TODO: for each surrounding cell within radius...
-	//
+	// Get the offset for the neighbors of this cell.
+	int const cellNeighborsOffset = cellIndex * neighborsPerCell;
 
-	// For each agent in the cell...
-	for( uint otherIndexSorted = pdCellStart[ cellIndex ]; otherIndexSorted < pdCellEnd[ cellIndex ]; otherIndexSorted++ )
+	// For each of the neighbors of the current cell...
+	for( int iCellNeighbor = 0; iCellNeighbor < neighborsPerCell; iCellNeighbor++ )
 	{
-		// Get the index of the other agent (unsorted).
-		uint const otherIndex = pdAgentIndices[ otherIndexSorted ];
-		
-		// Do not include self.
-		if( agentIndex == otherIndex )
+		cellIndex = pdCellNeighbors[ cellNeighborsOffset + iCellNeighbor ];
+
+		if( cellIndex == UINT_MAX )	// There is no neighboring cell in this position.
 			continue;
 
-		// Compute the distance between this agent and the one at i.
-		// TODO: texture memory....
-		float const dist = float3_distance( agentPosition, pdPositionSorted[ otherIndexSorted ] );
-
-		if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
+		// For each agent in the cell...
+		for( uint otherIndexSorted = pdCellStart[ cellIndex ]; otherIndexSorted < pdCellEnd[ cellIndex ]; otherIndexSorted++ )
 		{
-			// Agent at index i is the new (at least) kth closest. Set the distance and index in shared mem.
-			shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
-			shKNNIndices[(threadIdx.x * k) + (k - 1)] = otherIndex;
+			// Get the index of the other agent (unsorted).
+			uint const otherIndex = pdAgentIndices[ otherIndexSorted ];
+			
+			// Do not include self.
+			if( agentIndex == otherIndex )
+				continue;
 
-			// Bubble the values up...
-			for( int slot = k - 2; slot >= 0; slot-- )
+			// Compute the distance between this agent and the one at i.
+			// TODO: texture memory....
+			float const dist = float3_distance( POSITION_SH( threadIdx.x ), pdPositionSorted[ otherIndexSorted ] );
+
+			if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 			{
-				if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
+				// Agent at index i is the new (at least) kth closest. Set the distance and index in shared mem.
+				shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
+				shKNNIndices[(threadIdx.x * k) + (k - 1)] = otherIndex;
+
+				// Bubble the values up...
+				for( int slot = k - 2; slot >= 0; slot-- )
 				{
-					swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
-					swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
+					if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
+					{
+						swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
+						swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
+					}
+					else
+						break;
 				}
-				else
-					break;
 			}
 		}
 	}

@@ -574,8 +574,8 @@ OpenSteer::OpenSteerDemo::updateCamera (const float currentTime,
 // some camera-related default constants
 
 
-const float OpenSteer::OpenSteerDemo::camera2dElevation = 8;
-const float OpenSteer::OpenSteerDemo::cameraTargetDistance = 13;
+const float OpenSteer::OpenSteerDemo::camera2dElevation = 16;
+const float OpenSteer::OpenSteerDemo::cameraTargetDistance = 26;
 const float3 OpenSteer::OpenSteerDemo::cameraTargetOffset = make_float3(0, OpenSteer::OpenSteerDemo::camera2dElevation, 0);
 
 

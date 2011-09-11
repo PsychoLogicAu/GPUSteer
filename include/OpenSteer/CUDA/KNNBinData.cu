@@ -29,7 +29,6 @@ bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize, uint const
 	
 	// Compute the neighbors for the cells.
 	ComputeCellNeighbors( m_worldCells.y > 1 );
-
 }
 
 void bin_data::ComputeCellNeighbors( bool b3D )
@@ -37,14 +36,14 @@ void bin_data::ComputeCellNeighbors( bool b3D )
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	size_t const neighborsPerCell	=  ipow( (m_nSearchRadius * 2 + 1), (b3D ? 3 : 2) );
-	size_t const shMemSize			= sizeof(uint) * THREADSPERBLOCK * neighborsPerCell;
+	m_nNeighborsPerCell		=  ipow( (m_nSearchRadius * 2 + 1), (b3D ? 3 : 2) );
+	size_t const shMemSize	= sizeof(uint) * THREADSPERBLOCK * m_nNeighborsPerCell;
+
+	// Allocate enough device memory.
+	m_dvCellNeighbors.resize( m_nCells * m_nNeighborsPerCell );
 
 	// Bind the texture.
 	KNNBinningCUDABindTexture( pdCellIndexArray() );
-
-	// Allocate enough device memory.
-	m_dvCellNeighbors.resize( m_nCells * neighborsPerCell );
 
 	if( b3D )
 	{
@@ -53,7 +52,7 @@ void bin_data::ComputeCellNeighbors( bool b3D )
 	}
 	else
 	{
-		KNNBinningComputeCellNeighbors2D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), neighborsPerCell, m_nSearchRadius, m_nCells );
+		KNNBinningComputeCellNeighbors2D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
 	}
 	cutilCheckMsg( "KNNBinningComputeCellNeighbors failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
@@ -88,25 +87,25 @@ Texture addressing in CUDA operates as follows.
 
 	uint index = 0;
 
-	for( size_t z = 0; z < m_worldCells.y; z++ )			// height - texture z axis, world y axis
+	for( size_t iHeight = 0; iHeight < m_worldCells.y; iHeight++ )			// height - texture z axis, world y axis
 	{
-		for( size_t y = 0; y < m_worldCells.z; y++ )		// depth - texture y axis, world z axis
+		for( size_t iDepth = 0; iDepth < m_worldCells.z; iDepth++ )		// depth - texture y axis, world z axis
 		{
-			for( size_t x = 0; x < m_worldCells.x; x++ )	// width - texture x axis, world x axis
+			for( size_t iWidth = 0; iWidth < m_worldCells.x; iWidth++ )	// width - texture x axis, world x axis
 			{
 				// Make a bin_cell structure.
 				bin_cell bc;
 
 				//bc.iBinIndex = iBinIndex;
-				bc.index = x + (y * m_worldCells.x) + (z * m_worldCells.z * m_worldCells.x);
+				bc.index = iWidth + (iDepth * m_worldCells.x) + (iHeight * m_worldCells.z * m_worldCells.x);
 
 				// Set the offset value for the cell lookup texture.
 				phCellIndices[index++] = bc.index;
 
 				// Set the minBounds of the cell.
-				bc.minBound.x = x * step.x - 0.5f * m_worldSize.x;
-				bc.minBound.y = y * step.y - 0.5f * m_worldSize.y;
-				bc.minBound.z = z * step.z - 0.5f * m_worldSize.z;
+				bc.minBound.x = iWidth * step.x - 0.5f * m_worldSize.x;
+				bc.minBound.y = iHeight * step.y - 0.5f * m_worldSize.y;
+				bc.minBound.z = iDepth * step.z - 0.5f * m_worldSize.z;
 
 				// Set the position of the cell.
 				bc.position.x = bc.minBound.x + 0.5f * step.x;

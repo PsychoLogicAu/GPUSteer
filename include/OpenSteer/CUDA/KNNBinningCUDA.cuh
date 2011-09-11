@@ -17,8 +17,12 @@ protected:
 	//uint *			m_pdCellIndices;	// Key: Index of the cell this agent is in.
 	//uint *			m_pdAgentIndices;	// Value: Index of this agent in the group.
 
+	// TODO: move these to bin_data.
 	uint *			m_pdCellStart;
 	uint *			m_pdCellEnd;
+
+	//float3 *		m_pdPositionNormalized;
+	//float3 *		m_pdPositionNormalizedSorted;
 
 	// Passed in from externally.
 	//bin_data *		m_pdBinData;			// Device bin data.

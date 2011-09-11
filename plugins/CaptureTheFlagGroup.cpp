@@ -73,7 +73,7 @@ using namespace OpenSteer;
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-#define ANNOTATION_LINES
+//#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 
 // ----------------------------------------------------------------------------
@@ -84,16 +84,17 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 2050;
-const float gDim						= 150;
-const int gCells						= 30;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 47;
 
 //const int gEnemyCount					= 10000;
 //const float gDim						= 635;
 //const int gCells						= 47;
 
-uint const	g_knn						= 5;
-uint const	g_kno						= 2;
+uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
+uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
+uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
 
 float const g_fMaxPursuitPredictionTime	= 20.0f;	// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 1.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
@@ -216,7 +217,7 @@ class CtfEnemyGroup : public VehicleGroup
 {
 public:
 	CtfEnemyGroup(void)
-		:VehicleGroup( gWorldCells, gWorldSize, g_knn, g_kno )
+		:VehicleGroup( gWorldCells, gWorldSize, g_knn, g_kno, g_searchRadius )
 	{
 		reset();
 	}
