@@ -28,6 +28,7 @@ private:
 	uint					m_nCells;				// Total number of cells.
 
 	uint					m_nSearchRadius;		// Distance in cells to search for neighbors.
+	uint					m_nNeighborsPerCell;
 	dev_vector< uint >		m_dvCellNeighbors;
 
 	std::vector< bin_cell >	m_hvCells;
@@ -45,6 +46,9 @@ private:
 public:
 	bin_data( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius );
 	~bin_data( void ) {}
+
+	uint		radius( void )				{ return m_nSearchRadius; }
+	uint		neighborsPerCell( void )	{ return m_nNeighborsPerCell; }
 
 	// Get methods for device data.
 	uint *		pdCellNeighbors( void )		{ return m_dvCellNeighbors.begin(); }
