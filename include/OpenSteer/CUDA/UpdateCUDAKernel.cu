@@ -73,7 +73,7 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	// Update speed.
 	SPEED_SH( threadIdx.x ) = float3_length( newVelocity );
 
-	if( SPEED_SH( threadIdx.x ) > 0)
+	if(SPEED_SH(threadIdx.x) > 0)
 	{
 		// Calculate the unit forward vector.
 		FORWARD_SH( threadIdx.x ) = float3_scalar_divide( newVelocity, SPEED_SH( threadIdx.x ) );

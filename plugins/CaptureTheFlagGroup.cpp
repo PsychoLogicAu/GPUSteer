@@ -74,7 +74,7 @@ using namespace OpenSteer;
 #endif
 
 #define ANNOTATION_LINES
-#define ANNOTATION_TEXT
+//#define ANNOTATION_TEXT
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -84,9 +84,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 1000;
-const float gDim						= 200;
-const int gCells						= 15;
+const int gEnemyCount					= 2050;
+const float gDim						= 150;
+const int gCells						= 30;
 
 //const int gEnemyCount					= 10000;
 //const float gDim						= 635;
@@ -96,11 +96,11 @@ uint const	g_knn						= 5;
 uint const	g_kno						= 2;
 
 float const g_fMaxPursuitPredictionTime	= 20.0f;	// Look-ahead time for pursuit.
-float const g_fMinSeparationDistance	= 1.f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
+float const g_fMinSeparationDistance	= 1.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 1.f;		// Look-ahead time for neighbor avoidance.
 
 // Weights for certain behaviors.
-float const g_fSeparationWeight			= 1.f;
+float const g_fSeparationWeight			= 10.f;
 
 
 const int gMaxObstacleCount				= 0;
@@ -208,6 +208,7 @@ public:
 
     seekerState state;
     bool evading; // xxx store steer sub-state for anotation
+	bool wandering;
     float lastRunningTime; // for auto-reset
 };
 
@@ -295,8 +296,8 @@ void CtfEnemyGroup::draw(void)
 
 #if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 	// Temporary storage used for annotation.
-	uint * KNNIndices = (uint*)malloc( g_knn * sizeof(uint) );
-	float * KNNDistances = (float*)malloc( g_knn * sizeof(float) );
+	uint KNNIndices[g_knn];
+	float KNNDistances[g_knn];
 	uint cellIndex;
 #endif
 
@@ -352,12 +353,6 @@ void CtfEnemyGroup::draw(void)
 		}
 #endif
 	}
-
-#if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
-	// Clean up the temp data.
-	free( KNNIndices );
-	free( KNNDistances );
-#endif
 }
 
 void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
@@ -470,6 +465,7 @@ void CtfSeeker::reset (void)
     gSeeker = this;
     state = running;
     evading = false;
+	wandering = false;
 
 	//setPosition(float3_scalar_multiply(position(), 2.0f));
 }
@@ -816,6 +812,9 @@ float3 CtfSeeker::steeringForSeeker (float const elapsedTime)
     const bool clearPath = clearPathToGoal();
     adjustObstacleAvoidanceLookAhead(clearPath);
 	const float3 obstacleAvoidance = steerToAvoidObstacles(*this, gAvoidancePredictTime, *gObstacles);
+	
+	float3 const& seekerPosition = position();
+	float const halfDim = 0.5f * gDim;
 
     // saved for annotation
     avoiding = !float3_equals(obstacleAvoidance, float3_zero());
@@ -825,10 +824,27 @@ float3 CtfSeeker::steeringForSeeker (float const elapsedTime)
         // use pure obstacle avoidance if needed
         return obstacleAvoidance;
     }
+	else if(	seekerPosition.x < -halfDim		||
+				seekerPosition.y < -halfDim		||
+				seekerPosition.z < -halfDim		||
+
+				seekerPosition.x > halfDim		||
+				seekerPosition.y > halfDim		||
+				seekerPosition.z > halfDim
+		)
+	{
+		// Seeker has strayed outside of the world bounds. Seek back in.
+		float3 seek = steerForSeek( *this, gHomeBaseCenter );
+		seek.y = 0.f;
+		wandering = false;
+		return seek;
+
+	}
 	else
 	{
 		float3 wander = steerForWander( *this, elapsedTime );
 		wander.y = 0.f;
+		wandering = true;
 		return wander;
 	}
 	/*
@@ -945,6 +961,8 @@ void CtfSeeker::draw (void)
             seekerStateString = "avoid obstacle";
         else if (evading)
             seekerStateString = "seek and evade";
+		else if (wandering)
+			seekerStateString = "wander";
         else
             seekerStateString = "seek goal";
         break;

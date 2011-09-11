@@ -4,29 +4,77 @@
 
 using namespace OpenSteer;
 
-bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize )
-:	m_worldCells( worldCells ),
-	m_worldSize( worldSize )
+extern "C"
 {
+	__host__ void KNNBinningCUDABindTexture( cudaArray * pCudaArray );
+	__host__ void KNNBinningCUDAUnbindTexture( void );
+
+	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
+														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
+														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
+														int const		radius,				// In:	Search radius.
+														size_t const	numCells			// In:	Number of cells.
+														);
+}
+
+bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
+:	m_worldCells( worldCells ),
+	m_worldSize( worldSize ),
+	m_nSearchRadius( searchRadius )
+{
+	m_nCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
+
 	// Create the cells.
 	CreateCells();
+	
+	// Compute the neighbors for the cells.
+	ComputeCellNeighbors( m_worldCells.y > 1 );
 
-	m_nCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
+}
+
+void bin_data::ComputeCellNeighbors( bool b3D )
+{
+	dim3 grid = gridDim();
+	dim3 block = blockDim();
+
+	size_t const neighborsPerCell	=  ipow( (m_nSearchRadius * 2 + 1), (b3D ? 3 : 2) );
+	size_t const shMemSize			= sizeof(uint) * THREADSPERBLOCK * neighborsPerCell;
+
+	// Bind the texture.
+	KNNBinningCUDABindTexture( pdCellIndexArray() );
+
+	// Allocate enough device memory.
+	m_dvCellNeighbors.resize( m_nCells * neighborsPerCell );
+
+	if( b3D )
+	{
+		// TODO: Implement.
+		//KNNBinningComputeCellNeighbors3D<<< grid, block >>>( ... );
+	}
+	else
+	{
+		KNNBinningComputeCellNeighbors2D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), neighborsPerCell, m_nSearchRadius, m_nCells );
+	}
+	cutilCheckMsg( "KNNBinningComputeCellNeighbors failed." );
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+	// Unbind the texture.
+	KNNBinningCUDAUnbindTexture();
 }
 
 void bin_data::CreateCells( void )
 {
-	float3 const step = make_float3(	m_worldSize.x / m_worldCells.x,		// width
-										m_worldSize.y / m_worldCells.y,		// depth
-										m_worldSize.z / m_worldCells.z		// height
-										);
+	float3 const step =				make_float3(	m_worldSize.x / m_worldCells.x,		// width
+													m_worldSize.y / m_worldCells.y,		// depth
+													m_worldSize.z / m_worldCells.z );	// height
 
-	float3 const stepNormalized = make_float3(	step.x / m_worldSize.x,
-												step.y / m_worldSize.y,
-												step.z / m_worldSize.z
-												);
+	float3 const stepNormalized =	make_float3(	step.x / m_worldSize.x,
+													step.y / m_worldSize.y,
+													step.z / m_worldSize.z
+													);
+
 /*
-Texture addressing in CUDA operates as follows. The binning representation should match it internally.
+Texture addressing in CUDA operates as follows.
    z|
 	|    y/
 	|    /
@@ -40,10 +88,8 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 
 	uint index = 0;
 
-	//for( size_t z = 0; z < m_worldCells.z; z++ )
 	for( size_t z = 0; z < m_worldCells.y; z++ )			// height - texture z axis, world y axis
 	{
-		//for( size_t y = 0; y < m_worldCells.y; y++ )
 		for( size_t y = 0; y < m_worldCells.z; y++ )		// depth - texture y axis, world z axis
 		{
 			for( size_t x = 0; x < m_worldCells.x; x++ )	// width - texture x axis, world x axis
@@ -52,28 +98,25 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 				bin_cell bc;
 
 				//bc.iBinIndex = iBinIndex;
-				// FIXME: check these values, should be right now :)
-				bc.iCellIndex = x + (y * m_worldCells.x) + (z * m_worldCells.z * m_worldCells.x);
+				bc.index = x + (y * m_worldCells.x) + (z * m_worldCells.z * m_worldCells.x);
 
 				// Set the offset value for the cell lookup texture.
-				phCellIndices[index++] = bc.iCellIndex;
-
-				// TODO: set uint3 indices of m_neighborPosMin & m_neighborPosMax (?)
-
-				// Cell is initially empty.
-				bc.iBegin = 0;
-				bc.iEnd = 0;
-				bc.nSize = 0;
+				phCellIndices[index++] = bc.index;
 
 				// Set the minBounds of the cell.
-				bc.minBounds.x = x * step.x;
-				bc.minBounds.y = y * step.y;
-				bc.minBounds.z = z * step.z;
+				bc.minBound.x = x * step.x - 0.5f * m_worldSize.x;
+				bc.minBound.y = y * step.y - 0.5f * m_worldSize.y;
+				bc.minBound.z = z * step.z - 0.5f * m_worldSize.z;
+
+				// Set the position of the cell.
+				bc.position.x = bc.minBound.x + 0.5f * step.x;
+				bc.position.y = bc.minBound.y + 0.5f * step.y;
+				bc.position.z = bc.minBound.z + 0.5f * step.z;
 
 				// Set the maxBounds of the cell.
-				bc.maxBounds.x = bc.minBounds.x + step.x;
-				bc.maxBounds.y = bc.minBounds.y + step.y;
-				bc.maxBounds.z = bc.minBounds.z + step.z;
+				bc.maxBound.x = bc.minBound.x + step.x;
+				bc.maxBound.y = bc.minBound.y + step.y;
+				bc.maxBound.z = bc.minBound.z + step.z;
 
 				m_hvCells.push_back( bc );
 			}
@@ -104,9 +147,6 @@ Texture addressing in CUDA operates as follows. The binning representation shoul
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &stepNormalized, sizeof(float3) ) );
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
-
-	//CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldMin", &step, sizeof(float3) ) );
-	//CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldMax", &step, sizeof(float3) ) );
 
 	// Free host memory.
 	free( phCellIndices );
