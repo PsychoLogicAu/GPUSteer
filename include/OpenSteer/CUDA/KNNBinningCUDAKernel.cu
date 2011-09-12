@@ -29,6 +29,7 @@ extern "C"
 	// Unbind the textures.
 	__host__ void KNNBinningCUDAUnbindTexture( void );
 
+	// Use to precompute the neighbors of each cell once per decomposition.
 	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
 														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
 														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
@@ -39,7 +40,6 @@ extern "C"
 
 	// Kernel to set initial bin indices of vehicles in the simulation.
 	__global__ void KNNBinningBuildDB(		float3 const*	pdPosition,				// In:	Positions of each agent.
-											//float3 *		pdPositionNormalized,	// Out:	Normalized positions of each agent.
 											size_t *		pdAgentIndices,			// Out:	Indices of each agent.
 											size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
 											size_t const	numAgents
@@ -63,7 +63,6 @@ extern "C"
 											);
 
 	__global__ void KNNBinningKernel(		float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
-											//float3 const*	pdPositionNormalizedSorted,	// In:	Sorted normalized positions of the agents.
 
 											uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
 											uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
@@ -198,20 +197,16 @@ __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 
-	__syncthreads();
-
 	// Normalize the positions.
 	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * constWorldSize.x) / constWorldSize.x;
 	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
 	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
-	__syncthreads();
+	
 	// Write the agent's cell index out to global memory.
 	pdCellIndices[index] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
-	//pdCellIndices[index] = tex3D( texCellIndicesNormalized, POSITION_SH( threadIdx.x ).x, POSITION_SH( threadIdx.x ).y, POSITION_SH( threadIdx.x ).z );
 
 	// Write the agent's index out to global memory.
 	pdAgentIndices[index] = index;
-	__syncthreads();
 }
 
 
@@ -301,7 +296,6 @@ __global__ void KNNBinningReorderData(	float3 const*	pdPosition,			// In: Agent 
 }
 
 __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
-									//float3 const*	pdPositionNormalizedSorted,	// In:	Sorted normalized positions of the agents.
 
 									uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
 									uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
