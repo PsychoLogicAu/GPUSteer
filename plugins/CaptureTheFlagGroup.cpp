@@ -73,7 +73,7 @@ using namespace OpenSteer;
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-//#define ANNOTATION_LINES
+#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
 
@@ -85,9 +85,13 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 47;
+const int gEnemyCount					= 1000;
+const float gDim						= 200;
+const int gCells						= 15;
+
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 47;
 
 //const int gEnemyCount					= 10000;
 //const float gDim						= 635;

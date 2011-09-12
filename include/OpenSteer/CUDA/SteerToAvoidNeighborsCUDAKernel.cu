@@ -313,6 +313,10 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		float const parallelness = float3_dot( DIRECTION_SH( threadIdx.x ), DIRECTION( threatIndex ) );
 		float const angle = 0.707f;
 
+		//if( threatDistance < sumOfRadii )				// Agents are interpenetrating.
+		//{
+		//	STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
+		//}
 		if( threatDistance < minCenterToCenter )	// Other agent is within 'close' range.
 		{
 			// Steer hard to dodge the other agent.
@@ -351,7 +355,7 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 				else						// perpendicular paths: steer behind threat
 				{
 					// (only the slower of the two does this)
-					if( SPEED( threatIndex ) <= SPEED_SH( threadIdx.x ) )
+					if( SPEED_SH( threadIdx.x ) <= SPEED( threatIndex ) )
 					{
 						float sideDot = float3_dot( SIDE_SH( threadIdx.x ), float3_scalar_multiply( DIRECTION( threatIndex ), SPEED( threatIndex ) ) );
 						steer = (sideDot > 0) ? -1.0f : 1.0f;
