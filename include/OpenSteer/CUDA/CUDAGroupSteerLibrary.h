@@ -31,18 +31,18 @@ public:
 
 	// AbstractSteerLibrary interface
 	// Steering behaviours
-	virtual void steerForSeek( VehicleGroup &vehicleGroup, const float3 &target );
-	virtual void steerForFlee( VehicleGroup &vehicleGroup, const float3 &target );
-	virtual void steerToFollowPath( VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path );
-	virtual void steerToStayOnPath( VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path );
+	virtual void steerForSeek( VehicleGroup &vehicleGroup, const float3 &target, float const fWeight );
+	virtual void steerForFlee( VehicleGroup &vehicleGroup, const float3 &target, float const fWeight );
+	virtual void steerToFollowPath( VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight );
+	virtual void steerToStayOnPath( VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight );
 
 	// Obstacle avoidance
-	virtual void steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle );
-	virtual void steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles );
+	virtual void steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle, float const fWeight );
+	virtual void steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles, float const fWeight );
 
 	// Pursuit/ Evasion
-	virtual void steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
-	virtual void steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime );
+	virtual void steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime, float const fWeight );
+	virtual void steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime, float const fWeight );
 
 	// KNN search
 	virtual void findKNearestNeighbors( VehicleGroup & vehicleGroup );
@@ -51,7 +51,7 @@ public:
 	virtual void update( VehicleGroup &vehicleGroup, const float elapsedTime );
 
 	// Neighborhood based behaviors.
-	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance );
+	virtual void steerToAvoidNeighbors(VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight );
 
 	// Flocking behaviors.
 	virtual void steerForSeparation( VehicleGroup &vehicleGroup, float const fWeight );

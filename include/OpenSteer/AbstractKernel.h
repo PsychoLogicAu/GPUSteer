@@ -21,11 +21,6 @@ namespace OpenSteer
 			return 0;
 		}
 
-		inline float getWeight( void )
-		{
-			return m_fWeight;
-		}
-
 	public:
 		AbstractKernel( VehicleGroup * pVehicleGroup, float const fWeight = 1.f )
 		:	m_pVehicleGroup( pVehicleGroup ),

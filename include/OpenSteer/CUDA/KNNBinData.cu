@@ -24,6 +24,9 @@ bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize, uint const
 {
 	m_nCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
 
+	m_dvCellStart.resize( m_nCells );
+	m_dvCellEnd.resize( m_nCells );
+
 	// Create the cells.
 	CreateCells();
 	

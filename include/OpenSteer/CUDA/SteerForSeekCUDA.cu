@@ -7,11 +7,11 @@ using namespace OpenSteer;
 // Kernel function prototype.
 extern "C"
 {
-	__global__ void SteerForSeekCUDAKernel( float3 * pdSteering, float3 const* pdPosition, float3 const* pdForward, float3 const target, size_t const numAgents );
+	__global__ void SteerForSeekCUDAKernel( float3 * pdSteering, float3 const* pdPosition, float3 const* pdForward, float3 const target, size_t const numAgents, float const fWeight );
 }
 
-SteerForSeekCUDA::SteerForSeekCUDA( VehicleGroup * pVehicleGroup, float3 const& target )
-:	AbstractCUDAKernel( pVehicleGroup ),
+SteerForSeekCUDA::SteerForSeekCUDA( VehicleGroup * pVehicleGroup, float3 const& target, float const fWeight )
+:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
 	m_target( target )
 {
 }
@@ -31,7 +31,7 @@ void SteerForSeekCUDA::run(void)
 	float3 const* pdPosition = m_pVehicleGroupData->pdPosition();
 	float3 const* pdForward = m_pVehicleGroupData->pdForward();
 
-	SteerForSeekCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, m_target, getNumAgents() );
+	SteerForSeekCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, m_target, getNumAgents(), m_fWeight );
 	cutilCheckMsg( "SteerForSeekCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }

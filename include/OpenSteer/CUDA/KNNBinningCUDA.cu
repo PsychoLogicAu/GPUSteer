@@ -64,7 +64,7 @@ extern "C"
 }
 
 KNNBinningCUDA::KNNBinningCUDA( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup )
+:	AbstractCUDAKernel( pVehicleGroup, 1.f )
 {
 	m_nCells = m_pVehicleGroup->GetBinData().getNumCells();
 	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
@@ -74,12 +74,6 @@ void KNNBinningCUDA::init( void )
 {
 	// Bind the cell indices texture.
 	KNNBinningCUDABindTexture( m_pVehicleGroup->GetBinData().pdCellIndexArray() );
-
-	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellStart, m_nCells * sizeof(uint) ) );
-	CUDA_SAFE_CALL( cudaMalloc( &m_pdCellEnd, m_nCells * sizeof(uint) ) );
-
-	//CUDA_SAFE_CALL( cudaMalloc( &m_pdPositionNormalized, getNumAgents() * sizeof(float3) ) );
-	//CUDA_SAFE_CALL( cudaMalloc( &m_pdPositionNormalizedSorted, getNumAgents() * sizeof(float3) ) );
 }
 
 void KNNBinningCUDA::run( void )
@@ -101,6 +95,9 @@ void KNNBinningCUDA::run( void )
 	float *			pdKNNDistances			= m_pNearestNeighborData->pdKNNDistances();
 
 	uint *			pdCellIndices			= m_pNearestNeighborData->pdCellIndices();
+
+	uint *			pdCellStart				= m_pVehicleGroup->GetBinData().pdCellStart();
+	uint *			pdCellEnd				= m_pVehicleGroup->GetBinData().pdCellEnd();
 
 	uint *			pdCellIndicesSorted		= m_pNearestNeighborData->pdCellIndicesSorted();
 	uint *			pdAgentIndicesSorted	= m_pNearestNeighborData->pdAgentIndicesSorted();
@@ -138,12 +135,12 @@ void KNNBinningCUDA::run( void )
 							thrust::device_ptr<uint>( pdAgentIndicesSorted ) );
 
 	// Set all cells to empty.
-	CUDA_SAFE_CALL( cudaMemset( m_pdCellStart, 0xffffffff, m_nCells * sizeof(uint) ) );
+	CUDA_SAFE_CALL( cudaMemset( pdCellStart, 0xffffffff, m_nCells * sizeof(uint) ) );
 
 	KNNBinningReorderData<<< grid, block >>>(	pdPosition, /*m_pdPositionNormalized,*/ pdDirection, pdSpeed,
 												pdAgentIndicesSorted, pdCellIndicesSorted,
 												pdPositionSorted, /*m_pdPositionNormalizedSorted,*/ pdDirectionSorted, pdSpeedSorted,
-												m_pdCellStart, m_pdCellEnd,
+												pdCellStart, pdCellEnd,
 												numAgents
 												);
 	cutilCheckMsg( "KNNBinningReorderData failed" );
@@ -154,7 +151,7 @@ void KNNBinningCUDA::run( void )
 
 	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted, /*m_pdPositionNormalizedSorted,*/
 													pdAgentIndicesSorted, pdCellIndicesSorted,
-													m_pdCellStart, m_pdCellEnd,
+													pdCellStart, pdCellEnd,
 													pdCellNeighbors, neighborsPerCell,
 													pdKNNIndices, pdKNNDistances,
 													k, radius, numAgents
@@ -185,10 +182,4 @@ void KNNBinningCUDA::close( void )
 {
 	// Unbind the texture.
 	KNNBinningCUDAUnbindTexture();
-
-	CUDA_SAFE_CALL( cudaFree( m_pdCellStart ) );
-	CUDA_SAFE_CALL( cudaFree( m_pdCellEnd ) );
-
-	//CUDA_SAFE_CALL( cudaFree( m_pdPositionNormalized ) );
-	//CUDA_SAFE_CALL( cudaFree( m_pdPositionNormalizedSorted ) );
 }

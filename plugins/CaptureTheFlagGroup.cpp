@@ -66,6 +66,8 @@
 #include "OpenSteer/CUDA/CUDAGlobals.cuh"
 
 #include "OpenSteer/VehicleData.h"
+
+#include "OpenSteer/CUDA/DebugUtils.h"
  
 using namespace OpenSteer;
 
@@ -73,7 +75,7 @@ using namespace OpenSteer;
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-#define ANNOTATION_LINES
+//#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
 
@@ -85,13 +87,13 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 1000;
-const float gDim						= 200;
-const int gCells						= 15;
+//const int gEnemyCount					= 1000;
+//const float gDim						= 200;
+//const int gCells						= 15;
 
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 47;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 100;
 
 //const int gEnemyCount					= 10000;
 //const float gDim						= 635;
@@ -101,12 +103,16 @@ uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
 uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
 
-float const g_fMaxPursuitPredictionTime	= 20.0f;	// Look-ahead time for pursuit.
+float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 1.f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 1.f;		// Look-ahead time for neighbor avoidance.
 
-// Weights for certain behaviors.
-float const g_fSeparationWeight			= 1.f;
+// Weights for behaviors.
+float const g_fWeightSeparation			= 0.2f;
+float const g_fWeightPursuit			= 1.f;
+float const g_fWeightObstacleAvoidance	= 1.f;
+float const g_fWeightAvoidNeighbors		= 1.f;
+//float const g_fPursuitWeight			= 1.f;
 
 
 const int gMaxObstacleCount				= 0;
@@ -374,12 +380,15 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	SetSyncHost();
 
 	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
-	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance );
+	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
 
-	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime );
-	CUDAGroupSteerLibrary.steerForSeparation( *this, g_fSeparationWeight );
+	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
+	//CUDAGroupSteerLibrary.steerForSeek( *this, gSeeker->position(), g_fWeightPursuit );
 
-	CUDAGroupSteerLibrary.update(*this, elapsedTime);
+	// Maintain some semblence of separation.
+	CUDAGroupSteerLibrary.steerForSeparation( *this, g_fWeightSeparation );
+
+	CUDAGroupSteerLibrary.update( *this, elapsedTime );
 
 	// Pull the data back to the host so we can render the next frame.
 	SyncHost();

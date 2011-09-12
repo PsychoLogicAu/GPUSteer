@@ -18,7 +18,7 @@ protected:
 public:
 	SteerForPursuitCUDA(	VehicleGroup * pVehicleGroup, 
 							float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
-							const float fMaxPredictionTime );
+							const float fMaxPredictionTime, float const fWeight );
 	~SteerForPursuitCUDA( void ) {}
 
 	virtual void init( void );

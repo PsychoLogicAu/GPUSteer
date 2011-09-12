@@ -10,8 +10,8 @@ extern "C"
 												float3 const*	pdPosition,
 		
 												float3 *		pdSteering,
-												float const		weight,
-												size_t const	numAgents
+												size_t const	numAgents,
+												float const		fWeight
 												);
 }
 
@@ -43,7 +43,7 @@ void SteerForSeparationCUDA::run( void )
 	size_t shMemSize = k * THREADSPERBLOCK * sizeof(uint);
 
 	// Launch the kernel.
-	SteerForSeparationKernel<<< grid, block, shMemSize >>>( pdKNNIndices, k, pdPosition, pdSteering, getWeight(), numAgents );
+	SteerForSeparationKernel<<< grid, block, shMemSize >>>( pdKNNIndices, k, pdPosition, pdSteering, numAgents, m_fWeight );
 	cutilCheckMsg( "SteerForSeparationKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }

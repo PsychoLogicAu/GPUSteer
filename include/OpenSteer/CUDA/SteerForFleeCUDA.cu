@@ -8,11 +8,11 @@ using namespace OpenSteer;
 extern "C"
 {
 	__global__ void SteerForFleeCUDAKernel(	float3 const* pdPosition, float3 const* pdForward, float3 * pdSteering,
-											float3 const target, size_t const numAgents );
+											float3 const target, size_t const numAgents, float const fWeight );
 }
 
-SteerForFleeCUDA::SteerForFleeCUDA( VehicleGroup * pVehicleGroup, const float3 &target )
-:	AbstractCUDAKernel( pVehicleGroup ),
+SteerForFleeCUDA::SteerForFleeCUDA( VehicleGroup * pVehicleGroup, const float3 &target, float const fWeight )
+:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
 	m_target( target )
 { }
 
@@ -29,7 +29,7 @@ void SteerForFleeCUDA::run(void)
 	float3 const* pdForward = m_pVehicleGroupData->pdForward();
 	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
 
-	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdForward, pdSteering, m_target, getNumAgents() );
+	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdForward, pdSteering, m_target, getNumAgents(), m_fWeight );
 	cutilCheckMsg( "SteerForFleeCUDAKernel failed." );
 
 	cudaThreadSynchronize();

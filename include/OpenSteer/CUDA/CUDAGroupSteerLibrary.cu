@@ -12,10 +12,10 @@ CUDAGroupSteerLibrarySingleton* CUDAGroupSteerLibrarySingleton::Instance(void)
 	return _instance;
 }
 
-void CUDAGroupSteerLibrarySingleton::steerForSeek(VehicleGroup &vehicleGroup, const float3 &target)
+void CUDAGroupSteerLibrarySingleton::steerForSeek( VehicleGroup & vehicleGroup, float3 const& target, float const fWeight )
 {
 	//vehicleGroup.OutputDataToFile("vehicledata.txt");
-	SteerForSeekCUDA kernel( &vehicleGroup, target );
+	SteerForSeekCUDA kernel( &vehicleGroup, target, fWeight );
 
 	kernel.init();
 	kernel.run();
@@ -32,26 +32,26 @@ void CUDAGroupSteerLibrarySingleton::update( VehicleGroup &vehicleGroup, const f
 	kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerForFlee( VehicleGroup &vehicleGroup, const float3 &target )
+void CUDAGroupSteerLibrarySingleton::steerForFlee( VehicleGroup &vehicleGroup, const float3 &target, float const fWeight )
 {
-	SteerForFleeCUDA kernel( &vehicleGroup, target );
+	SteerForFleeCUDA kernel( &vehicleGroup, target, fWeight );
 
 	kernel.init();
 	kernel.run();
 	kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToFollowPath(VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path)
+void CUDAGroupSteerLibrarySingleton::steerToFollowPath(VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight)
 {
 
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToStayOnPath(VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path)
+void CUDAGroupSteerLibrarySingleton::steerToStayOnPath(VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight)
 {
 
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle )
+void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacle( VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle, float const fWeight )
 {
 	//AvoidObstacleCUDA kernel( &vehicleGroup, minTimeToCollision, &obstacle );
 
@@ -60,7 +60,7 @@ void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacle( VehicleGroup &vehicle
 	//kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles )
+void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles, float const fWeight )
 {
 	//AvoidObstaclesCUDA kernel( &vehicleGroup, minTimeToCollision, &obstacles );
 
@@ -69,18 +69,18 @@ void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( VehicleGroup &vehicl
 	//kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance )
+void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight )
 {
-	SteerToAvoidNeighborsCUDA kernel( &vehicleGroup, fMinTimeToCollision, fMinSeparationDistance );
+	SteerToAvoidNeighborsCUDA kernel( &vehicleGroup, fMinTimeToCollision, fMinSeparationDistance, fWeight );
 
 	kernel.init();
 	kernel.run();
 	kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime )
+void CUDAGroupSteerLibrarySingleton::steerForPursuit( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime, float const fWeight )
 {
-	SteerForPursuitCUDA kernel( &vehicleGroup, target.position, target.forward, target.velocity(), target.speed, maxPredictionTime );
+	SteerForPursuitCUDA kernel( &vehicleGroup, target.position, target.forward, target.velocity(), target.speed, maxPredictionTime, fWeight );
 
 	kernel.init();
 	kernel.run();
@@ -100,7 +100,7 @@ void CUDAGroupSteerLibrarySingleton::findKNearestNeighbors( VehicleGroup & vehic
 	kernel.close();
 }
 
-void CUDAGroupSteerLibrarySingleton::steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime )
+void CUDAGroupSteerLibrarySingleton::steerForEvasion( VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime, float const fWeight )
 {
 
 }

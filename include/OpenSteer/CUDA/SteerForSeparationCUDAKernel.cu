@@ -10,8 +10,8 @@ extern "C"
 												float3 const*	pdPosition,
 		
 												float3 *		pdSteering,
-												float const		weight,
-												size_t const	numAgents
+												size_t const	numAgents,
+												float const		fWeight
 												);
 }
 
@@ -22,8 +22,8 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 											float3 const*	pdPosition,
 	
 											float3 *		pdSteering,
-											float const		weight,
-											size_t const	numAgents
+											size_t const	numAgents,
+											float const		fWeight
 											)
 {
 	uint index = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -39,8 +39,9 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 	// Copy required from global memory.
 	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
 	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	for( uint i = 0; i < k; i++ )
-		shKNNIndices[threadIdx.x + (THREADSPERBLOCK*i)] = pdKNNIndices[index + (THREADSPERBLOCK*i)];
+
+	for( int i = 0; i < k; i++ )
+		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
 	__syncthreads();
 
     // steering accumulator and count of neighbors, both initially zero
@@ -59,7 +60,6 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 
 		float3 const offset = float3_subtract( pdPosition[ otherIndex ], POSITION_SH( threadIdx.x ) );
 		float const distanceSquared = float3_dot( offset, offset );
-		//steering += float3_scalar_divide( offset, -distanceSquared );
 		steering = float3_add( steering, float3_scalar_divide( offset, -distanceSquared ) );
 
 		neighbors++;
@@ -70,7 +70,7 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 		steering = float3_normalize( float3_scalar_divide( steering, (float)neighbors ) );
 
 	// Apply the weight.
-	float3_scalar_multiply( steering, weight );
+	steering = float3_scalar_multiply( steering, fWeight );
 
 	// Add into the steering vector.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );

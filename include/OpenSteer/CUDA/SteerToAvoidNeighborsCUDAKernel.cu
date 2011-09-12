@@ -2,6 +2,8 @@
 
 #include "CUDAKernelGlobals.cuh"
 
+#define CLOSE_CHECK
+
 extern "C"
 {
 	__global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			// In:		Indices of the KNN for each agent.
@@ -19,9 +21,10 @@ extern "C"
 														float const		minTimeToCollision,		// In:		Look-ahead time for collision avoidance.
 														float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
 
-														size_t const	numAgents
+														size_t const	numAgents,
+														float const		fWeight
 														);
-
+/*
 	__global__ void SteerToAvoidCloseNeighborsCUDAKernel(	uint const*		pdKNNIndices,
 		float const*	pdKNNDistances,
 		size_t const	k,
@@ -37,8 +40,10 @@ extern "C"
 
 		size_t const	numAgents
 		);
+*/
 }
 
+/*
 // DEPRECATED: this has been handled within SteerToAvoidNeighborsCUDAKernel
 __global__ void SteerToAvoidCloseNeighborsCUDAKernel(	uint const*		pdKNNIndices,
 													 float const*	pdKNNDistances,
@@ -137,6 +142,7 @@ __global__ void SteerToAvoidCloseNeighborsCUDAKernel(	uint const*		pdKNNIndices,
 
 	SPEED( index ) = SPEED_SH( threadIdx.x );
 }
+*/
 
 // Given the time until nearest approach (predictNearestApproachTime)
 // determine position of each agent at that time, and the distance
@@ -199,7 +205,8 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 													float const		minTimeToCollision,		// In:		Look-ahead time for collision avoidance.
 													float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
 
-													size_t const	numAgents
+													size_t const	numAgents,
+													float const		fWeight
 												)
 {
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -264,6 +271,7 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		// avoid when future positions are this close (or less)
 		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + RADIUS( otherIndex );
 
+#if defined CLOSE_CHECK
 		// Check for a 'close' neighbor.
 		if( otherDistance < (minSeparationDistance + sumOfRadii) && otherDistance < threatDistance )
 		{
@@ -275,6 +283,7 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 
 		if( minTime == 0.f )
 			continue;
+#endif
 
 		// predicted time until nearest approach of "this" and "other"
 		float const time = predictNearestApproachTime(	POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), SPEED_SH( threadIdx.x ),
@@ -313,10 +322,7 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		float const parallelness = float3_dot( DIRECTION_SH( threadIdx.x ), DIRECTION( threatIndex ) );
 		float const angle = 0.707f;
 
-		//if( threatDistance < sumOfRadii )				// Agents are interpenetrating.
-		//{
-		//	STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
-		//}
+#if defined CLOSE_CHECK
 		if( threatDistance < minCenterToCenter )	// Other agent is within 'close' range.
 		{
 			// Steer hard to dodge the other agent.
@@ -334,6 +340,7 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		}
 		else
 		{
+#endif
 
 
 			if( parallelness < -angle )		// anti-parallel "head on" paths:
@@ -362,7 +369,9 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 					}
 				}
 			}
+#if defined CLOSE_CHECK
 		}
+#endif
 	}
 
 	STEERING_SH( threadIdx.x ) = float3_scalar_multiply( SIDE_SH( threadIdx.x ), steer );
