@@ -10,40 +10,45 @@ using namespace OpenSteer;
 extern "C"
 {
 	__global__ void SteerForFleeCUDAKernel(	float3 const* pdPosition, float3 const* pdForward, float3 * pdSteering,
-											float3 const target, size_t const numAgents )
-	{
-		int offset = (blockIdx.x * blockDim.x) + threadIdx.x;
+											float3 const target, size_t const numAgents, float const fWeight );
+}
 
-		// Check bounds.
-		if( offset >= numAgents )
-			return;
+__global__ void SteerForFleeCUDAKernel(	float3 const* pdPosition, float3 const* pdForward, float3 * pdSteering,
+									   float3 const target, size_t const numAgents, float const fWeight )
 
-		// Shared memory for the input data.
-		__shared__ float3 shSteering[THREADSPERBLOCK];
-		__shared__ float3 shPosition[THREADSPERBLOCK];
-		__shared__ float3 shForward[THREADSPERBLOCK];
+{
+	int offset = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-		// Temporary shared memory storage for desired velocity.
-		__shared__ float3 shDesiredVelocity[THREADSPERBLOCK];
+	// Check bounds.
+	if( offset >= numAgents )
+		return;
 
-		// Copy the required data to shared memory.
-		FLOAT3_GLOBAL_READ( shSteering, pdSteering );
-		FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-		FLOAT3_GLOBAL_READ( shForward, pdForward );
+	// Shared memory for the input data.
+	__shared__ float3 shSteering[THREADSPERBLOCK];
+	__shared__ float3 shPosition[THREADSPERBLOCK];
+	__shared__ float3 shForward[THREADSPERBLOCK];
 
-		// If we already have a steering vector set, do nothing.
-		if( !float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
-			return;
+	// Copy the required data to shared memory.
+	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
+	FLOAT3_GLOBAL_READ( shForward, pdForward );
 
-		// Get the desired velocity.
-		shDesiredVelocity[ threadIdx.x ] = float3_subtract( POSITION_SH( threadIdx.x ), target );
+	// If we already have a steering vector set, do nothing.
+	if( ! float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
+		return;
 
-		// Set the steering vector.
-		STEERING_SH( threadIdx.x ) = float3_subtract( shDesiredVelocity[ threadIdx.x ], FORWARD_SH( threadIdx.x ) );
+	// Get the desired velocity.
+	float3 const desiredVelocity = float3_subtract( POSITION_SH( threadIdx.x ), target );
 
-		__syncthreads();
+	// Set the steering vector.
+	float3 steering = float3_subtract( desiredVelocity, FORWARD_SH( threadIdx.x ) );
 
-		// Copy the steering vectors back to global memory.
-		FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
-	}
+	// Normalize and apply the weight.
+	steering = float3_scalar_multiply( float3_normalize( steering ), fWeight );
+
+	// Add into the steering vector.
+	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
+
+	// Copy the steering vectors back to global memory.
+	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 }

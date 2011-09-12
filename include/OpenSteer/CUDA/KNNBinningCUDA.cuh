@@ -18,8 +18,8 @@ protected:
 	//uint *			m_pdAgentIndices;	// Value: Index of this agent in the group.
 
 	// TODO: move these to bin_data.
-	uint *			m_pdCellStart;
-	uint *			m_pdCellEnd;
+	//uint *			m_pdCellStart;
+	//uint *			m_pdCellEnd;
 
 	//float3 *		m_pdPositionNormalized;
 	//float3 *		m_pdPositionNormalizedSorted;

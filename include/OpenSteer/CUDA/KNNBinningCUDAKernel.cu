@@ -340,8 +340,6 @@ __global__ void KNNBinningKernel(	float3 const*	pdPositionSorted,			// In:	(sort
 	// Store this thread's agent index and cell index in registers. TODO: texture memory.
 	uint const		agentIndex				= pdAgentIndices[ index ];
 	uint			cellIndex				= pdCellIndices[ index ];
-	// Debugging:
-	float3 const	agentPosition			= POSITION_SH( threadIdx.x );
 
 	// Get the offset for the neighbors of this cell.
 	int const cellNeighborsOffset = cellIndex * neighborsPerCell;

@@ -29,18 +29,14 @@ extern "C"
 											);
 }
 
-#define USE_THRUST
-
-#ifdef USE_THRUST
 #include <thrust/device_ptr.h>
 #include <thrust/sort.h>
-#endif
 
 using namespace OpenSteer;
 
 #pragma region KNNBruteForceCUDA
 KNNBruteForceCUDA::KNNBruteForceCUDA( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup )
+:	AbstractCUDAKernel( pVehicleGroup, 1.f )
 { }
 
 void KNNBruteForceCUDA::init( void )
@@ -91,12 +87,8 @@ void KNNBruteForceCUDA::run( void )
 		thrust::device_ptr< size_t > pdIndexStart( m_pdIndexMatrix + (i * numAgents) );
 
 		// Sort the results (using thrust)
-#ifdef USE_THRUST
 		thrust::sort_by_key( pdDistanceStart, pdDistanceEnd, pdIndexStart );
-#endif
-
 	}
-
 	
 	cudaEventRecord( stop, 0 );
 	cudaEventSynchronize( stop );
@@ -127,7 +119,7 @@ void KNNBruteForceCUDA::close( void )
 //	V2 implementation.
 //
 KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup )
+:	AbstractCUDAKernel( pVehicleGroup, 1.f )
 {
 	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
 }
@@ -169,7 +161,7 @@ void KNNBruteForceCUDAV2::close( void )
 //	V3 implementation.
 //
 KNNBruteForceCUDAV3::KNNBruteForceCUDAV3( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup )
+:	AbstractCUDAKernel( pVehicleGroup, 1.f )
 {
 	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
 }

@@ -14,7 +14,7 @@ extern "C"
 }
 
 UpdateCUDA::UpdateCUDA( VehicleGroup * pVehicleGroup, const float fElapsedTime )
-:	AbstractCUDAKernel( pVehicleGroup ),
+:	AbstractCUDAKernel( pVehicleGroup, 1.f ),
 	m_fElapsedTime( fElapsedTime )
 {
 }

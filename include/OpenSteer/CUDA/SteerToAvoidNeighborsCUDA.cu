@@ -19,7 +19,8 @@ extern "C"
 														float const		minTimeToCollision,		// In:		Look-ahead time for collision avoidance.
 														float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
 
-														size_t const	numAgents
+														size_t const	numAgents,
+														float const		fWeight
 														);
 
 	__global__ void SteerToAvoidCloseNeighborsCUDAKernel(	uint const*		pdKNNIndices,
@@ -35,12 +36,13 @@ extern "C"
 
 															float const		minSeparationDistance,
 
-															size_t const	numAgents
+															size_t const	numAgents,
+															float const		fWeight
 															);
 }
 
-SteerToAvoidNeighborsCUDA::SteerToAvoidNeighborsCUDA( VehicleGroup *pVehicleGroup, float const fMinTimeToCollision, float const fMinSeparationDistance )
-:	AbstractCUDAKernel( pVehicleGroup ),
+SteerToAvoidNeighborsCUDA::SteerToAvoidNeighborsCUDA( VehicleGroup *pVehicleGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight )
+:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
 	m_fMinTimeToCollision( fMinTimeToCollision ),
 	m_fMinSeparationDistance( fMinSeparationDistance )
 {
@@ -89,7 +91,7 @@ void SteerToAvoidNeighborsCUDA::run( void )
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(uint) + sizeof(float));
 	
-	SteerToAvoidNeighborsCUDAKernel<<< grid, block, shMemSize >>>( pdKNNIndices, pdKNNDistances, k, pdPosition, pdDirection, pdRadius, pdSide, pdSpeed, pdSteering, m_fMinTimeToCollision, m_fMinSeparationDistance, numAgents );
+	SteerToAvoidNeighborsCUDAKernel<<< grid, block, shMemSize >>>( pdKNNIndices, pdKNNDistances, k, pdPosition, pdDirection, pdRadius, pdSide, pdSpeed, pdSteering, m_fMinTimeToCollision, m_fMinSeparationDistance, numAgents, m_fWeight );
 	cutilCheckMsg( "SteerToAvoidNeighborsCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }

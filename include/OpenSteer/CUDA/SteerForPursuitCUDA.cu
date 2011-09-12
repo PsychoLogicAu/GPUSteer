@@ -9,13 +9,14 @@ extern "C"
 {
 	__global__ void SteerForPursuitCUDAKernel(	float3 * pdSteering, float3 const* pdPosition, float3 const* pdForward, float const* pdSpeed, 
 												float3 const targetPosition, float3 const targetForward, float3 const targetVelocity, float const targetSpeed,
-												size_t const numAgents, float const maxPredictionTime );
+												size_t const numAgents, float const maxPredictionTime, float const weight
+												);
 }
 
 SteerForPursuitCUDA::SteerForPursuitCUDA(	VehicleGroup * pVehicleGroup, 
 											float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
-											const float fMaxPredictionTime )
-:	AbstractCUDAKernel( pVehicleGroup ),
+											const float fMaxPredictionTime, float const fWeight )
+:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
 	m_targetPosition( targetPosition ),
 	m_targetForward( targetForward ),
 	m_targetVelocity( targetVelocity ),
@@ -37,7 +38,7 @@ void SteerForPursuitCUDA::run(void)
 	float3 const* pdForward = m_pVehicleGroupData->pdForward();
 	float const* pdSpeed = m_pVehicleGroupData->pdSpeed();
 
-	SteerForPursuitCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, pdSpeed, m_targetPosition, m_targetForward, m_targetVelocity, m_targetSpeed, getNumAgents(), m_fMaxPredictionTime );
+	SteerForPursuitCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, pdSpeed, m_targetPosition, m_targetForward, m_targetVelocity, m_targetSpeed, getNumAgents(), m_fMaxPredictionTime, m_fWeight );
 	cutilCheckMsg( "SteerForPursuitCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }

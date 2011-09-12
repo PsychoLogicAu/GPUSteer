@@ -13,7 +13,7 @@ protected:
 	float m_fMinSeparationDistance;
 
 public:
-	SteerToAvoidNeighborsCUDA( VehicleGroup *pVehicleGroup, float const fMinTimeToCollision, float const fMinSeparationDistance );
+	SteerToAvoidNeighborsCUDA( VehicleGroup *pVehicleGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight );
 	~SteerToAvoidNeighborsCUDA( void ) {}
 
 	virtual void init( void );
