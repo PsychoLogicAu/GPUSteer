@@ -78,6 +78,7 @@ using namespace OpenSteer;
 //#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
+#define NO_DRAW
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -91,9 +92,13 @@ class CtfBase;
 //const float gDim						= 200;
 //const int gCells						= 15;
 
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 100;
+//const int gEnemyCount					= 3000000;
+//const float gDim						= 8000;
+//const int gCells						= 1500;
+
+const int gEnemyCount					= 100000;
+const float gDim						= 2000;
+const int gCells						= 550;
 
 //const int gEnemyCount					= 10000;
 //const float gDim						= 635;
@@ -101,14 +106,14 @@ const int gCells						= 100;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
-uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
+uint const	g_searchRadius				= 2;		// Distance in cells to search for neighbors.
 
 float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 1.f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 1.f;		// Look-ahead time for neighbor avoidance.
 
 // Weights for behaviors.
-float const g_fWeightSeparation			= 0.2f;
+float const g_fWeightSeparation			= 0.1f;
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightObstacleAvoidance	= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
@@ -269,6 +274,11 @@ void CtfEnemyGroup::reset(void)
 
 		delete enemy;
 	}
+
+	// Transfer the data to the device.
+	SyncDevice();
+	// Compute the initial KNN
+	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
 }
 
 // ----------------------------------------------------------------------------
@@ -297,6 +307,10 @@ void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData
 
 void CtfEnemyGroup::draw(void)
 {
+#if defined NO_DRAW
+	return;
+#endif
+
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
@@ -375,11 +389,14 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// This should be accomplished with a pursuit kernel instead.
 	//CUDAGroupSteerLibrary.steerForSeek(*this, gSeeker->position());
 
-	SyncDevice();
+	//SyncDevice();
 	// Force the host to pull data on next call to SyncHost().
-	SetSyncHost();
+	//SetSyncHost();
 
-	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
+	//uint j = 0;
+	//if( j++ % 5 == 0 )
+		CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
+
 	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
 
 	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
@@ -391,7 +408,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	CUDAGroupSteerLibrary.update( *this, elapsedTime );
 
 	// Pull the data back to the host so we can render the next frame.
-	SyncHost();
+	//SyncHost();
 
 	/*
 {
