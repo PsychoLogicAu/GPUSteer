@@ -10,14 +10,14 @@ using namespace OpenSteer;
 extern "C"
 {
 	__global__ void UpdateCUDAKernel(	// vehicle_group_data members.
-										float3 * pdSide, float3 * pdUp, float3 * pdForward,
+										float3 * pdSide, float3 * pdUp, float3 * pdDirection,
 										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
 										// vehicle_group_const members.
 										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
 										float const elapsedTime, size_t const numAgents );
 }
 
-__global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdForward,
+__global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDirection,
 										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
 										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
 										float const elapsedTime, size_t const numAgents )
@@ -31,7 +31,7 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	// Copy the vehicleData and vehicleConst values to shared memory.
 	__shared__ float3 shSide[THREADSPERBLOCK];
 	__shared__ float3 shUp[THREADSPERBLOCK];
-	__shared__ float3 shForward[THREADSPERBLOCK];
+	__shared__ float3 shDirection[THREADSPERBLOCK];
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	__shared__ float3 shSteering[THREADSPERBLOCK];
 	__shared__ float shSpeed[THREADSPERBLOCK];
@@ -43,7 +43,7 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	// Copy the required global memory variables to shared mem.
 	FLOAT3_GLOBAL_READ( shSide, pdSide );
 	FLOAT3_GLOBAL_READ( shUp, pdUp );
-	FLOAT3_GLOBAL_READ( shForward, pdForward );
+	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
 	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
 	
@@ -76,15 +76,15 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	if(SPEED_SH(threadIdx.x) > 0)
 	{
 		// Calculate the unit forward vector.
-		FORWARD_SH( threadIdx.x ) = float3_scalar_divide( newVelocity, SPEED_SH( threadIdx.x ) );
+		DIRECTION_SH( threadIdx.x ) = float3_scalar_divide( newVelocity, SPEED_SH( threadIdx.x ) );
 
 		// derive new side basis vector from NEW forward and OLD up.
 		// TODO: handedness? assumed right
-		SIDE_SH( threadIdx.x ) = float3_normalize( float3_cross( FORWARD_SH( threadIdx.x ), UP_SH( threadIdx.x ) ) );
+		SIDE_SH( threadIdx.x ) = float3_normalize( float3_cross( DIRECTION_SH( threadIdx.x ), UP_SH( threadIdx.x ) ) );
 
 		// derive new up basis vector from new forward and side.
 		// TODO: handedness? assumed right
-		UP_SH( threadIdx.x ) = float3_cross( SIDE_SH( threadIdx.x ), FORWARD_SH( threadIdx.x ) );
+		UP_SH( threadIdx.x ) = float3_cross( SIDE_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ) );
 	}
 
 	// Euler integrate (per frame) velocity into position.
@@ -93,15 +93,12 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdFo
 	// Set the steering vector back to zero.
 	STEERING_SH( threadIdx.x ) = float3_zero();
 
-	__syncthreads();
-
 	// Copy the shared memory back to global.
 	FLOAT3_GLOBAL_WRITE( pdSide, shSide );
 	FLOAT3_GLOBAL_WRITE( pdUp, shUp );
-	FLOAT3_GLOBAL_WRITE( pdForward, shForward );
+	FLOAT3_GLOBAL_WRITE( pdDirection, shDirection );
 	FLOAT3_GLOBAL_WRITE( pdPosition, shPosition );
 	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 
-	__syncthreads();
 	SPEED( index ) = SPEED_SH( threadIdx.x );
 }

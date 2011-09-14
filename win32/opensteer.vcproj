@@ -239,86 +239,6 @@
 				Name="CUDA"
 				>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.cu"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="Cudart Build Rule"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="Cudart Build Rule"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.h"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="Cudart Build Rule"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="Cudart Build Rule"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.h"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
 					RelativePath="..\include\OpenSteer\CUDA\CUDAGlobals.cuh"
 					>
 				</File>
@@ -382,11 +302,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDAKernel.cu"
-						>
-					</File>
-					<File
-						RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
+						RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu"
 						>
 					</File>
 					<File
@@ -493,6 +409,114 @@
 						RelativePath="..\include\OpenSteer\CUDA\dev_vector.cuh"
 						>
 					</File>
+				</Filter>
+				<Filter
+					Name="Obstacle and Wall avoidance"
+					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.cu"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.h"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.h"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\WallData.cuh"
+						>
+					</File>
+					<Filter
+						Name="Kernels"
+						>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDAKernel.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
+							>
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 		</Filter>

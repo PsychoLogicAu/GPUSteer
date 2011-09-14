@@ -326,12 +326,12 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		if( threatDistance < minCenterToCenter )	// Other agent is within 'close' range.
 		{
 			// Steer hard to dodge the other agent.
-			STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
+			//STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
 
 			// Slow down if collision iminent
 			// If the agent at threatIndex is ahead of me...
 			if(	float3_dot( DIRECTION_SH( threadIdx.x ), offset ) > 0.f &&		// Other agent is in front.
-				SPEED_SH( threadIdx.x ) > SPEED( threatIndex )					// Moving faster than the threat agent.
+				SPEED_SH( threadIdx.x ) > SPEED( threatIndex )					// I am moving faster than the threat agent.
 				)
 			{
 				// I should slow down.
@@ -369,12 +369,13 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 					}
 				}
 			}
+		STEERING_SH( threadIdx.x ) = float3_scalar_multiply( SIDE_SH( threadIdx.x ), steer );
+	
 #if defined CLOSE_CHECK
 		}
 #endif
 	}
 
-	STEERING_SH( threadIdx.x ) = float3_scalar_multiply( SIDE_SH( threadIdx.x ), steer );
 
 	__syncthreads();
 

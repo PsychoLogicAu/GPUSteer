@@ -69,6 +69,8 @@
 // To include OpenSteer::round.
 #include "OpenSteer/Utilities.h"
 
+int const gSegments = 10;
+
 // ----------------------------------------------------------------------------
 
 
@@ -1201,7 +1203,7 @@ OpenSteer::drawBasic2dCircularVehicle (	float const& radius,
     endDoubleSidedDrawing ();
 
     // draw the circular collision boundary
-    drawXZCircle (radius, float3_add(position, u), gWhite, 20);
+    drawXZCircle (radius, float3_add(position, u), gWhite, gSegments);
 }
 
 

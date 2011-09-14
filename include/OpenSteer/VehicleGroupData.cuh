@@ -324,9 +324,9 @@ public:
 typedef vehicle_group_const VehicleGroupConst;
 
 /// Compute the velocity of the vehicle at index i.
-static inline __host__ __device__ float3 velocity( size_t const i, float3 const* pForward, float const* pSpeed )
+static inline __host__ __device__ float3 velocity( size_t const i, float3 const* pDirection, float const* pSpeed )
 {
-	return float3_scalar_multiply( pForward[i], pSpeed[i] );
+	return float3_scalar_multiply( pDirection[i], pSpeed[i] );
 }
 /// Compute the predicted position of the vehicle at index i at time (current + fPredictionTime).
 static inline __host__ __device__ float3 predictFuturePosition( size_t const i, float3 const* pPosition, float3 const* pForward, float const* pSpeed, float const fPredictionTime )
