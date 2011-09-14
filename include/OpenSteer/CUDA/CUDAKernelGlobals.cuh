@@ -106,7 +106,7 @@ static __inline__ __device__ __host__ int ipow( int base, int exp )
 // VehicleData
 #define STEERING_SH(i)		shSteering[i]
 #define SPEED_SH(i)			shSpeed[i]
-#define VELOCITY_SH(i)		velocity( i, shForward, shSpeed )
+#define VELOCITY_SH(i)		velocity( i, shDirection, shSpeed )
 #define POSITION_SH(i)		shPosition[i]
 
 #define FORWARD_SH(i)		shForward[i]

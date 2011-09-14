@@ -78,7 +78,7 @@ using namespace OpenSteer;
 //#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
-#define NO_DRAW
+//#define NO_DRAW
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -96,24 +96,24 @@ class CtfBase;
 //const float gDim						= 8000;
 //const int gCells						= 1500;
 
-const int gEnemyCount					= 100000;
-const float gDim						= 2000;
-const int gCells						= 550;
+//const int gEnemyCount					= 100000;
+//const float gDim						= 2000;
+//const int gCells						= 550;
 
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 47;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 47;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
 uint const	g_searchRadius				= 2;		// Distance in cells to search for neighbors.
 
 float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
-float const g_fMinSeparationDistance	= 1.f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
-float const g_fMinTimeToCollision		= 1.f;		// Look-ahead time for neighbor avoidance.
+float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
+float const g_fMinTimeToCollision		= 1.0f;		// Look-ahead time for neighbor avoidance.
 
 // Weights for behaviors.
-float const g_fWeightSeparation			= 0.1f;
+float const g_fWeightSeparation			= 0.5f;
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightObstacleAvoidance	= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
