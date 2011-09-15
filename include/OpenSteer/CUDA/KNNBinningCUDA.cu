@@ -16,34 +16,26 @@ extern "C"
 	__host__ void KNNBinningCUDAUnbindTexture( void );
 
 	__global__ void KNNBinningBuildDB(		float3 const*	pdPosition,				// In:	Positions of each agent.
-											//float3 *		pdPositionNormalized,	// Out:	Normalized positions of each agent.
 											size_t *		pdAgentIndices,			// Out:	Indices of each agent.
 											size_t *		pdCellIndices,			// Out:	Indices of the cell each agent is in.
 											size_t const	numAgents
 											);
 
 	// Kernel to sort position/direction/speed based on pdAgentIndices, and to compute start and end indices of cells.
-	__global__ void KNNBinningReorderData(	float3 const*	pdPosition,					// In: Agent positions.
-											//float3 const*	pdPositionNormalized,		// In:	Normalized agent positions.
-											float3 const*	pdDirection,				// In: Agent directions.
-											float const*	pdSpeed,					// In: Agent speeds.
-					
-											uint const*		pdAgentIndices,				// In: (sorted) agent index.
-											uint const*		pdCellIndices,				// In: (sorted) cell index agent is in.
+	__global__ void KNNBinningReorderDB(	float3 const*	pdPosition,			// In: Agent positions.
+								
+											uint const*		pdAgentIndices,		// In: (sorted) agent index.
+											uint const*		pdCellIndices,		// In: (sorted) cell index agent is in.
 
-											float3 *		pdPositionSorted,			// Out: Sorted agent positions.
-											//float3 *		pdPositionNormalizedSorted,	// Out:	Sorted normalized agent positions.
-											float3 *		pdDirectionSorted,			// Out: Sorted agent directions.
-											float *			pdSpeedSorted,				// Out: Sorted agent speeds.
+											float3 *		pdPositionSorted,	// Out: Sorted agent positions.
 
-											uint *			pdCellStart,				// Out: Start index of this cell in pdCellIndices.
-											uint *			pdCellEnd,					// Out: End index of this cell in pdCellIndices.
+											uint *			pdCellStart,		// Out: Start index of this cell in pdCellIndices.
+											uint *			pdCellEnd,			// Out: End index of this cell in pdCellIndices.
 
 											size_t const	numAgents
 											);
-
+/*
 	__global__ void KNNBinningKernel(		float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
-											//float3 const*	pdPositionNormalizedSorted,	// In:	Sorted normalized positions of the agents.
 
 											uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
 											uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
@@ -61,6 +53,36 @@ extern "C"
 											size_t const	radius,						// In:	Maximum radius (in cells) to consider.
 											size_t const	numAgents					// In:	Number of agents in the simulation.
 											);
+*/
+	__global__ void KNNBinningKernel(					// Group A
+														float3 const*	pdAPositionSorted,			// In:	Sorted group A positions.
+
+														uint const*		pdAIndices,					// In:	Sorted group A indices
+														uint const*		pdACellIndices,				// In:	Sorted group A cell indices.
+
+														// Group B
+														float3 const*	pdBPositionSorted,			// In:	Sorted group B positions.
+
+														uint const*		pdBIndices,					// In:	Sorted group B indices
+														uint const*		pdBCellIndices,				// In:	Sorted group B cell indices.
+
+														uint const*		pdBCellStart,				// In:	Start index of each cell in pdBCellIndices.
+														uint const*		pdBCellEnd,					// In:	End index of each cell in pdBCellIndices.
+
+														// Cell neighbor info.
+														uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
+														size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
+														size_t const	radius,						// In:	Search radius (in cells) to consider.
+
+														// Output data.
+														uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
+														float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
+
+														size_t const	k,							// In:	Number of neighbors to consider.
+														size_t const	numA,						// In:	Size of group A.
+														size_t const	numB,						// In:	Size of group B.
+														bool const		groupWithSelf				// In:	Are we testing this group with itself? (group A == group B)
+														);
 }
 
 KNNBinningCUDA::KNNBinningCUDA( VehicleGroup * pVehicleGroup )
@@ -87,8 +109,8 @@ void KNNBinningCUDA::run( void )
 
 	// Gather the required device pointers.
 	float3 const*	pdPosition				= m_pVehicleGroupData->pdPosition();
-	float3 const*	pdDirection				= m_pVehicleGroupData->pdForward();
-	float const*	pdSpeed					= m_pVehicleGroupData->pdSpeed();
+	//float3 const*	pdDirection				= m_pVehicleGroupData->pdForward();
+	//float const*	pdSpeed					= m_pVehicleGroupData->pdSpeed();
 
 	// Pointers to output data.
 	uint *			pdKNNIndices			= m_pNearestNeighborData->pdKNNIndices();
@@ -103,8 +125,6 @@ void KNNBinningCUDA::run( void )
 	uint *			pdAgentIndicesSorted	= m_pNearestNeighborData->pdAgentIndicesSorted();
 
 	float3 *		pdPositionSorted		= m_pNearestNeighborData->pdPositionSorted();
-	float3 *		pdDirectionSorted		= m_pNearestNeighborData->pdDirectionSorted();
-	float *			pdSpeedSorted			= m_pNearestNeighborData->pdSpeedSorted();
 	
 	size_t const	radius					= m_pVehicleGroup->GetBinData().radius();
 	size_t const	neighborsPerCell		= m_pVehicleGroup->GetBinData().neighborsPerCell();
@@ -137,25 +157,33 @@ void KNNBinningCUDA::run( void )
 	// Set all cells to empty.
 	CUDA_SAFE_CALL( cudaMemset( pdCellStart, 0xffffffff, m_nCells * sizeof(uint) ) );
 
-	KNNBinningReorderData<<< grid, block >>>(	pdPosition, /*m_pdPositionNormalized,*/ pdDirection, pdSpeed,
-												pdAgentIndicesSorted, pdCellIndicesSorted,
-												pdPositionSorted, /*m_pdPositionNormalizedSorted,*/ pdDirectionSorted, pdSpeedSorted,
-												pdCellStart, pdCellEnd,
-												numAgents
-												);
+	KNNBinningReorderDB<<< grid, block >>>(	pdPosition, /*m_pdPositionNormalized, pdDirection, pdSpeed,*/
+											pdAgentIndicesSorted, pdCellIndicesSorted,
+											pdPositionSorted, /*m_pdPositionNormalizedSorted, pdDirectionSorted, pdSpeedSorted,*/
+											pdCellStart, pdCellEnd,
+											numAgents
+											);
 	cutilCheckMsg( "KNNBinningReorderData failed" );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
-	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted, /*m_pdPositionNormalizedSorted,*/
+/*
+	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted,
 													pdAgentIndicesSorted, pdCellIndicesSorted,
 													pdCellStart, pdCellEnd,
 													pdCellNeighbors, neighborsPerCell,
 													pdKNNIndices, pdKNNDistances,
 													k, radius, numAgents
 											);
+*/
+	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted, pdAgentIndicesSorted, pdCellIndicesSorted,
+														pdPositionSorted, pdAgentIndicesSorted, pdCellIndicesSorted, 
+														pdCellStart, pdCellEnd,
+														pdCellNeighbors, neighborsPerCell, radius,
+														pdKNNIndices, pdKNNDistances, k,
+														numAgents, numAgents, true );
 	cutilCheckMsg( "KNNBinningKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 

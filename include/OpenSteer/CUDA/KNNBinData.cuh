@@ -31,10 +31,7 @@ private:
 	uint					m_nNeighborsPerCell;
 	dev_vector< uint >		m_dvCellNeighbors;
 
-	dev_vector< uint >		m_dvCellStart;
-	dev_vector< uint >		m_dvCellEnd;
-
-	std::vector< bin_cell >	m_hvCells;
+	std::vector< bin_cell >	m_hvCells;				// Keep a copy of the cell data on the host so we can draw them if needed.
 	dev_vector< bin_cell >	m_dvCells;
 
 	// cudaArray used to hold the bin_cell structures on the device.
@@ -55,8 +52,7 @@ public:
 
 	// Get methods for device data.
 	uint *		pdCellNeighbors( void )		{ return m_dvCellNeighbors.begin(); }
-	uint *		pdCellStart( void )			{ return m_dvCellStart.begin(); }
-	uint *		pdCellEnd( void )			{ return m_dvCellEnd.begin(); }
+
 	bin_cell *	pdCells( void )				{ return m_dvCells.begin(); }
 	cudaArray *	pdCellIndexArray( void )	{ return m_pdCellIndexArray; }
 

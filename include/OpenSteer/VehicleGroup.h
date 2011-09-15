@@ -1,14 +1,16 @@
 #ifndef OPENSTEER_VEHICLEGROUP_H
 #define OPENSTEER_VEHICLEGROUP_H
 
+#include "BaseGroup.h"
+
 #include "VehicleGroupData.cuh"
 #include "CUDA/KNNBinData.cuh"
-#include "CUDA/NearestNeighborData.cuh"
+#include "CUDA/KNNDatabase.cuh"
 #include <map>
 
 namespace OpenSteer
 {
-class VehicleGroup
+class VehicleGroup : public BaseGroup
 {
 	typedef std::map< id_type, size_t > IDToIndexMap;
 
@@ -25,20 +27,13 @@ protected:
 	VehicleGroupData			m_vehicleGroupData;
 	VehicleGroupConst			m_vehicleGroupConst;
 
-	// Nearest neighbor data.
-	NearestNeighborData			m_nearestNeighbors;
-	NearestNeighborData			m_nearestObstacles;
-
-	// Bin data to be used for KNN lookups.
-	BinData						m_binData;
-
 	IDToIndexMap				m_cIDToIndexMap;
 
 	size_t						m_nCount;
 
 public:
 	//VehicleGroup( void );
-	VehicleGroup( uint3 const& worldCells, float3 const& worldSize, uint const knn, uint const kno = 2, uint const searchRadius = 2 );
+	VehicleGroup( uint3 const& worldCells, uint const knn );
 	virtual ~VehicleGroup( void );
 
 	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );
@@ -48,26 +43,19 @@ public:
 	void SetSyncHost( void )
 	{
 		m_vehicleGroupData.m_bSyncHost = true;
-		m_nearestNeighbors.m_bSyncHost = true;
-		m_nearestObstacles.m_bSyncHost = true;
+		m_neighborDB.m_bSyncHost = true;
 	}
 
-	/// Get the size of the collection.
-	size_t Size( void ) const
-	{
-		return m_nCount;
-	}
-
-	NearestNeighborData &	GetNearestNeighborData( void )	{ return m_nearestNeighbors; }
-	NearestNeighborData &	GetNearestObstacleData( void )	{ return m_nearestNeighbors; }
 	VehicleGroupConst &		GetVehicleGroupConst( void )	{ return m_vehicleGroupConst; }
 	VehicleGroupData &		GetVehicleGroupData( void )		{ return m_vehicleGroupData; }
-	BinData &				GetBinData( void )				{ return m_binData; }
-	
+
 	/// Use to extract data for an individual vehicle
 	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
 
-	//void OutputDataToFile( const char *filename );
+	// Overloaded pure virtuals.
+	uint		Size( void ) const		{ return m_nCount; }
+	float3 *	pdPosition( void )		{ return m_vehicleGroupData.pdPosition(); }
+
 };	//class VehicleGroup
 }	//namespace OpenSteer
 #endif

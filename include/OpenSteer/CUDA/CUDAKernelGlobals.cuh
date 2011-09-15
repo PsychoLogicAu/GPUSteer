@@ -6,9 +6,6 @@
 #include "../VectorUtils.cuh"
 #include "../VehicleGroupData.cuh"
 
-
-
-
 #define THREADSPERBLOCK 256
 
 #define COALESCE

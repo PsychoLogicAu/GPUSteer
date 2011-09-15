@@ -5,11 +5,9 @@
 
 using namespace OpenSteer;
 
-VehicleGroup::VehicleGroup( uint3 const& worldCells, float3 const& worldSize, uint const knn, uint const kno, uint const searchRadius )
-:	m_nCount( 0 ),
-	m_binData( worldCells, worldSize, searchRadius ),
-	m_nearestNeighbors( knn ),
-	m_nearestObstacles( kno )
+VehicleGroup::VehicleGroup( uint3 const& worldCells, uint const knn )
+:	BaseGroup( knn, 0, worldCells.x*worldCells.y*worldCells.z ),
+	m_nCount( 0 )
 {
 }
 
@@ -39,10 +37,6 @@ bool VehicleGroup::AddVehicle( VehicleData const& vd, VehicleConst const& vc )
 	// Add the vehicle if it is not already contained.
 	if( GetVehicleIndex( vc.id ) == -1 )
 	{
-		// Allocate room in m_nearestNeighbors and m_nearestObstacles.
-		m_nearestNeighbors.addAgent();
-		m_nearestObstacles.addAgent();
-
 		// Add the vehicle's data to the host structures.
 		m_vehicleGroupData.addVehicle( vd );
 		m_vehicleGroupConst.addVehicle( vc );
@@ -53,6 +47,9 @@ bool VehicleGroup::AddVehicle( VehicleData const& vd, VehicleConst const& vc )
 
 		// Add the id and index to the IDToIndexMap.
 		m_cIDToIndexMap[ vc.id ] = m_nCount++;
+
+		// Resize the neighbor database.
+		m_neighborDB.resize( m_nCount );
 
 		return true;
 	}
@@ -72,11 +69,11 @@ void VehicleGroup::RemoveVehicle( id_type const id )
 		m_vehicleGroupConst.removeVehicle( index );
 		m_vehicleGroupData.removeVehicle( index );
 
-		m_nearestNeighbors.removeAgent( index );
-		m_nearestObstacles.removeAgent( index );
-
 		// There is now one less.
 		m_nCount--;
+
+		// Resize the neighbor database.
+		m_neighborDB.resize( m_nCount );
 
 		// The vehicle indices will have changed. Rebuild the map.
 		RebuildIDToIndexMap();
@@ -108,8 +105,8 @@ void VehicleGroup::Clear(void)
 	m_vehicleGroupData.clear();
 	m_vehicleGroupConst.clear();
 
-	m_nearestNeighbors.clear();
-	m_nearestObstacles.clear();
+	// Clear the neighbor database.
+	m_neighborDB.clear();
 
 	m_cIDToIndexMap.clear();
 
@@ -140,8 +137,7 @@ void VehicleGroup::SyncDevice( void )
 	m_vehicleGroupData.syncDevice();
 	m_vehicleGroupConst.syncDevice();
 
-	m_nearestNeighbors.syncDevice();
-	m_nearestObstacles.syncDevice();
+	m_neighborDB.syncDevice();
 }
 
 void VehicleGroup::SyncHost( void )
@@ -149,6 +145,5 @@ void VehicleGroup::SyncHost( void )
 	m_vehicleGroupData.syncHost();
 	m_vehicleGroupConst.syncHost();
 
-	m_nearestNeighbors.syncHost();
-	m_nearestObstacles.syncHost();
+	m_neighborDB.syncHost();
 }

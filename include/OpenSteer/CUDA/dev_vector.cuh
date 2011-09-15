@@ -29,6 +29,7 @@ private:
 	{
 		cudaError_t error;
 		CUDA_SAFE_CALL( error = cudaFree( pdMem ) );
+		pdMem = NULL;
 		return error;
 	}
 
@@ -116,6 +117,7 @@ public:
 	void clear( void )
 	{
 		free( m_pdMem );
+		m_pdMem = NULL;
 		m_nSize = 0;
 	}
 

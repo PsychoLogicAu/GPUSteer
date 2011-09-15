@@ -225,6 +225,9 @@ steerToAvoidObstacles (const AbstractVehicle& v,
 					   const float minTimeToCollision,
                        ObstacleGroup& obstacles)
 {
+	return float3_zero();
+
+	/*
     float3 avoidance = float3_zero();
     PathIntersection nearest, next;
     const float minDistanceToCollision = minTimeToCollision * v.speed();
@@ -271,6 +274,7 @@ steerToAvoidObstacles (const AbstractVehicle& v,
     }
 
     return avoidance;
+	*/
 }
 
 
