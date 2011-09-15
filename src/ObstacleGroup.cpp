@@ -1,124 +1,83 @@
 #include "OpenSteer/ObstacleGroup.h"
 
-//#include <iostream>
-//#include <fstream>
-//using std::endl;
+#include "OpenSteer/VectorUtils.cuh"
+#include "OpenSteer/Utilities.h"
 
 using namespace OpenSteer;
 
-ObstacleGroup::ObstacleGroup( const float3 &center, const float3 &dimensions, const uint3 &divisions)
-:	m_nCount(0),
-	m_proximityDatabase(NULL),
-	m_lookupToken(NULL)
+ObstacleGroup::ObstacleGroup( uint3 const& worldCells, uint const kno )
+:	BaseGroup( kno, 0, worldCells.x*worldCells.y*worldCells.z ),
+	m_nCount( 0 )
 {
-	// Create the proximity database.
-	m_proximityDatabase = new SphericalObstaclePDB(center, dimensions, divisions);
-
-	// Create the token to use for lookups.
-	SphericalObstacleData temp(1.0f, make_float3(0.0f, 0.0f, 0.0f));
-	m_lookupToken = m_proximityDatabase->allocateToken(&temp);
-
-	m_vObstacleData.reserve(100);
 }
 
 ObstacleGroup::~ObstacleGroup(void)
 {
 	Clear();
-
-	delete m_lookupToken;
-	delete m_proximityDatabase;
 }
 
-void ObstacleGroup::Clear(void)
+// Adds a vehicle to the group.
+void ObstacleGroup::AddObstacle(  ObstacleData const& od )
 {
-	//// Clear the obstacle data vector.
-	//for(SphericalObstacleDataIt it = m_vObstacleData.begin(); it != m_vObstacleData.end(); it++)
-	//{
-	//	delete *it;
-	//}
-	m_vObstacleData.clear();
+	// Add the vehicle's data to the host structures.
+	m_obstacleGroupData.addObstacle( od );
 
-	// Delete all of the proximity tokens.
-	for(SphericalObstaclePTIt it = m_proximityTokens.begin(); it != m_proximityTokens.end(); it++)
+	// There is now one more.
+	m_nCount++;
+
+	// Resize the neighbor database.
+	m_neighborDB.resize( m_nCount );
+
+	// Will need to sync the device.
+	m_obstacleGroupData.m_bSyncDevice = true;
+}
+
+// Removes a vehicle from the group using the supplied id number.
+void ObstacleGroup::RemoveObstacle( uint const index )
+{
+	if( index < m_nCount )
 	{
-		delete *it;
+		// Remove the vehicle from the host structures.
+		m_obstacleGroupData.removeObstacle( index );
+
+		// There is now one less.
+		m_nCount--;
+
+		// Resize the neighbor database.
+		m_neighborDB.resize( m_nCount );
+
+		// Will need to sync the device.
+		m_obstacleGroupData.m_bSyncDevice = true;
 	}
-	m_proximityTokens.clear();
+}
+
+void ObstacleGroup::Clear( void )
+{
+	// Clear the host and device vectors.
+	m_obstacleGroupData.clear();
+
+	// Clear the neighbor database.
+	m_neighborDB.clear();
 
 	m_nCount = 0;
 }
 
-void ObstacleGroup::AddObstacle(SphericalObstacleData* pData)
+// Gets the data for a vehicle from the supplied id.
+bool ObstacleGroup::GetDataForObstacle( uint const index, ObstacleData & od )
 {
-	// Set the id of the obstacle to its index in the array.
-	pData->id = m_nCount;
-
-	// Add a copy of the obstacle into the vector.
-	m_vObstacleData.push_back(*pData);
-
-	// Allocate a token for the obstacle.
-	SphericalObstaclePT *pToken = m_proximityDatabase->allocateToken(&m_vObstacleData.back());
-
-	// Set the position of the object in the db.
-	pToken->updateForNewPosition(pData->center);
-	m_proximityTokens.push_back(pToken);
-
-	m_nCount++;
-}
-
-// Returns a collection of objects within the given sphere.
-void ObstacleGroup::FindNearObstacles(const float3 &center, const float radius, SphericalObstacleDataVec &results)
-{
-	//m_lookupToken->updateForNewPosition(center); // TODO: this line needed?
-
-	// Get the indices of obstacles within the sphere.
-	m_lookupToken->findNeighbors(center, radius, results);
-}
-
-// Returns the minimum distance to any obstacle within the given radius through the distance parameter.  Returns true or false signifying the success of the search.
-bool ObstacleGroup::MinDistanceToObstacle(const float3 &position, const float radius, float &distance)
-{
-	SphericalObstacleDataVec neighbours;
-	m_lookupToken->findNeighbors(position, radius, neighbours);
-
-	// No neighbours were found within the given sphere.
-	if(neighbours.size() == 0)
-		return false;
-
-	distance = FLT_MAX;
-
-	// For each neighbour found.
-	for(unsigned int i = 0; i < neighbours.size(); i++)
+	if( index < m_nCount )
 	{
-		float dist = float3_distance(position, m_vObstacleData[i].center);
+		m_obstacleGroupData.getObstacleData( index, od );
 
-		if(dist < distance)
-			distance = dist;
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
-unsigned int ObstacleGroup::Size(void)
+void ObstacleGroup::SyncDevice( void )
 {
-	return m_nCount;
-}
+	m_obstacleGroupData.syncDevice();
 
-//void ObstacleGroup::OutputDataToFile(const char *filename)
-//{
-//	std::ofstream out;
-//	out.open(filename);
-//	if(out.is_open())
-//	{
-//		for(unsigned int i = 0; i < Size(); i++)
-//		{
-//			out << "number: " << i + 1 << endl;
-//			out << "center: " << m_vObstacleData[i].center << endl;
-//			out << "radius: " << m_vObstacleData[i].radius << endl;
-//
-//			out << endl;
-//		}
-//
-//		out.close();
-//	}
-//}
+	m_neighborDB.syncDevice();
+}

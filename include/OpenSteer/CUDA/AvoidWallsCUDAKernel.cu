@@ -36,7 +36,7 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 										float3 const*	pdLineEnd,
 										float3 const*	pdLineNormal,
 
-										uint const*		pdKNLIndices,	// Indices of the K Nearest Lines
+										uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
 										uint const		k,				// Number of lines in KNL.
 
 										float const		lookAheadTime,

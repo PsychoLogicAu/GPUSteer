@@ -100,13 +100,22 @@ class CtfBase;
 //const float gDim						= 2000;
 //const int gCells						= 550;
 
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 47;
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 47;
+
+// Using cell diameter of 7
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 91;
+
+const int gEnemyCount					= 100000;
+const float gDim						= 2000;
+const int gCells						= 285;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
-uint const	g_searchRadius				= 2;		// Distance in cells to search for neighbors.
+uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
 
 float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
@@ -120,13 +129,18 @@ float const g_fWeightAvoidNeighbors		= 1.f;
 //float const g_fPursuitWeight			= 1.f;
 
 
-const int gMaxObstacleCount				= 0;
+
+
+const int gMaxObstacleCount				= 100;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
 const float		gHomeBaseRadius			= 1.5f;
 
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
+
+// Bin data to be used for KNN lookups.
+BinData						g_binData(	gWorldCells, gWorldSize, g_searchRadius );
 
 const float gMinStartRadius				= 30.0f;
 //const float gMaxStartRadius				= 60.0f;
@@ -257,13 +271,14 @@ void CtfEnemyGroup::randomizeHeadingOnXZPlane(VehicleData &vehicleData)
 
 void CtfEnemyGroup::reset(void)
 {
+	Clear();
 	//static unsigned int id = 0;
 	// Add the required number of enemies.
 	while(Size() < gEnemyCount)
 	{
-		CtfBase *enemy = new CtfBase;
-		VehicleData &edata = enemy->getVehicleData();
-		VehicleConst &econst = enemy->getVehicleConst();
+		CtfBase enemy;
+		VehicleData &edata = enemy.getVehicleData();
+		VehicleConst &econst = enemy.getVehicleConst();
 
 		edata.speed = 3.0f;
 		econst.maxForce = 3.0f;
@@ -271,8 +286,6 @@ void CtfEnemyGroup::reset(void)
 		randomizeStartingPositionAndHeading(edata, econst);
 		
 		bool success = AddVehicle(edata, econst);
-
-		delete enemy;
 	}
 
 	// Transfer the data to the device.
@@ -391,7 +404,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 
 	//SyncDevice();
 	// Force the host to pull data on next call to SyncHost().
-	//SetSyncHost();
+	SetSyncHost();
 
 	//uint j = 0;
 	//if( j++ % 5 == 0 )
@@ -1224,23 +1237,22 @@ public:
         // reset the seeker ("hero"/"attacker")
         ctfSeeker->reset ();
 
-		VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
-		VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
+		gEnemies->reset();
 
-		// reset the enemies
+		//VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
+		//VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
 
-		// For each enemy...
-		for( size_t i = 0; i < gEnemies->Size(); i++ )
-		{
-			//enemiesData[i].speed = 3.0f;
-			vgd.hvSpeed()[i] = 3.0f;
-			//randomizeHeadingOnXZPlane(enemiesData[i]);
-			randomizeHeadingOnXZPlane( vgd.hvUp()[i], vgd.hvForward()[i], vgd.hvSide()[i] );
-			randomizeStartingPositionAndHeading( vgd.hvPosition()[i], vgc.hvRadius()[i], vgd.hvUp()[i], vgd.hvForward()[i], vgd.hvSide()[i] );
-		}
+		//// reset the enemies
 
-		// FIXME: is this line necessary?
-		//vgd.m_bSyncDevice = true;
+		//// For each enemy...
+		//for( size_t i = 0; i < gEnemies->Size(); i++ )
+		//{
+		//	//enemiesData[i].speed = 3.0f;
+		//	vgd.hvSpeed()[i] = 3.0f;
+		//	//randomizeHeadingOnXZPlane(enemiesData[i]);
+		//	randomizeHeadingOnXZPlane( vgd.hvUp()[i], vgd.hvForward()[i], vgd.hvSide()[i] );
+		//	randomizeStartingPositionAndHeading( vgd.hvPosition()[i], vgc.hvRadius()[i], vgd.hvUp()[i], vgd.hvForward()[i], vgd.hvSide()[i] );
+		//}
 
         // reset camera position
         OpenSteerDemo::position2dCamera (*ctfSeeker);

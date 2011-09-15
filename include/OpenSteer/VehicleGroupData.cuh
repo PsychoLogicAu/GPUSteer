@@ -95,7 +95,7 @@ public:
 		m_nSize++;
 		m_bSyncDevice = true;
 	}
-	/// Removes the vehicle_data structure at index.
+	/// Removes the vehicle structure at index.
 	void removeVehicle( size_t const index )
 	{
 		if( index < m_nSize )

@@ -302,10 +302,6 @@
 						>
 					</File>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu"
-						>
-					</File>
-					<File
 						RelativePath="..\include\OpenSteer\CUDA\CUDAKernelGlobals.cuh"
 						>
 					</File>
@@ -354,11 +350,19 @@
 						>
 					</File>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cu"
+						RelativePath="..\include\OpenSteer\CUDA\KNNData.cu"
 						>
 					</File>
 					<File
-						RelativePath="..\include\OpenSteer\CUDA\NearestNeighborData.cuh"
+						RelativePath="..\include\OpenSteer\CUDA\KNNData.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNDatabase.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\KNNDatabase.cuh"
 						>
 					</File>
 					<File
@@ -502,6 +506,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\include\OpenSteer\CUDA\ObstacleGroupData.cuh"
+						>
+					</File>
+					<File
 						RelativePath="..\include\OpenSteer\CUDA\WallData.cuh"
 						>
 					</File>
@@ -514,6 +522,10 @@
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu"
 							>
 						</File>
 					</Filter>
@@ -533,6 +545,10 @@
 			</File>
 			<File
 				RelativePath="..\include\OpenSteer\Annotation.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OpenSteer\BaseGroup.h"
 				>
 			</File>
 			<File

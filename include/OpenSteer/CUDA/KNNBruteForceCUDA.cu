@@ -6,27 +6,39 @@
 extern "C"
 {
 	__global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
-												float const*	pdDistanceMatrix,	// Global storage for distance matrix.
-												size_t const*	pdIndexMatrix,		// The indices which match postions in pdDistanceMatrix.
-												//size_t *		pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
+												float *			pdDistanceMatrix,	// Global storage for distance matrix.
+												size_t *		pdIndexMatrix,		// The indices which match postions in pdDistanceMatrix.
 												size_t const	k,					// Number of neighbors to consider.
-												size_t const	numAgents			// Number of agents in the simulation.
-											);
+												size_t const	numAgents,			// Number of agents in the simulation.
+												float3 const*	pdPositionOther,
+												uint const		numOther,
+												bool const		groupWithSelf
+												);
 
 	__global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Agent positions.
 												uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
 												float *			pdKNNDistances,		// Out:	Distances of each of the neighbors in pdKNNIndices.
 												size_t const	k,					// In:	Number of neighbors to consider.
-												size_t const	numAgents			// In:	Number of agents in the simulation.
+												size_t const	numAgents,			// In:	Number of agents in the simulation.
+												float3 const*	pdPositionOther,
+												uint const		numOther,
+												bool const		groupWithSelf
 												);
 
 	__global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent positions.
+
 												uint *			pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
 												float *			pdKNNDistances,		// Output, distances of the K Nearest Neighbors in pdPosition.
+
 												size_t const	k,					// Number of neighbors to consider.
 												size_t const	numAgents,			// Number of agents in the simulation.
+
+												float3 const*	pdPositionOther,
+												uint const		numOther,
+												bool const		groupWithSelf,
+
 												bool const		bSeed = false
-											);
+												);
 }
 
 #include <thrust/device_ptr.h>
@@ -35,20 +47,20 @@ extern "C"
 using namespace OpenSteer;
 
 #pragma region KNNBruteForceCUDA
-KNNBruteForceCUDA::KNNBruteForceCUDA( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f )
+KNNBruteForceCUDA::KNNBruteForceCUDA( VehicleGroup * pVehicleGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
+:	AbstractCUDAKernel( pVehicleGroup, 1.f ),
+	m_pKNNData( pKNNData ),
+	m_pOtherGroup( pOtherGroup )
 { }
 
 void KNNBruteForceCUDA::init( void )
 {
-	size_t numAgents = getNumAgents();
-	size_t numAgentsSquared = numAgents * numAgents;
+	size_t const& numAgents = getNumAgents();
+	size_t const numAgentsSquared = numAgents * numAgents;
 
 	// Allocate the temporary device storage.
-	cudaMalloc( &m_pdDistanceMatrix, numAgentsSquared * sizeof(float) );
-	cutilCheckMsg( "cudaMalloc failed." );
-	cudaMalloc( &m_pdIndexMatrix, numAgentsSquared * sizeof(size_t) );
-	cutilCheckMsg( "cudaMalloc failed." );
+	CUDA_SAFE_CALL( cudaMalloc( &m_pdDistanceMatrix, numAgentsSquared * sizeof(float) ) );
+	CUDA_SAFE_CALL( cudaMalloc( &m_pdIndexMatrix, numAgentsSquared * sizeof(uint) ) );
 }
 
 void KNNBruteForceCUDA::run( void )
@@ -57,22 +69,27 @@ void KNNBruteForceCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 const*	pdPosition	= m_pVehicleGroupData->pdPosition();
+	float3 const*	pdPosition		= m_pVehicleGroupData->pdPosition();
 
-	size_t const&	numAgents	= getNumAgents();
-	size_t const&	k			= m_pVehicleGroup->GetNearestNeighborData().k();
+	uint const&		numAgents		= getNumAgents();
+	uint const&		k				= m_pKNNData->k();
+
+	uint const&		numOther		= m_pOtherGroup->Size();
+	float3 const*	pdPositionOther = m_pOtherGroup->pdPosition();
+	bool const		groupWithSelf	= pdPosition == pdPositionOther;
 
 	// Launch the KNNBruteForceCUDAKernel to compute distances to each other vehicle.
-	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, k, numAgents );
+	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, k, numAgents, pdPositionOther, numOther, groupWithSelf );
 	cutilCheckMsg( "KNNBruteForceCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
+#if defined TIMING
 	// Events for timing the sort operations.
 	cudaEvent_t start, stop;
 	cudaEventCreate( &start );
 	cudaEventCreate( &stop );
 	cudaEventRecord( start, 0 );
-
+#endif
 
 	// For each agent...
 	for( size_t i = 0; i < numAgents; i++ )
@@ -88,8 +105,13 @@ void KNNBruteForceCUDA::run( void )
 
 		// Sort the results (using thrust)
 		thrust::sort_by_key( pdDistanceStart, pdDistanceEnd, pdIndexStart );
+
+		// Copy the first k elements to the KNNData structure for output.
+		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNDistances() + i*k, m_pdDistanceMatrix, k * sizeof(float), cudaMemcpyDeviceToDevice ) );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNIndices() + i*k, m_pdIndexMatrix, k * sizeof(uint), cudaMemcpyDeviceToDevice ) );
 	}
 	
+#if defined TIMING
 	cudaEventRecord( stop, 0 );
 	cudaEventSynchronize( stop );
 	
@@ -99,17 +121,17 @@ void KNNBruteForceCUDA::run( void )
 	sprintf_s( szString, "%f\n", elapsedTime );
 	OutputDebugString( szString );
 
-
 	// Destroy the events.
 	cudaEventDestroy( start );
 	cudaEventDestroy( stop );
+#endif
 }
 
 void KNNBruteForceCUDA::close( void )
 {
 	// Deallocate the temporary device storage.
-	cudaFree( m_pdDistanceMatrix );
-	cudaFree( m_pdIndexMatrix );
+	CUDA_SAFE_CALL( cudaFree( m_pdDistanceMatrix ) );
+	CUDA_SAFE_CALL( cudaFree( m_pdIndexMatrix ) );
 }
 #pragma endregion
 
@@ -118,10 +140,11 @@ void KNNBruteForceCUDA::close( void )
 // 
 //	V2 implementation.
 //
-KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f )
+KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
+:	AbstractCUDAKernel( pVehicleGroup, 1.f ),
+	m_pKNNData( pKNNData ),
+	m_pOtherGroup( pOtherGroup )
 {
-	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
 }
 
 void KNNBruteForceCUDAV2::init( void )
@@ -134,18 +157,22 @@ void KNNBruteForceCUDAV2::run( void )
 	dim3 block = blockDim();
 
 	// Gather required data.
-	float3 const*	pdPosition = m_pVehicleGroupData->pdPosition();
+	float3 const*	pdPosition		= m_pVehicleGroupData->pdPosition();
 
-	uint *			pdKNNIndices = m_pNearestNeighborData->pdKNNIndices();
-	float *			pdKNNDistances = m_pNearestNeighborData->pdKNNDistances();
-	uint			k = m_pNearestNeighborData->k();
+	uint *			pdKNNIndices	= m_pKNNData->pdKNNIndices();
+	float *			pdKNNDistances	= m_pKNNData->pdKNNDistances();
+	uint const&		k				= m_pKNNData->k();
 	
-	size_t			numAgents = getNumAgents();
+	uint const&		numAgents		= getNumAgents();
+
+	float3 const*	pdPositionOther	= m_pOtherGroup->pdPosition();
+	uint const&		numOther		= m_pOtherGroup->Size();
+	bool const		groupWithSelf	= pdPosition == pdPositionOther;
 
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
-	KNNBruteForceCUDAKernelV2<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents );
+	KNNBruteForceCUDAKernelV2<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, pdPositionOther, numOther, groupWithSelf );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV2 failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
@@ -186,7 +213,7 @@ void KNNBruteForceCUDAV3::run( void )
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
 	// FIXME: there is a bug in the seeding part of KNNBruteForceV3
-	KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, m_pNearestNeighborData->seedable() );
+	KNNBruteForceCUDAKernelV3/*<<< grid, block, shMemSize >>>*/( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, m_pNearestNeighborData->seedable() );
 	//KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, false );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV3 failed." );
 	// Data will now be seedable.
