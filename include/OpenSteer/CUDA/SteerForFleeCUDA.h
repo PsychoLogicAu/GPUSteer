@@ -11,7 +11,7 @@ namespace OpenSteer
 		float3		m_target;
 
 	public:
-		SteerForFleeCUDA( VehicleGroup * pVehicleGroup, const float3 &target, float const fWeight );
+		SteerForFleeCUDA( AgentGroup * pAgentGroup, const float3 &target, float const fWeight );
 		~SteerForFleeCUDA( void ) {}
 
 		virtual void init( void );

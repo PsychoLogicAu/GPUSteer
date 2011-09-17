@@ -8,8 +8,8 @@ extern "C"
 	__global__ void AvoidObstacleCUDAKernel(vehicle_data *vehicleData, vehicle_const *vehicleConst, int numAgents, spherical_obstacle_data *obstacleData, const float minTimeToCollision);
 }
 
-AvoidObstacleCUDA::AvoidObstacleCUDA(VehicleGroup *pVehicleGroup, const float minTimeToCollision, const SphericalObstacle *pObstacle)
-:	AbstractCUDAKernel(pVehicleGroup),
+AvoidObstacleCUDA::AvoidObstacleCUDA(AgentGroup *pAgentGroup, const float minTimeToCollision, const SphericalObstacle *pObstacle)
+:	AbstractCUDAKernel(pAgentGroup),
 	m_pObstacle(pObstacle),
 	m_minTimeToCollision(minTimeToCollision)
 {

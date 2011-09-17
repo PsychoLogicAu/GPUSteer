@@ -20,8 +20,8 @@ public:
 	KNNDatabase &			GetKNNDatabase( void )			{ return m_neighborDB; }
 
 	// Pure virtual methods.
-	uint					Size( void ) const = 0;
-	float3 *				pdPosition( void ) = 0;
+	virtual uint			Size( void ) const = 0;
+	virtual float3 *		pdPosition( void ) = 0;
 };	// class BaseGroup
 }	// namespace OpenSteer
 

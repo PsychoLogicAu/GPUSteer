@@ -16,7 +16,7 @@ namespace OpenSteer
 		spherical_obstacle_data*	m_pdObstacleData;
 
 	public:
-		AvoidObstacleCUDA(VehicleGroup *pVehicleGroup, const float minTimeToCollision, const SphericalObstacle *pObstacle);
+		AvoidObstacleCUDA(AgentGroup *pAgentGroup, const float minTimeToCollision, const SphericalObstacle *pObstacle);
 		~AvoidObstacleCUDA(void) {}
 
 		virtual void init(void);

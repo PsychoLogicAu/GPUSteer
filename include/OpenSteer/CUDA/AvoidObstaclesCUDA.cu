@@ -8,8 +8,8 @@ extern "C"
 	__global__ void AvoidObstaclesCUDAKernel(vehicle_data *vehicleData, vehicle_const *vehicleConst, int numAgents, spherical_obstacle_data *obstacleData, near_obstacle_index *nearObstacleIndices, int *obstacleIndices, const float minTimeToCollision);
 }
 
-AvoidObstaclesCUDA::AvoidObstaclesCUDA(VehicleGroup *pVehicleGroup, const float minTimeToCollision, ObstacleGroup *pObstacleGroup)
-:	AbstractCUDAKernel(pVehicleGroup),
+AvoidObstaclesCUDA::AvoidObstaclesCUDA(AgentGroup *pAgentGroup, const float minTimeToCollision, ObstacleGroup *pObstacleGroup)
+:	AbstractCUDAKernel(pAgentGroup),
 	m_pObstacleGroup(pObstacleGroup),
 	m_minTimeToCollision(minTimeToCollision)
 {
@@ -22,14 +22,14 @@ void AvoidObstaclesCUDA::init(void)
 	// Indices into the m_pObstacleGroup data array.
 	std::vector<int> obstacleIndices;
 
-	int numVehicles = m_pVehicleGroup->Size();
+	int numVehicles = m_pAgentGroup->Size();
 
 	// Indices for each vehicle into the obstacleIndices vector.
 	//NearObstacleIndex *pVehicleIndices = new NearObstacleIndex[numVehicles];
 	std::vector<NearObstacleIndex> vehicleIndices(numVehicles);
 
-	const VehicleData* vehicleData = m_pVehicleGroup->GetVehicleData();
-	const VehicleConst* vehicleConst = m_pVehicleGroup->GetVehicleConst();
+	const VehicleData* vehicleData = m_pAgentGroup->GetVehicleData();
+	const VehicleConst* vehicleConst = m_pAgentGroup->GetVehicleConst();
 
 	// For each vehicle in the group.
 	for(int i = 0; i < numVehicles; i++)

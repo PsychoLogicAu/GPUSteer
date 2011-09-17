@@ -12,7 +12,7 @@ namespace OpenSteer
 
 class KNNDatabase
 {
-	friend class VehicleGroup;
+	friend class AgentGroup;
 	friend class ObstacleGroup;
 private:
 	// Number of nearest neighbors per agent.
@@ -66,8 +66,6 @@ public:
 	//
 	// Accessor/mutators
 	//
-	bool	seedable( void ) const								{ return m_bSeedable; }
-	void	seedable( bool const b )							{ m_bSeedable = b; }
 	uint	k( void ) const										{ return m_nK; }
 
 	// Device data.

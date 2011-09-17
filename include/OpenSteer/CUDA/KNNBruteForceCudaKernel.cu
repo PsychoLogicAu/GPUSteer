@@ -1,6 +1,6 @@
 #include "KNNBruteForceCUDA.cuh"
 
-//#include "../VehicleGroupData.cuh"
+//#include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
 
 #include "CUDAKernelGlobals.cuh"
@@ -65,7 +65,7 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 											uint const		numOther,
 											bool const		groupWithSelf,
 
-											bool const		bSeed = false
+											bool const		bSeed
 											)
 {
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -143,7 +143,7 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 			continue;
 
 		// Compute the distance between this agent and the one at i.
-		float const dist = float3_distance( position, pdPositionOther[ otherIndex ] );
+		float const dist = float3_distance( POSITION_SH( threadIdx.x ), pdPositionOther[ otherIndex ] );
 
 		if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 		{
@@ -270,11 +270,10 @@ __global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Ag
 		}
 	}
 }
-
+/*
 __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
 											float *			pdDistanceMatrix,	// Global storage for distance matrix.
 											size_t *		pdIndexMatrix,		// The indices which match postions in pdDistanceMatrix.
-											//size_t *		pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
 											size_t const	k,					// Number of neighbors to consider.
 											size_t const	numAgents			// Number of agents in the simulation.
 										)
@@ -303,6 +302,7 @@ __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent po
 	// Currently doing externally using thrust. This method is so god awfully slow there is no point in even trying to optimise it.
 	// Does it even make sense to sort them? All we want is the k lowest, surely this can be accomplished by sequentially scanning.
 }
+*/
 
 __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
 											float *			pdDistanceMatrix,	// Global storage for distance matrix.
@@ -333,8 +333,8 @@ __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent po
 		if( groupWithSelf && index == i )
 			continue;
 
-		pdDistanceMatrix[ outputOffset + i ] = float3_distance( POSITION_SH( threadIdx.x ), pdPositionOther[ i ] );
-		pdIndexMatrix[ outputOffset + i ] = i;
+		pdDistanceMatrix[ outputIndex + i ] = float3_distance( POSITION_SH( threadIdx.x ), pdPositionOther[ i ] );
+		pdIndexMatrix[ outputIndex + i ] = i;
 	}
 
 	__syncthreads();

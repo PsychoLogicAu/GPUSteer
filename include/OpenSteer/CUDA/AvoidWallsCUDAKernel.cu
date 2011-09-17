@@ -1,6 +1,6 @@
 #include "AvoidWallsCUDA.cuh"
 
-#include "../VehicleGroupData.cuh"
+#include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
 
 #include "CUDAKernelGlobals.cuh"

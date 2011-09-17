@@ -16,7 +16,7 @@ protected:
 	float					m_targetSpeed;
 
 public:
-	SteerForPursuitCUDA(	VehicleGroup * pVehicleGroup, 
+	SteerForPursuitCUDA(	AgentGroup * pAgentGroup, 
 							float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
 							const float fMaxPredictionTime, float const fWeight );
 	~SteerForPursuitCUDA( void ) {}

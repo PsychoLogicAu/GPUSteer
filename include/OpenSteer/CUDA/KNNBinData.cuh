@@ -19,7 +19,7 @@ struct bin_cell
 	float3	maxBound;	// Maximum bounds of this cell.
 };
 
-class bin_data
+class KNNBinData
 {
 private:
 	uint3					m_worldCells;			// Number of cells in each world dimension.
@@ -44,8 +44,8 @@ private:
 	virtual dim3 blockDim( void )	{	return dim3( THREADSPERBLOCK );	}
 
 public:
-	bin_data( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius );
-	~bin_data( void ) {}
+	KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius );
+	~KNNBinData( void ) {}
 
 	uint		radius( void )				{ return m_nSearchRadius; }
 	uint		neighborsPerCell( void )	{ return m_nNeighborsPerCell; }
@@ -61,8 +61,6 @@ public:
 	float3 const& WorldSize( void ) const	{ return m_worldSize; }
 	uint getNumCells( void ) const			{ return m_nCells; }
 };	// class bin_data
-typedef bin_data BinData;
-
 }	// namespace OpenSteer
 #endif
 

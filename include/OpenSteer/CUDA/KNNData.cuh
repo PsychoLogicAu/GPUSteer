@@ -42,6 +42,9 @@ public:
 
 	uint		k( void )										{ return m_nK; }
 	uint		size( void )									{ return m_nSize; }
+	bool		seedable( void ) const							{ return m_bSeedable; }
+	void		seedable( bool const b )						{ m_bSeedable = b; }
+	void		setSyncHost( void )								{ m_bSyncHost = true; }
 
 	void resize( uint const nSize, uint const nK );
 

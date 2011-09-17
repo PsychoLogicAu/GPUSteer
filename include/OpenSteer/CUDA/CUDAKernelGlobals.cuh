@@ -4,7 +4,7 @@
 #include "CUDAGlobals.cuh"
 
 #include "../VectorUtils.cuh"
-#include "../VehicleGroupData.cuh"
+#include "../AgentGroupData.cuh"
 
 #define THREADSPERBLOCK 256
 

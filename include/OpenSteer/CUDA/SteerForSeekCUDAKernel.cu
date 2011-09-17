@@ -1,6 +1,6 @@
 #include "SteerForSeekCUDA.h"
 
-#include "../VehicleGroupData.cuh"
+#include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
 
 #include "CUDAKernelGlobals.cuh"

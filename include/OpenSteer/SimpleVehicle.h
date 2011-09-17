@@ -66,7 +66,7 @@
 
 #include "AbstractVehicle.h"
 #include "SteerLibrary.h"
-#include "VehicleGroupData.cuh"
+#include "AgentGroupData.cuh"
 
 namespace OpenSteer {
 

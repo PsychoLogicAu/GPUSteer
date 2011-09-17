@@ -11,7 +11,7 @@ namespace OpenSteer
 		float m_fElapsedTime;
 
 	public:
-		UpdateCUDA( VehicleGroup * pVehicleGroup, const float fElapsedTime );
+		UpdateCUDA( AgentGroup * pAgentGroup, const float fElapsedTime );
 		~UpdateCUDA( void ) {}
 
 		virtual void init( void );

@@ -3,6 +3,8 @@
 
 #include "AbstractCUDAKernel.cuh"
 
+#include "KNNData.cuh"
+
 namespace OpenSteer
 {
 
@@ -12,8 +14,11 @@ protected:
 	float m_fMinTimeToCollision;
 	float m_fMinSeparationDistance;
 
+	KNNData *		m_pKNNData;
+	AgentGroup *	m_pOtherGroup;
+
 public:
-	SteerToAvoidNeighborsCUDA( VehicleGroup *pVehicleGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight );
+	SteerToAvoidNeighborsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight );
 	~SteerToAvoidNeighborsCUDA( void ) {}
 
 	virtual void init( void );

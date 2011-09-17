@@ -2,28 +2,28 @@
 #define OPENSTEER_ABSTRACTKERNEL_H
 
 #include <cuda_runtime.h>
-#include "VehicleGroupData.cuh"
-#include "VehicleGroup.h"
+#include "AgentGroupData.cuh"
+#include "AgentGroup.h"
 
 namespace OpenSteer
 {
 	class AbstractKernel
 	{
 	protected:
-		VehicleGroup *	m_pVehicleGroup;
+		AgentGroup *	m_pAgentGroup;
 		float			m_fWeight;
 
 		inline size_t getNumAgents( void )
 		{
-			if( m_pVehicleGroup != NULL )
-				return m_pVehicleGroup->Size();
+			if( m_pAgentGroup != NULL )
+				return m_pAgentGroup->Size();
 
 			return 0;
 		}
 
 	public:
-		AbstractKernel( VehicleGroup * pVehicleGroup, float const fWeight = 1.f )
-		:	m_pVehicleGroup( pVehicleGroup ),
+		AbstractKernel( AgentGroup * pAgentGroup, float const fWeight = 1.f )
+		:	m_pAgentGroup( pAgentGroup ),
 			m_fWeight( fWeight )
 		{ }
 
@@ -37,9 +37,9 @@ namespace OpenSteer
 			init();
 		}
 
-		VehicleGroup * GetVehicleGroup( void )
+		AgentGroup * GetAgentGroup( void )
 		{
-			return m_pVehicleGroup;
+			return m_pAgentGroup;
 		}
 	};
 } // namespace OpenSteer

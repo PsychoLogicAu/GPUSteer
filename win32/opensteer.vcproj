@@ -239,6 +239,10 @@
 				Name="CUDA"
 				>
 				<File
+					RelativePath="..\include\OpenSteer\AgentGroupData.cuh"
+					>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\CUDAGlobals.cuh"
 					>
 				</File>
@@ -288,10 +292,6 @@
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\VectorUtils.cuh"
-					>
-				</File>
-				<File
-					RelativePath="..\include\OpenSteer\VehicleGroupData.cuh"
 					>
 				</File>
 				<Filter
@@ -544,6 +544,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OpenSteer\AgentData.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OpenSteer\AgentGroup.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OpenSteer\Annotation.h"
 				>
 			</File>
@@ -607,18 +615,14 @@
 				RelativePath="..\include\OpenSteer\Utilities.h"
 				>
 			</File>
-			<File
-				RelativePath="..\include\OpenSteer\VehicleData.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OpenSteer\VehicleGroup.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="src"
 			>
+			<File
+				RelativePath="..\src\AgentGroup.cpp"
+				>
+			</File>
 			<File
 				RelativePath="..\src\Annotation.cpp"
 				>
@@ -661,10 +665,6 @@
 			</File>
 			<File
 				RelativePath="..\src\SteerLibrary.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\VehicleGroup.cpp"
 				>
 			</File>
 		</Filter>

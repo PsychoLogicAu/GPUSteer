@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "VehicleData.h"
+#include "AgentData.h"
 #include "VectorUtils.cuh"
 
 #include "CUDA\dev_vector.cuh"
@@ -20,7 +20,7 @@ class vehicle_group_const;
 
 class vehicle_group_data
 {
-	friend class VehicleGroup;
+	friend class AgentGroup;
 private:
 	bool	m_bSyncHost;
 	bool	m_bSyncDevice;
@@ -178,12 +178,12 @@ public:
 		m_hvSpeed.clear();
 	}
 };
-typedef vehicle_group_data VehicleGroupData;
+typedef vehicle_group_data AgentGroupData;
 
 
 class vehicle_group_const
 {
-	friend class VehicleGroup;
+	friend class AgentGroup;
 private:
 	//
 	// Device data.
@@ -321,7 +321,7 @@ public:
 	float *		pdMass( void )		{ return m_dvMass.begin(); }
 	float *		pdRadius( void )	{ return m_dvRadius.begin(); }
 };
-typedef vehicle_group_const VehicleGroupConst;
+typedef vehicle_group_const AgentGroupConst;
 
 /// Compute the velocity of the vehicle at index i.
 static inline __host__ __device__ float3 velocity( size_t const i, float3 const* pDirection, float const* pSpeed )

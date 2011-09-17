@@ -1,6 +1,6 @@
 #include "SteerForFleeCUDA.h"
 
-#include "../VehicleGroupData.cuh"
+#include "../AgentGroupData.cuh"
 
 using namespace OpenSteer;
 
@@ -11,8 +11,8 @@ extern "C"
 											float3 const target, size_t const numAgents, float const fWeight );
 }
 
-SteerForFleeCUDA::SteerForFleeCUDA( VehicleGroup * pVehicleGroup, const float3 &target, float const fWeight )
-:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
+SteerForFleeCUDA::SteerForFleeCUDA( AgentGroup * pAgentGroup, const float3 &target, float const fWeight )
+:	AbstractCUDAKernel( pAgentGroup, fWeight ),
 	m_target( target )
 { }
 
@@ -25,9 +25,9 @@ void SteerForFleeCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gather required device pointers.
-	float3 const* pdPosition = m_pVehicleGroupData->pdPosition();
-	float3 const* pdForward = m_pVehicleGroupData->pdForward();
-	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
+	float3 const* pdPosition = m_pAgentGroupData->pdPosition();
+	float3 const* pdForward = m_pAgentGroupData->pdForward();
+	float3 * pdSteering = m_pAgentGroupData->pdSteering();
 
 	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdForward, pdSteering, m_target, getNumAgents(), m_fWeight );
 	cutilCheckMsg( "SteerForFleeCUDAKernel failed." );
@@ -37,6 +37,6 @@ void SteerForFleeCUDA::run(void)
 
 void SteerForFleeCUDA::close(void)
 {
-	// Device data has changed. Instruct the VehicleGroup it needs to synchronize the host.
-	m_pVehicleGroup->SetSyncHost();
+	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
+	m_pAgentGroup->SetSyncHost();
 }

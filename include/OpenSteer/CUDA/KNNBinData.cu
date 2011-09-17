@@ -10,14 +10,9 @@ extern "C"
 	__host__ void KNNBinningCUDAUnbindTexture( void );
 
 	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
-														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
-														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
-														int const		radius,				// In:	Search radius.
-														size_t const	numCells			// In:	Number of cells.
-														);
 }
 
-bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
+KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
 :	m_worldCells( worldCells ),
 	m_worldSize( worldSize ),
 	m_nSearchRadius( searchRadius )
@@ -34,7 +29,7 @@ bin_data::bin_data( uint3 const& worldCells, float3 const& worldSize, uint const
 	ComputeCellNeighbors( m_worldCells.y > 1 );
 }
 
-void bin_data::ComputeCellNeighbors( bool b3D )
+void KNNBinData::ComputeCellNeighbors( bool b3D )
 {
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
@@ -64,7 +59,7 @@ void bin_data::ComputeCellNeighbors( bool b3D )
 	KNNBinningCUDAUnbindTexture();
 }
 
-void bin_data::CreateCells( void )
+void KNNBinData::CreateCells( void )
 {
 	float3 const step =				make_float3(	m_worldSize.x / m_worldCells.x,		// width
 													m_worldSize.y / m_worldCells.y,		// depth

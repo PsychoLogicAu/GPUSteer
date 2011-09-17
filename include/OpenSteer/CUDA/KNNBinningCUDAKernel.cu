@@ -95,16 +95,16 @@ extern "C"
 
 														// Cell neighbor info.
 														uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
-														size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
-														size_t const	radius,						// In:	Search radius (in cells) to consider.
+														uint const		neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
+														uint const		radius,						// In:	Search radius (in cells) to consider.
 
 														// Output data.
 														uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
 														float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
 
-														size_t const	k,							// In:	Number of neighbors to consider.
-														size_t const	numA,						// In:	Size of group A.
-														size_t const	numB,						// In:	Size of group B.
+														uint const		k,							// In:	Number of neighbors to consider.
+														uint const		numA,						// In:	Size of group A.
+														uint const		numB,						// In:	Size of group B.
 														bool const		groupWithSelf				// In:	Are we testing this group with itself? (group A == group B)
 														);
 }
@@ -430,16 +430,16 @@ __global__ void KNNBinningKernel(	// Group A
 
 									// Cell neighbor info.
 									uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
-									size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
-									size_t const	radius,						// In:	Search radius (in cells) to consider.
+									uint const		neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
+									uint const		radius,						// In:	Search radius (in cells) to consider.
 
 									// Output data.
 									uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
 									float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
 
-									size_t const	k,							// In:	Number of neighbors to consider.
-									size_t const	numA,						// In:	Size of group A.
-									size_t const	numB,						// In:	Size of group B.
+									uint const		k,							// In:	Number of neighbors to consider.
+									uint const		numA,						// In:	Size of group A.
+									uint const		numB,						// In:	Size of group B.
 									bool const		groupWithSelf				// In:	Are we testing this group with itself? (group A == group B)
 									)
 {

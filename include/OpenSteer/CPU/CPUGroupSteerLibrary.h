@@ -12,27 +12,27 @@ protected:
 public:
 	//AbstractSteerLibrary interface
 	//Steering behaviours
-	virtual void steerForSeek(VehicleGroup &vehicleGroup, const float3 &target);
-	virtual void steerForFlee(VehicleGroup &vehicleGroup, const float3 &target); // TODO: implement
-	virtual void steerToFollowPath(VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path); // TODO: implement
-	virtual void steerToStayOnPath(VehicleGroup &vehicleGroup, const float predictionTime, const std::vector<float3> &path); // TODO: implement
+	virtual void steerForSeek(AgentGroup &agentGroup, const float3 &target);
+	virtual void steerForFlee(AgentGroup &agentGroup, const float3 &target); // TODO: implement
+	virtual void steerToFollowPath(AgentGroup &agentGroup, const float predictionTime, const std::vector<float3> &path); // TODO: implement
+	virtual void steerToStayOnPath(AgentGroup &agentGroup, const float predictionTime, const std::vector<float3> &path); // TODO: implement
 
 	//Obstacle avoidance
-	virtual void steerToAvoidObstacle(VehicleGroup &vehicleGroup, const float minTimeToCollision, const SphericalObstacle& obstacle); // TODO: implement
-	virtual void steerToAvoidObstacles(VehicleGroup &vehicleGroup, const float minTimeToCollision, ObstacleGroup const& obstacles); // TODO: implement
+	virtual void steerToAvoidObstacle(AgentGroup &agentGroup, const float minTimeToCollision, const SphericalObstacle& obstacle); // TODO: implement
+	virtual void steerToAvoidObstacles(AgentGroup &agentGroup, const float minTimeToCollision, ObstacleGroup const& obstacles); // TODO: implement
 
 	//Unaligned collision avoidance
-	virtual void steerToAvoidNeighbors( VehicleGroup &vehicleGroup, const float fMinTimeToCollision, float const fMinSeparationDistance );
+	virtual void steerToAvoidNeighbors( AgentGroup &agentGroup, const float fMinTimeToCollision, float const fMinSeparationDistance );
 
 	//Pursuit/ Evasion
-	virtual void steerForPursuit(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime); // TODO: implement
-	virtual void steerForEvasion(VehicleGroup &vehicleGroup, const VehicleData &target, const float maxPredictionTime); // TODO: implement
+	virtual void steerForPursuit(AgentGroup &agentGroup, const VehicleData &target, const float maxPredictionTime); // TODO: implement
+	virtual void steerForEvasion(AgentGroup &agentGroup, const VehicleData &target, const float maxPredictionTime); // TODO: implement
 
 	// KNN search
-	virtual void findKNearestNeighbors( VehicleGroup & vehicleGroup );
+	virtual void findKNearestNeighbors( AgentGroup & agentGroup );
 
 	// Update
-	virtual void update(VehicleGroup &vehicleGroup, const float elapsedTime);
+	virtual void update(AgentGroup &agentGroup, const float elapsedTime);
 };	// class CPUGroupSteerLibrary
 };	// namespace OpenSteer
 #endif //CPU_STEER_LIBRARY_H
