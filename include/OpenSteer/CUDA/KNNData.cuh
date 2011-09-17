@@ -29,7 +29,7 @@ private:
 
 public:
 	KNNData( uint const nSize, uint const nK );
-	~KNNData( void );
+	~KNNData( void ) {}
 
 	//
 	// Accessor/mutators

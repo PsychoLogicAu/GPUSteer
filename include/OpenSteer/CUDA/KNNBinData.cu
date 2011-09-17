@@ -6,10 +6,18 @@ using namespace OpenSteer;
 
 extern "C"
 {
+	// Bind the textures to the input cudaArray.
 	__host__ void KNNBinningCUDABindTexture( cudaArray * pCudaArray );
+	// Unbind the textures.
 	__host__ void KNNBinningCUDAUnbindTexture( void );
 
+	// Use to precompute the neighbors of each cell once per decomposition.
 	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
+														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
+														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
+														int const		radius,				// In:	Search radius.
+														size_t const	numCells			// In:	Number of cells.
+														);
 }
 
 KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
@@ -18,9 +26,6 @@ KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint c
 	m_nSearchRadius( searchRadius )
 {
 	m_nCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
-
-	m_dvCellStart.resize( m_nCells );
-	m_dvCellEnd.resize( m_nCells );
 
 	// Create the cells.
 	CreateCells();
@@ -125,7 +130,10 @@ Texture addressing in CUDA operates as follows.
 
 	// Prepare the bin_cell index lookup texture.
 	cudaExtent const extent = make_cudaExtent( m_worldCells.x, m_worldCells.y, m_worldCells.z );
-	cudaChannelFormatDesc const desc = cudaCreateChannelDesc< uint >();
+	//cudaChannelFormatDesc const desc = cudaCreateChannelDesc< uint >();
+	
+	cudaChannelFormatDesc const desc = cudaCreateChannelDesc( 32, 0, 0, 0, cudaChannelFormatKindUnsigned );
+
 	cudaPitchedPtr srcPtr = make_cudaPitchedPtr( (void*)phCellIndices, m_worldCells.x * sizeof(uint), m_worldCells.x, m_worldCells.y );
 
 	// Allocate m_pdCellIndexArray.
@@ -140,10 +148,10 @@ Texture addressing in CUDA operates as follows.
 	CUDA_SAFE_CALL( cudaMemcpy3D( &copyParms ) );
 
 	// Copy the m_worldSize and m_worldCells values to constant memory.
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSize", &m_worldSize, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &stepNormalized, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldSize", &m_worldSize, sizeof(float3), 0, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldStep", &step, sizeof(float3), 0, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldStepNormalized", &stepNormalized, sizeof(float3), 0, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldCells", &m_worldCells, sizeof(uint3), 0, cudaMemcpyHostToDevice ) );
 
 	// Free host memory.
 	free( phCellIndices );

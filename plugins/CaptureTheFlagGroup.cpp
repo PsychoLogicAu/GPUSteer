@@ -67,7 +67,10 @@
 
 #include "OpenSteer/AgentData.h"
 
-#include "OpenSteer/CUDA/DebugUtils.h"
+//#include "OpenSteer/CUDA/DebugUtils.h"
+
+// Include the required KNN headers.
+#include "OpenSteer/CUDA/KNNBinData.cuh"
  
 using namespace OpenSteer;
 
@@ -75,7 +78,7 @@ using namespace OpenSteer;
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-//#define ANNOTATION_LINES
+#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
 //#define NO_DRAW
@@ -88,9 +91,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-//const int gEnemyCount					= 1000;
-//const float gDim						= 200;
-//const int gCells						= 15;
+const int gEnemyCount					= 1000;
+const float gDim						= 200;
+const int gCells						= 15;
 
 //const int gEnemyCount					= 3000000;
 //const float gDim						= 8000;
@@ -109,9 +112,9 @@ class CtfBase;
 //const float gDim						= 635;
 //const int gCells						= 91;
 
-const int gEnemyCount					= 100000;
-const float gDim						= 2000;
-const int gCells						= 285;
+//const int gEnemyCount					= 100000;
+//const float gDim						= 2000;
+//const int gCells						= 285;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
@@ -140,7 +143,8 @@ const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
 
 // Bin data to be used for KNN lookups.
-BinData						g_binData(	gWorldCells, gWorldSize, g_searchRadius );
+KNNBinData								g_KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
+KNNData									g_KNNDataEnemyGroupWithSelf( gEnemyCount, g_knn );
 
 const float gMinStartRadius				= 30.0f;
 //const float gMaxStartRadius				= 60.0f;
@@ -247,7 +251,7 @@ class CtfEnemyGroup : public AgentGroup
 {
 public:
 	CtfEnemyGroup(void)
-		:AgentGroup( gWorldCells, gWorldSize, g_knn, g_kno, g_searchRadius )
+		:AgentGroup( gWorldCells, g_knn )
 	{
 		reset();
 	}
@@ -290,8 +294,8 @@ void CtfEnemyGroup::reset(void)
 
 	// Transfer the data to the device.
 	SyncDevice();
-	// Compute the initial KNN
-	CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
+	// Compute the initial KNN for this group with itself.
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, &g_KNNDataEnemyGroupWithSelf, &g_KNNBinData, this );
 }
 
 // ----------------------------------------------------------------------------
@@ -304,18 +308,19 @@ void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData
 	vehicleData.position = float3_add(gHomeBaseCenter, randomOnRing);
 
     // are we are too close to an obstacle?
-	float distance;
-	if(gObstacles->MinDistanceToObstacle(vehicleData.position, vehicleConst.radius * 5, distance))
-    {
-        // if so, retry the randomization (this recursive call may not return
-        // if there is too little free space)
-        randomizeStartingPositionAndHeading (vehicleData, vehicleConst);
-    }
-    else
-    {
+	//float distance;
+	// TODO: implement distance check.
+	//if(gObstacles->MinDistanceToObstacle(vehicleData.position, vehicleConst.radius * 5, distance))
+ //   {
+ //       // if so, retry the randomization (this recursive call may not return
+ //       // if there is too little free space)
+ //       randomizeStartingPositionAndHeading (vehicleData, vehicleConst);
+ //   }
+ //   else
+ //   {
         // otherwise, if the position is OK, randomize 2D heading
 		randomizeHeadingOnXZPlane(vehicleData);
-    }
+    //}
 }
 
 void CtfEnemyGroup::draw(void)
@@ -337,7 +342,6 @@ void CtfEnemyGroup::draw(void)
 	// Temporary storage used for annotation.
 	uint KNNIndices[g_knn];
 	float KNNDistances[g_knn];
-	uint cellIndex;
 #endif
 
 	// For each enemy...
@@ -357,7 +361,8 @@ void CtfEnemyGroup::draw(void)
 		//
 
 		// Pull the KNN data for this agent from the nearest neighbor database.
-		m_nearestNeighbors.getAgentData( i, KNNIndices, KNNDistances, cellIndex );
+		g_KNNDataEnemyGroupWithSelf.getAgentData( i, KNNIndices, KNNDistances );
+		
 #endif
 
 #if defined ANNOTATION_TEXT
@@ -366,7 +371,7 @@ void CtfEnemyGroup::draw(void)
 		std::ostringstream annote;
 
 		// Write this agent's index.
-		annote << i << "," << cellIndex << std::endl;
+		annote << i << std::endl;
 		// Write each ID of the KNN for this agent.
 		//if( i % 5 == 0 )
 		//{
@@ -404,21 +409,19 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 
 	//SyncDevice();
 	// Force the host to pull data on next call to SyncHost().
-	SetSyncHost();
+	SetSyncHost();	// <-- TODO: This should be replaced by appropriate setSynsHost calls in the kernel close() methods.
 
-	//uint j = 0;
-	//if( j++ % 5 == 0 )
-		CUDAGroupSteerLibrary.findKNearestNeighbors( *this );
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, &g_KNNDataEnemyGroupWithSelf, &g_KNNBinData, this );
 
-	CUDAGroupSteerLibrary.steerToAvoidNeighbors( *this, g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
+	CUDAGroupSteerLibrary.steerToAvoidNeighbors( this, &g_KNNDataEnemyGroupWithSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
 
-	CUDAGroupSteerLibrary.steerForPursuit( *this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
+	CUDAGroupSteerLibrary.steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
 	//CUDAGroupSteerLibrary.steerForSeek( *this, gSeeker->position(), g_fWeightPursuit );
 
 	// Maintain some semblence of separation.
-	CUDAGroupSteerLibrary.steerForSeparation( *this, g_fWeightSeparation );
+	CUDAGroupSteerLibrary.steerForSeparation( this, &g_KNNDataEnemyGroupWithSelf, this, g_fWeightSeparation );
 
-	CUDAGroupSteerLibrary.update( *this, elapsedTime );
+	CUDAGroupSteerLibrary.update( this, elapsedTime );
 
 	// Pull the data back to the host so we can render the next frame.
 	//SyncHost();
@@ -543,18 +546,19 @@ void randomizeStartingPositionAndHeading( float3 & position, float const radius,
     position =  float3_add( gHomeBaseCenter, randomOnRing );
 
     // are we are too close to an obstacle?
-	float distance;
-	if ( gObstacles->MinDistanceToObstacle( position, radius * 5, distance ) )
-    {
-        // if so, retry the randomization (this recursive call may not return
-        // if there is too little free space)
-		randomizeStartingPositionAndHeading( position, radius, up, forward, side );
-    }
-    else
-    {
+	//float distance;
+	// TODO: Implement this distance check.
+	//if ( gObstacles->MinDistanceToObstacle( position, radius * 5, distance ) )
+ //   {
+ //       // if so, retry the randomization (this recursive call may not return
+ //       // if there is too little free space)
+	//	randomizeStartingPositionAndHeading( position, radius, up, forward, side );
+ //   }
+ //   else
+ //   {
         // otherwise, if the position is OK, randomize 2D heading
         randomizeHeadingOnXZPlane( up, forward, side );
-    }
+    //}
 }
 
 // ----------------------------------------------------------------------------
@@ -1079,10 +1083,14 @@ private:
 		// loop until no overlap with other obstacles and the home base
 		float r;
 		float3 c;
-		float minClearance;
+		//float minClearance;
 		const float requiredClearance = 2.0f; //gSeeker->radius() * 4; // 2 x diameter
 		//SphericalObstacleDataVec obstacles = gObstacles->GetObstacles();
 
+		r = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
+		c = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), gMaxStartRadius * 1.1f);
+
+		/*	// TODO: Re-implement overlap checking.
 		do
 		{
 			r = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
@@ -1101,11 +1109,15 @@ private:
 				testOneObstacleOverlap((**o).radius, (**o).center);
 			}
 		} while (minClearance < requiredClearance);
+		*/
 
-		SphericalObstacleData *pData = new SphericalObstacleData(r, c);
+		ObstacleData od;
+		od.position = c;
+		od.radius = r;
+		//SphericalObstacleData *pData = new SphericalObstacleData(r, c);
 
 		// add new non-overlapping obstacle to registry
-		gObstacles->AddObstacle(pData);
+		gObstacles->AddObstacle( od );
 	}
 
 
@@ -1121,7 +1133,8 @@ public:
     {
 		OpenSteerDemo::setAnnotationOff();
 
-		gObstacles = new ObstacleGroup( gHomeBaseCenter, gWorldSize, gWorldCells );
+
+		gObstacles = new ObstacleGroup( gWorldCells, g_kno );
 
 		initializeObstacles();
 
@@ -1300,12 +1313,13 @@ public:
     {
         const float3 color = make_float3(0.8f, 0.6f, 0.4f);
 
-		std::vector<SphericalObstacleData>& allSO = gObstacles->m_vObstacleData;
+		for( uint i = 0; i < gObstacles->Size(); i++ )
+		{
+			ObstacleData od;
+			gObstacles->GetDataForObstacle( i, od );
 
-		for (std::vector<SphericalObstacleData>::iterator o = allSO.begin(); o != allSO.end(); o++)
-        {
-            drawXZCircle ((*o).radius, (*o).center, color, 20);
-        }
+			drawXZCircle( od.radius, od.position, color, 20 );
+		}
     }
 
     // a group (STL vector) of all vehicles in the PlugIn

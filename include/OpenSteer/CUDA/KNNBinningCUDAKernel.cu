@@ -8,13 +8,12 @@ using namespace OpenSteer;
 
 // Define the texture reference to access the appropriate bin_cell's index.
 texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndicesNormalized;
-texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndices;
+//texture< uint, cudaTextureType3D, cudaReadModeElementType > texCellIndices;
 
-// Constant memory used to hold the worldSize and worldCells values.
-__constant__ float3		constWorldSize;
-__constant__ float3		constWorldStep;
-__constant__ float3		constWorldStepNormalized;
-__constant__ uint3		constWorldCells;
+__constant__ float3		cWorldSize;
+__constant__ float3		cWorldStep;
+__constant__ float3		cWorldStepNormalized;
+__constant__ uint3		cWorldCells;
 
 // Fetch the cell index from texCellIndicesNormalized at a given world {x,y,z} position.
 #define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
@@ -30,11 +29,11 @@ extern "C"
 	__host__ void KNNBinningCUDAUnbindTexture( void );
 
 	// Use to precompute the neighbors of each cell once per decomposition.
-	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,					// In:	Cell data.
-														uint *			pdCellNeighbors,			// Out:	Array of computed cell neighbors.
-														size_t const	neighborsPerCell,			// In:	Number of neighbors per cell.
-														int const		radius,						// In:	Search radius.
-														size_t const	numCells					// In:	Number of cells.
+	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
+														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
+														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
+														int const		radius,				// In:	Search radius.
+														size_t const	numCells			// In:	Number of cells.
 														);
 
 	// Kernel to set initial bin indices of vehicles in the simulation.
@@ -128,9 +127,9 @@ __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// 
 	shPosition[ threadIdx.x ] = pdCells[index].position;
 
 	// Normalize the positions.
-	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * constWorldSize.x) / constWorldSize.x;
-	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
-	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
+	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * cWorldSize.x) / cWorldSize.x;
+	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * cWorldSize.y) / cWorldSize.y;
+	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * cWorldSize.z) / cWorldSize.z;
 
 	__syncthreads();
 
@@ -151,9 +150,9 @@ __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// 
 				// Only do for the outside cells.
 				if( dz == -iCurrentRadius || dz == iCurrentRadius || dx == -iCurrentRadius || dx == iCurrentRadius )
 				{
-					float3 queryPosition = make_float3(	POSITION_SH( threadIdx.x ).x + dx * constWorldStepNormalized.x,
+					float3 queryPosition = make_float3(	POSITION_SH( threadIdx.x ).x + dx * cWorldStepNormalized.x,
 														POSITION_SH( threadIdx.x ).y,
-														POSITION_SH( threadIdx.x ).z + dz * constWorldStepNormalized.z
+														POSITION_SH( threadIdx.x ).z + dz * cWorldStepNormalized.z
 														);
 
 					uint cellIndex = CELL_INDEX_NORMALIZED( queryPosition );
@@ -191,7 +190,7 @@ __host__ void KNNBinningCUDABindTexture( cudaArray * pdCudaArray )
 	texCellIndicesNormalized.addressMode[2] = cudaAddressModeClamp;
 
 	CUDA_SAFE_CALL( cudaBindTextureToArray( texCellIndicesNormalized, pdCudaArray, channelDesc ) );
-
+/*
 	texCellIndices.normalized = false;
 	texCellIndices.filterMode = cudaFilterModePoint;
 	texCellIndices.addressMode[0] = cudaAddressModeClamp;
@@ -199,12 +198,13 @@ __host__ void KNNBinningCUDABindTexture( cudaArray * pdCudaArray )
 	texCellIndices.addressMode[2] = cudaAddressModeClamp;
 
 	CUDA_SAFE_CALL( cudaBindTextureToArray( texCellIndices, pdCudaArray, channelDesc ) );
+*/
 }
 
 __host__ void KNNBinningCUDAUnbindTexture( void )
 {
 	CUDA_SAFE_CALL( cudaUnbindTexture( texCellIndicesNormalized ) );
-	CUDA_SAFE_CALL( cudaUnbindTexture( texCellIndices ) );
+	//CUDA_SAFE_CALL( cudaUnbindTexture( texCellIndices ) );
 }
 
 __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions of each agent.
@@ -225,9 +225,9 @@ __global__ void KNNBinningBuildDB(	float3 const*	pdPosition,				// In:	Positions
 	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 
 	// Normalize the positions.
-	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * constWorldSize.x) / constWorldSize.x;
-	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
-	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
+	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * cWorldSize.x) / cWorldSize.x;
+	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * cWorldSize.y) / cWorldSize.y;
+	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * cWorldSize.z) / cWorldSize.z;
 	
 	// Write the agent's cell index out to global memory.
 	pdCellIndices[index] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
