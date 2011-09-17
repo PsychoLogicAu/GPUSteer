@@ -1,23 +1,23 @@
-#include "OpenSteer/VehicleGroup.h"
+#include "OpenSteer/AgentGroup.h"
 
 #include "OpenSteer/VectorUtils.cuh"
 #include "OpenSteer/Utilities.h"
 
 using namespace OpenSteer;
 
-VehicleGroup::VehicleGroup( uint3 const& worldCells, uint const knn )
+AgentGroup::AgentGroup( uint3 const& worldCells, uint const knn )
 :	BaseGroup( knn, 0, worldCells.x*worldCells.y*worldCells.z ),
 	m_nCount( 0 )
 {
 }
 
-VehicleGroup::~VehicleGroup(void)
+AgentGroup::~AgentGroup(void)
 {
 	Clear();
 }
 
 // Gets the index of a vehicle in the vector from its id number.
-int VehicleGroup::GetVehicleIndex( unsigned int _id ) const
+int AgentGroup::GetVehicleIndex( unsigned int _id ) const
 {
 	int index = -1;
 
@@ -32,18 +32,18 @@ int VehicleGroup::GetVehicleIndex( unsigned int _id ) const
 }
 
 // Adds a vehicle to the group.
-bool VehicleGroup::AddVehicle( VehicleData const& vd, VehicleConst const& vc )
+bool AgentGroup::AddVehicle( VehicleData const& vd, VehicleConst const& vc )
 {
 	// Add the vehicle if it is not already contained.
 	if( GetVehicleIndex( vc.id ) == -1 )
 	{
 		// Add the vehicle's data to the host structures.
-		m_vehicleGroupData.addVehicle( vd );
-		m_vehicleGroupConst.addVehicle( vc );
+		m_agentGroupData.addVehicle( vd );
+		m_agentGroupConst.addVehicle( vc );
 
 		// Will need to sync the device.
-		m_vehicleGroupData.m_bSyncDevice = true;
-		m_vehicleGroupConst.m_bSyncDevice = true;
+		m_agentGroupData.m_bSyncDevice = true;
+		m_agentGroupConst.m_bSyncDevice = true;
 
 		// Add the id and index to the IDToIndexMap.
 		m_cIDToIndexMap[ vc.id ] = m_nCount++;
@@ -58,7 +58,7 @@ bool VehicleGroup::AddVehicle( VehicleData const& vd, VehicleConst const& vc )
 }
 
 // Removes a vehicle from the group using the supplied id number.
-void VehicleGroup::RemoveVehicle( id_type const id )
+void AgentGroup::RemoveVehicle( id_type const id )
 {
 	// Get the vehicle's index.
 	int index = GetVehicleIndex( id );
@@ -66,8 +66,8 @@ void VehicleGroup::RemoveVehicle( id_type const id )
 	if(index > -1) // Found.
 	{
 		// Remove the vehicle from the host structures.
-		m_vehicleGroupConst.removeVehicle( index );
-		m_vehicleGroupData.removeVehicle( index );
+		m_agentGroupConst.removeVehicle( index );
+		m_agentGroupData.removeVehicle( index );
 
 		// There is now one less.
 		m_nCount--;
@@ -79,31 +79,31 @@ void VehicleGroup::RemoveVehicle( id_type const id )
 		RebuildIDToIndexMap();
 
 		// Will need to sync the device.
-		m_vehicleGroupData.m_bSyncDevice = true;
-		m_vehicleGroupConst.m_bSyncDevice = true;
+		m_agentGroupData.m_bSyncDevice = true;
+		m_agentGroupConst.m_bSyncDevice = true;
 	}
 }
 
-void VehicleGroup::RebuildIDToIndexMap( void )
+void AgentGroup::RebuildIDToIndexMap( void )
 {
 	// Clear the current map.
 	m_cIDToIndexMap.clear();
 
 	size_t index = 0;
 	// For each vehicle ID in the host hvId vector...
-	for(	std::vector<id_type>::const_iterator it = m_vehicleGroupConst.hvId().begin();
-			it != m_vehicleGroupConst.hvId().end();
+	for(	std::vector<id_type>::const_iterator it = m_agentGroupConst.hvId().begin();
+			it != m_agentGroupConst.hvId().end();
 			++it, ++index )
 	{
 		m_cIDToIndexMap[ (*it) ] = index;
 	}
 }
 
-void VehicleGroup::Clear(void)
+void AgentGroup::Clear(void)
 {
 	// Clear the host and device vectors.
-	m_vehicleGroupData.clear();
-	m_vehicleGroupConst.clear();
+	m_agentGroupData.clear();
+	m_agentGroupConst.clear();
 
 	// Clear the neighbor database.
 	m_neighborDB.clear();
@@ -114,7 +114,7 @@ void VehicleGroup::Clear(void)
 }
 
 // Gets the data for a vehicle from the supplied id.
-bool VehicleGroup::GetDataForVehicle( id_type const id, VehicleData & vd, VehicleConst & vc )
+bool AgentGroup::GetDataForVehicle( id_type const id, VehicleData & vd, VehicleConst & vc )
 {
 	// Do I want to do synchronization from this class, or vehicle_group_data/vehicle_group_const ???
 	// Sync the host.
@@ -126,24 +126,24 @@ bool VehicleGroup::GetDataForVehicle( id_type const id, VehicleData & vd, Vehicl
 	if( index == -1 ) // Not found.
 		return false;
 
-	m_vehicleGroupConst.getVehicleData( index, vc );
-	m_vehicleGroupData.getVehicleData( index, vd );
+	m_agentGroupConst.getVehicleData( index, vc );
+	m_agentGroupData.getVehicleData( index, vd );
 
 	return true;
 }
 
-void VehicleGroup::SyncDevice( void )
+void AgentGroup::SyncDevice( void )
 {
-	m_vehicleGroupData.syncDevice();
-	m_vehicleGroupConst.syncDevice();
+	m_agentGroupData.syncDevice();
+	m_agentGroupConst.syncDevice();
 
 	m_neighborDB.syncDevice();
 }
 
-void VehicleGroup::SyncHost( void )
+void AgentGroup::SyncHost( void )
 {
-	m_vehicleGroupData.syncHost();
-	m_vehicleGroupConst.syncHost();
+	m_agentGroupData.syncHost();
+	m_agentGroupConst.syncHost();
 
 	m_neighborDB.syncHost();
 }

@@ -33,8 +33,8 @@ public:
 	bool MinDistanceToObstacle( const float3 &position, const float radius, float &distance );
 
 	// Overloaded pure virtuals.
-	uint		Size( void ) const		{ return m_nCount; }
-	float3 *	pdPosition( void )		{ return m_obstacleGroupData.pdPosition(); }
+	virtual uint		Size( void ) const		{ return m_nCount; }
+	virtual float3 *	pdPosition( void )		{ return m_obstacleGroupData.pdPosition(); }
 };	// class ObstacleGroup
 }	// namespace OpenSteer
 #endif

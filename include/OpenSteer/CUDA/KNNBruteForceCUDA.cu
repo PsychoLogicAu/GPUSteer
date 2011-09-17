@@ -47,8 +47,8 @@ extern "C"
 using namespace OpenSteer;
 
 #pragma region KNNBruteForceCUDA
-KNNBruteForceCUDA::KNNBruteForceCUDA( VehicleGroup * pVehicleGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f ),
+KNNBruteForceCUDA::KNNBruteForceCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
+:	AbstractCUDAKernel( pAgentGroup, 1.f ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup )
 { }
@@ -69,7 +69,7 @@ void KNNBruteForceCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 const*	pdPosition		= m_pVehicleGroupData->pdPosition();
+	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
 
 	uint const&		numAgents		= getNumAgents();
 	uint const&		k				= m_pKNNData->k();
@@ -78,11 +78,6 @@ void KNNBruteForceCUDA::run( void )
 	float3 const*	pdPositionOther = m_pOtherGroup->pdPosition();
 	bool const		groupWithSelf	= pdPosition == pdPositionOther;
 
-	// Launch the KNNBruteForceCUDAKernel to compute distances to each other vehicle.
-	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, k, numAgents, pdPositionOther, numOther, groupWithSelf );
-	cutilCheckMsg( "KNNBruteForceCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
-
 #if defined TIMING
 	// Events for timing the sort operations.
 	cudaEvent_t start, stop;
@@ -90,6 +85,11 @@ void KNNBruteForceCUDA::run( void )
 	cudaEventCreate( &stop );
 	cudaEventRecord( start, 0 );
 #endif
+
+	// Launch the KNNBruteForceCUDAKernel to compute distances to each other vehicle.
+	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, k, numAgents, pdPositionOther, numOther, groupWithSelf );
+	cutilCheckMsg( "KNNBruteForceCUDAKernel failed." );
+	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// For each agent...
 	for( size_t i = 0; i < numAgents; i++ )
@@ -118,8 +118,8 @@ void KNNBruteForceCUDA::run( void )
 	float elapsedTime;
 	cudaEventElapsedTime( &elapsedTime, start, stop );
 	char szString[128] = {0};
-	sprintf_s( szString, "%f\n", elapsedTime );
-	OutputDebugString( szString );
+	sprintf_s( szString, "KNNBruteForceCUDA,%f\n", elapsedTime );
+	OutputDebugStringToFile( szString );
 
 	// Destroy the events.
 	cudaEventDestroy( start );
@@ -140,8 +140,8 @@ void KNNBruteForceCUDA::close( void )
 // 
 //	V2 implementation.
 //
-KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f ),
+KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
+:	AbstractCUDAKernel( pAgentGroup, 1.f ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup )
 {
@@ -157,7 +157,7 @@ void KNNBruteForceCUDAV2::run( void )
 	dim3 block = blockDim();
 
 	// Gather required data.
-	float3 const*	pdPosition		= m_pVehicleGroupData->pdPosition();
+	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
 
 	uint *			pdKNNIndices	= m_pKNNData->pdKNNIndices();
 	float *			pdKNNDistances	= m_pKNNData->pdKNNDistances();
@@ -187,14 +187,16 @@ void KNNBruteForceCUDAV2::close( void )
 // 
 //	V3 implementation.
 //
-KNNBruteForceCUDAV3::KNNBruteForceCUDAV3( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f )
+KNNBruteForceCUDAV3::KNNBruteForceCUDAV3( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
+:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+	m_pKNNData( pKNNData ),
+	m_pOtherGroup( pOtherGroup )
 {
-	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
 }
 
 void KNNBruteForceCUDAV3::init( void )
 {
+	// Nothing to do.
 }
 
 void KNNBruteForceCUDAV3::run( void )
@@ -203,26 +205,34 @@ void KNNBruteForceCUDAV3::run( void )
 	dim3 block = blockDim();
 
 	// Gather required data.
-	float3 const*	pdPosition = m_pVehicleGroupData->pdPosition();
-	uint *			pdKNNIndices = m_pNearestNeighborData->pdKNNIndices();
-	float *			pdKNNDistances = m_pNearestNeighborData->pdKNNDistances();
-	size_t			numAgents = getNumAgents();
-	uint			k = m_pNearestNeighborData->k();
+	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
+	uint const&		numAgents		= getNumAgents();
+
+	uint *			pdKNNIndices	= m_pKNNData->pdKNNIndices();
+	float *			pdKNNDistances	= m_pKNNData->pdKNNDistances();
+	uint const&		k				= m_pKNNData->k();
+	bool const&		seedable		= m_pKNNData->seedable();
+
+	float3 const*	pdPositionOther	= m_pOtherGroup->pdPosition();
+	uint const&		numOther		= m_pOtherGroup->Size();
+	bool const		groupWithSelf	= m_pAgentGroup == m_pOtherGroup;
 
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
 	// FIXME: there is a bug in the seeding part of KNNBruteForceV3
-	KNNBruteForceCUDAKernelV3/*<<< grid, block, shMemSize >>>*/( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, m_pNearestNeighborData->seedable() );
-	//KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, false );
+	KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, pdPositionOther, numOther, groupWithSelf, seedable );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV3 failed." );
+
 	// Data will now be seedable.
-	m_pNearestNeighborData->seedable( true );
+	m_pKNNData->seedable( true );
 
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void KNNBruteForceCUDAV3::close( void )
 {
+	// The KNNData has most likely changed.
+	m_pKNNData->setSyncHost();
 }
 #pragma endregion

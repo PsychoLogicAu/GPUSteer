@@ -15,8 +15,10 @@ extern "C"
 												);
 }
 
-SteerForSeparationCUDA::SteerForSeparationCUDA(	VehicleGroup * pVehicleGroup, float const fWeight )
-:	AbstractCUDAKernel( pVehicleGroup, fWeight )
+SteerForSeparationCUDA::SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight )
+:	AbstractCUDAKernel( pAgentGroup, fWeight ),
+	m_pKNNData( pKNNData ),
+	m_pOtherGroup( pOtherGroup )
 {
 	// Nothing to do.
 }
@@ -31,13 +33,13 @@ void SteerForSeparationCUDA::run( void )
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	size_t const	numAgents = getNumAgents();
-	size_t const	k = m_pVehicleGroup->GetNearestNeighborData().k();
+	size_t const	numAgents		= getNumAgents();
+	size_t const	k				= m_pKNNData->k();
 
 	// Gather required device pointers.
-	float3 const*	pdPosition = m_pVehicleGroupData->pdPosition();
-	float3 *		pdSteering = m_pVehicleGroupData->pdSteering();
-	uint const*		pdKNNIndices = m_pVehicleGroup->GetNearestNeighborData().pdKNNIndices();
+	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
+	float3 *		pdSteering		= m_pAgentGroupData->pdSteering();
+	uint const*		pdKNNIndices	= m_pKNNData->pdKNNIndices();
 
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * sizeof(uint);
@@ -50,5 +52,6 @@ void SteerForSeparationCUDA::run( void )
 
 void SteerForSeparationCUDA::close( void )
 {
-	// Nothing to do.
+	// The AgentGroup data has most likely changed.
+	m_pAgentGroup->SetSyncHost();
 }

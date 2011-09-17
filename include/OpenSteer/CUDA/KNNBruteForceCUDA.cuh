@@ -19,7 +19,7 @@ protected:
 	BaseGroup *	m_pOtherGroup;
 
 public:
-	KNNBruteForceCUDA( VehicleGroup * pVehicleGroup, KNNData * pKNNData, BaseGroup * pOtherGroup );
+	KNNBruteForceCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup );
 	virtual ~KNNBruteForceCUDA( void ) {}
 
 	virtual void init( void );
@@ -35,7 +35,7 @@ protected:
 	BaseGroup *	m_pOtherGroup;
 
 public:
-	KNNBruteForceCUDAV2( VehicleGroup * pVehicleGroup, KNNData * pKNNData, BaseGroup * pOtherGroup );
+	KNNBruteForceCUDAV2( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup );
 	virtual ~KNNBruteForceCUDAV2( void ) {}
 
 	virtual void init( void );
@@ -50,7 +50,7 @@ protected:
 	BaseGroup *	m_pOtherGroup;
 
 public:
-	KNNBruteForceCUDAV3( VehicleGroup * pVehicleGroup );
+	KNNBruteForceCUDAV3( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup );
 	virtual ~KNNBruteForceCUDAV3( void ) {}
 
 	virtual void init( void );

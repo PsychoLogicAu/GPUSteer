@@ -3,14 +3,13 @@
 
 #include "BaseGroup.h"
 
-#include "VehicleGroupData.cuh"
-#include "CUDA/KNNBinData.cuh"
-#include "CUDA/KNNDatabase.cuh"
+#include "AgentGroupData.cuh"
+
 #include <map>
 
 namespace OpenSteer
 {
-class VehicleGroup : public BaseGroup
+class AgentGroup : public BaseGroup
 {
 	typedef std::map< id_type, size_t > IDToIndexMap;
 
@@ -24,17 +23,17 @@ protected:
 	void	SyncHost( void );
 
 	// Vehicle data.
-	VehicleGroupData			m_vehicleGroupData;
-	VehicleGroupConst			m_vehicleGroupConst;
+	AgentGroupData			m_agentGroupData;
+	AgentGroupConst			m_agentGroupConst;
 
 	IDToIndexMap				m_cIDToIndexMap;
 
 	size_t						m_nCount;
 
 public:
-	//VehicleGroup( void );
-	VehicleGroup( uint3 const& worldCells, uint const knn );
-	virtual ~VehicleGroup( void );
+	//AgentGroup( void );
+	AgentGroup( uint3 const& worldCells, uint const knn );
+	virtual ~AgentGroup( void );
 
 	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );
 	void RemoveVehicle( id_type const id );
@@ -42,20 +41,20 @@ public:
 	void Clear( void );
 	void SetSyncHost( void )
 	{
-		m_vehicleGroupData.m_bSyncHost = true;
+		m_agentGroupData.m_bSyncHost = true;
 		m_neighborDB.m_bSyncHost = true;
 	}
 
-	VehicleGroupConst &		GetVehicleGroupConst( void )	{ return m_vehicleGroupConst; }
-	VehicleGroupData &		GetVehicleGroupData( void )		{ return m_vehicleGroupData; }
+	AgentGroupConst &		GetAgentGroupConst( void )	{ return m_agentGroupConst; }
+	AgentGroupData &		GetAgentGroupData( void )		{ return m_agentGroupData; }
 
 	/// Use to extract data for an individual vehicle
 	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
 
 	// Overloaded pure virtuals.
-	uint		Size( void ) const		{ return m_nCount; }
-	float3 *	pdPosition( void )		{ return m_vehicleGroupData.pdPosition(); }
+	virtual uint		Size( void ) const					{ return m_nCount; }
+	virtual float3 *	pdPosition( void )					{ return m_agentGroupData.pdPosition(); }
 
-};	//class VehicleGroup
+};	//class AgentGroup
 }	//namespace OpenSteer
 #endif

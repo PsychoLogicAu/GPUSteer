@@ -60,12 +60,12 @@
 #include "OpenSteer/Proximity.h"
 #include "OpenSteer/ObstacleGroup.h"
 
-#include "OpenSteer/VehicleGroup.h"
+#include "OpenSteer/AgentGroup.h"
 
 #include "OpenSteer/CUDA/CUDAGroupSteerLibrary.h"
 #include "OpenSteer/CUDA/CUDAGlobals.cuh"
 
-#include "OpenSteer/VehicleData.h"
+#include "OpenSteer/AgentData.h"
 
 #include "OpenSteer/CUDA/DebugUtils.h"
  
@@ -243,11 +243,11 @@ public:
     float lastRunningTime; // for auto-reset
 };
 
-class CtfEnemyGroup : public VehicleGroup
+class CtfEnemyGroup : public AgentGroup
 {
 public:
 	CtfEnemyGroup(void)
-		:VehicleGroup( gWorldCells, gWorldSize, g_knn, g_kno, g_searchRadius )
+		:AgentGroup( gWorldCells, gWorldSize, g_knn, g_kno, g_searchRadius )
 	{
 		reset();
 	}
@@ -330,8 +330,8 @@ void CtfEnemyGroup::draw(void)
 	VehicleConst vc;
 	VehicleData vd;
 
-	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
-	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
+	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
+	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
 
 #if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 	// Temporary storage used for annotation.
@@ -638,8 +638,8 @@ bool CtfSeeker::clearPathToGoal (void)
 	VehicleConst econst;
 	VehicleData edata;
 
-	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
-	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
+	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
+	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
@@ -765,8 +765,8 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
 	VehicleConst econst;
 	VehicleData edata;
 
-	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
-	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
+	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
+	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
@@ -812,8 +812,8 @@ float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
 	VehicleConst econst;
 	VehicleData edata;
 
-	VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
-	VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
+	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
+	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
@@ -1239,8 +1239,8 @@ public:
 
 		gEnemies->reset();
 
-		//VehicleGroupData & vgd = gEnemies->GetVehicleGroupData();
-		//VehicleGroupConst & vgc = gEnemies->GetVehicleGroupConst();
+		//AgentGroupData & vgd = gEnemies->GetAgentGroupData();
+		//AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
 
 		//// reset the enemies
 

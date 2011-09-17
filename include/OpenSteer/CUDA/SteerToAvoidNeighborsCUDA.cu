@@ -41,8 +41,10 @@ extern "C"
 															);
 }
 
-SteerToAvoidNeighborsCUDA::SteerToAvoidNeighborsCUDA( VehicleGroup *pVehicleGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight )
-:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
+SteerToAvoidNeighborsCUDA::SteerToAvoidNeighborsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight )
+:	AbstractCUDAKernel( pAgentGroup, fWeight ),
+	m_pKNNData( pKNNData ),
+	m_pOtherGroup( pOtherGroup ),
 	m_fMinTimeToCollision( fMinTimeToCollision ),
 	m_fMinSeparationDistance( fMinSeparationDistance )
 {
@@ -58,21 +60,21 @@ void SteerToAvoidNeighborsCUDA::run( void )
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	size_t const&	k = m_pVehicleGroup->GetNearestNeighborData().k();
-	size_t const&	numAgents = getNumAgents();
+	size_t const&	k				= m_pKNNData->k();
+	size_t const&	numAgents		= getNumAgents();
 
 	// Gather the required device pointers.
-	uint const*		pdKNNIndices = m_pVehicleGroup->GetNearestNeighborData().pdKNNIndices();
-	float const*	pdKNNDistances = m_pVehicleGroup->GetNearestNeighborData().pdKNNDistances();
+	uint const*		pdKNNIndices	= m_pKNNData->pdKNNIndices();
+	float const*	pdKNNDistances	= m_pKNNData->pdKNNDistances();
 
-	float3 const*	pdPosition = m_pVehicleGroupData->pdPosition();
-	float3 const*	pdDirection = m_pVehicleGroupData->pdForward();
-	float3 const*	pdSide = m_pVehicleGroupData->pdSide();
-	float *			pdSpeed = m_pVehicleGroupData->pdSpeed();
+	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
+	float3 const*	pdDirection		= m_pAgentGroupData->pdForward();
+	float3 const*	pdSide			= m_pAgentGroupData->pdSide();
+	float *			pdSpeed			= m_pAgentGroupData->pdSpeed();
 
-	float const*	pdRadius = m_pVehicleGroupConst->pdRadius();
+	float const*	pdRadius		= m_pAgentGroupConst->pdRadius();
 
-	float3 *		pdSteering = m_pVehicleGroupData->pdSteering();
+	float3 *		pdSteering		= m_pAgentGroupData->pdSteering();
 
 	// Only consider to be 'close neighbor' when this close.
 	m_fMinSeparationDistance = 1.f;
@@ -98,6 +100,6 @@ void SteerToAvoidNeighborsCUDA::run( void )
 
 void SteerToAvoidNeighborsCUDA::close(void )
 {
-	// Device data has changed. Instruct the VehicleGroup it needs to synchronize the host.
-	m_pVehicleGroup->SetSyncHost();
+	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
+	m_pAgentGroup->SetSyncHost();
 }

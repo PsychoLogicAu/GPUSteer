@@ -13,8 +13,8 @@ extern "C"
 										float const elapsedTime, size_t const numAgents );
 }
 
-UpdateCUDA::UpdateCUDA( VehicleGroup * pVehicleGroup, const float fElapsedTime )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f ),
+UpdateCUDA::UpdateCUDA( AgentGroup * pAgentGroup, const float fElapsedTime )
+:	AbstractCUDAKernel( pAgentGroup, 1.f ),
 	m_fElapsedTime( fElapsedTime )
 {
 }
@@ -30,16 +30,16 @@ void UpdateCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gather pointers to the required data...
-	float3 * pdSide = m_pVehicleGroupData->pdSide();
-	float3 * pdUp = m_pVehicleGroupData->pdUp();
-	float3 * pdForward = m_pVehicleGroupData->pdForward();
-	float3 * pdPosition = m_pVehicleGroupData->pdPosition();
-	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
-	float * pdSpeed = m_pVehicleGroupData->pdSpeed();
+	float3 * pdSide = m_pAgentGroupData->pdSide();
+	float3 * pdUp = m_pAgentGroupData->pdUp();
+	float3 * pdForward = m_pAgentGroupData->pdForward();
+	float3 * pdPosition = m_pAgentGroupData->pdPosition();
+	float3 * pdSteering = m_pAgentGroupData->pdSteering();
+	float * pdSpeed = m_pAgentGroupData->pdSpeed();
 
-	float const* pdMaxForce = m_pVehicleGroupConst->pdMaxForce();
-	float const* pdMaxSpeed = m_pVehicleGroupConst->pdMaxSpeed();
-	float const* pdMass = m_pVehicleGroupConst->pdMass();
+	float const* pdMaxForce = m_pAgentGroupConst->pdMaxForce();
+	float const* pdMaxSpeed = m_pAgentGroupConst->pdMaxSpeed();
+	float const* pdMass = m_pAgentGroupConst->pdMass();
 
 	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdForward, pdPosition, pdSteering, pdSpeed,
 											pdMaxForce, pdMaxSpeed, pdMass,
@@ -51,6 +51,6 @@ void UpdateCUDA::run(void)
 
 void UpdateCUDA::close(void)
 {
-	// Device data has changed. Instruct the VehicleGroup it needs to synchronize the host.
-	m_pVehicleGroup->SetSyncHost();
+	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
+	m_pAgentGroup->SetSyncHost();
 }

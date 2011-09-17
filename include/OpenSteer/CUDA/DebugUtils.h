@@ -4,6 +4,20 @@
 #include <iostream>
 #include <fstream>
 
+void OutputDebugStringToFile( char const* szString, char const* szFilename = "debug.log" )
+{
+	std::ofstream of;
+
+	// Open the file to append.
+	of.open( szFilename, std::ios_base::app );
+
+	if( of.is_open() )
+	{
+		of << szString << std::endl;
+		of.close();
+	}
+}
+
 template < typename T >
 void OutputDeviceData( T const* pdData, size_t const nEnt, size_t const nElemsPerEnt, std::ostream & os )
 {

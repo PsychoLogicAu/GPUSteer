@@ -32,6 +32,8 @@ void KNNData::resize( uint const nSize, uint const nK )
 	// Resize the device data.
 	m_dvKNNIndices.resize( nSize * nK );
 	m_dvKNNDistances.resize( nSize * nK );
+
+	m_bSeedable = false;
 }
 
 void KNNData::clear( void )
@@ -46,6 +48,8 @@ void KNNData::clear( void )
 	// Clear the host data.
 	m_hvKNNDistances.clear();
 	m_hvKNNIndices.clear();
+
+	m_bSeedable = false;
 }
 
 void KNNData::getAgentData( size_t const index, uint * pKNNIndices, float * pKNNDistances )

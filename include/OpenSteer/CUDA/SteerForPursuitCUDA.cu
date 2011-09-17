@@ -1,6 +1,6 @@
 #include "SteerForPursuitCUDA.h"
 
-#include "../VehicleGroupData.cuh"
+#include "../AgentGroupData.cuh"
 
 using namespace OpenSteer;
 
@@ -13,10 +13,10 @@ extern "C"
 												);
 }
 
-SteerForPursuitCUDA::SteerForPursuitCUDA(	VehicleGroup * pVehicleGroup, 
+SteerForPursuitCUDA::SteerForPursuitCUDA(	AgentGroup * pAgentGroup, 
 											float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
 											const float fMaxPredictionTime, float const fWeight )
-:	AbstractCUDAKernel( pVehicleGroup, fWeight ),
+:	AbstractCUDAKernel( pAgentGroup, fWeight ),
 	m_targetPosition( targetPosition ),
 	m_targetForward( targetForward ),
 	m_targetVelocity( targetVelocity ),
@@ -33,10 +33,10 @@ void SteerForPursuitCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gether the required device pointers.
-	float3 * pdSteering = m_pVehicleGroupData->pdSteering();
-	float3 const* pdPosition = m_pVehicleGroupData->pdPosition();
-	float3 const* pdForward = m_pVehicleGroupData->pdForward();
-	float const* pdSpeed = m_pVehicleGroupData->pdSpeed();
+	float3 * pdSteering = m_pAgentGroupData->pdSteering();
+	float3 const* pdPosition = m_pAgentGroupData->pdPosition();
+	float3 const* pdForward = m_pAgentGroupData->pdForward();
+	float const* pdSpeed = m_pAgentGroupData->pdSpeed();
 
 	SteerForPursuitCUDAKernel<<< grid, block >>>( pdSteering, pdPosition, pdForward, pdSpeed, m_targetPosition, m_targetForward, m_targetVelocity, m_targetSpeed, getNumAgents(), m_fMaxPredictionTime, m_fWeight );
 	cutilCheckMsg( "SteerForPursuitCUDAKernel failed." );
@@ -45,6 +45,6 @@ void SteerForPursuitCUDA::run(void)
 
 void SteerForPursuitCUDA::close(void)
 {
-	// Device data has changed. Instruct the VehicleGroup it needs to synchronize the host.
-	m_pVehicleGroup->SetSyncHost();
+	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
+	m_pAgentGroup->SetSyncHost();
 }

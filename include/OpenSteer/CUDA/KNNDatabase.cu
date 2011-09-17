@@ -16,7 +16,6 @@ void KNNDatabase::resize( uint const nSize )
 	m_hvPositionSorted.resize( nSize );
 
 	m_nSize = nSize;
-	m_bSeedable = false;
 	m_bSyncDevice = true;
 }
 
@@ -107,7 +106,6 @@ void KNNDatabase::clear( void )
 	m_nSize = 0;
 	m_bSyncHost = false;
 	m_bSyncDevice = false;
-	m_bSeedable = false;
 
 	// Clear device data.
 	m_dvCellIndices.clear();

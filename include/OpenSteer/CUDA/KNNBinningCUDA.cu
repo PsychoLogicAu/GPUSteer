@@ -2,6 +2,8 @@
 
 using namespace OpenSteer;
 
+#include "KNNBinData.cuh"
+
 #include <thrust/sort.h>
 
 #include "DebugUtils.h"
@@ -85,50 +87,41 @@ extern "C"
 														);
 }
 
-KNNBinningCUDA::KNNBinningCUDA( VehicleGroup * pVehicleGroup )
-:	AbstractCUDAKernel( pVehicleGroup, 1.f )
+
+#pragma region KNNBinningUpdateDBCUDA
+
+KNNBinningUpdateDBCUDA::KNNBinningUpdateDBCUDA( AgentGroup * pAgentGroup, KNNBinData const* pKNNBinData )
+:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+	m_pKNNBinData( pKNNBinData )
 {
-	m_nCells = m_pVehicleGroup->GetBinData().getNumCells();
-	m_pNearestNeighborData = &pVehicleGroup->GetNearestNeighborData();
+	// Nothing to do.
 }
 
-void KNNBinningCUDA::init( void )
+
+void KNNBinningUpdateDBCUDA::init( void )
 {
-	// Bind the cell indices texture.
-	KNNBinningCUDABindTexture( m_pVehicleGroup->GetBinData().pdCellIndexArray() );
+	// Bind the texture.
+	KNNBinningCUDABindTexture( m_pKNNBinData->pdCellIndexArray() );
 }
 
-void KNNBinningCUDA::run( void )
+void KNNBinningUpdateDBCUDA::run( void )
 {
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	size_t const&	numAgents				= getNumAgents();
-	uint const&		k						= m_pNearestNeighborData->k();
-	float3 const&	worldSize				= m_pVehicleGroup->GetBinData().WorldSize();
-
-	// Gather the required device pointers.
-	float3 const*	pdPosition				= m_pVehicleGroupData->pdPosition();
-	//float3 const*	pdDirection				= m_pVehicleGroupData->pdForward();
-	//float const*	pdSpeed					= m_pVehicleGroupData->pdSpeed();
-
-	// Pointers to output data.
-	uint *			pdKNNIndices			= m_pNearestNeighborData->pdKNNIndices();
-	float *			pdKNNDistances			= m_pNearestNeighborData->pdKNNDistances();
-
-	uint *			pdCellIndices			= m_pNearestNeighborData->pdCellIndices();
-
-	uint *			pdCellStart				= m_pVehicleGroup->GetBinData().pdCellStart();
-	uint *			pdCellEnd				= m_pVehicleGroup->GetBinData().pdCellEnd();
-
-	uint *			pdCellIndicesSorted		= m_pNearestNeighborData->pdCellIndicesSorted();
-	uint *			pdAgentIndicesSorted	= m_pNearestNeighborData->pdAgentIndicesSorted();
-
-	float3 *		pdPositionSorted		= m_pNearestNeighborData->pdPositionSorted();
+	// Gather required data.
+	float3 const*	pdPosition				= m_pAgentGroupData->pdPosition();
 	
-	size_t const	radius					= m_pVehicleGroup->GetBinData().radius();
-	size_t const	neighborsPerCell		= m_pVehicleGroup->GetBinData().neighborsPerCell();
-	uint const*		pdCellNeighbors			= m_pVehicleGroup->GetBinData().pdCellNeighbors();
+	uint *			pdCellIndices			= m_pAgentGroup->GetKNNDatabase().pdCellIndices();
+
+	uint *			pdAgentIndicesSorted	= m_pAgentGroup->GetKNNDatabase().pdAgentIndicesSorted();
+	uint *			pdCellIndicesSorted		= m_pAgentGroup->GetKNNDatabase().pdCellIndicesSorted();
+
+	float3 *		pdPositionSorted		= m_pAgentGroup->GetKNNDatabase().pdPositionSorted();
+	uint *			pdCellStart				= m_pAgentGroup->GetKNNDatabase().pdCellStart();
+	uint *			pdCellEnd				= m_pAgentGroup->GetKNNDatabase().pdCellEnd();
+
+	uint const&		numAgents				= getNumAgents();
 
 #if defined TIMING
 	//
@@ -141,15 +134,15 @@ void KNNBinningCUDA::run( void )
 	cudaEventRecord( start, 0 );
 #endif
 
-	// Build the database (get the bin indices for the agents).
-	KNNBinningBuildDB<<< grid, block >>>( pdPosition, /*m_pdPositionNormalized,*/ pdAgentIndicesSorted, pdCellIndices, numAgents );
+	// Call KNNBinningBuildDB to build the database. 
+	KNNBinningBuildDB<<< grid, block >>>( pdPosition, pdAgentIndicesSorted, pdCellIndices, numAgents );
 	cutilCheckMsg( "KNNBinningBuildDB failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
-	// Copy pdCellIndices to pdCellIndicesSorted.
+	// Copy pdCellIndices to  pdCellIndicesSorted.
 	CUDA_SAFE_CALL( cudaMemcpy( pdCellIndicesSorted, pdCellIndices, numAgents * sizeof(uint), cudaMemcpyDeviceToDevice ) );
 
-	// Sort m_pAgentIndices on m_pdCellIndicesSorted using thrust.
+	// Sort pdAgentIndicesSorted on pdCellIndicesSorted using thrust.
 	thrust::sort_by_key(	thrust::device_ptr<uint>( pdCellIndicesSorted ),
 							thrust::device_ptr<uint>( pdCellIndicesSorted + numAgents ),
 							thrust::device_ptr<uint>( pdAgentIndicesSorted ) );
@@ -157,17 +150,118 @@ void KNNBinningCUDA::run( void )
 	// Set all cells to empty.
 	CUDA_SAFE_CALL( cudaMemset( pdCellStart, 0xffffffff, m_nCells * sizeof(uint) ) );
 
-	KNNBinningReorderDB<<< grid, block >>>(	pdPosition, /*m_pdPositionNormalized, pdDirection, pdSpeed,*/
-											pdAgentIndicesSorted, pdCellIndicesSorted,
-											pdPositionSorted, /*m_pdPositionNormalizedSorted, pdDirectionSorted, pdSpeedSorted,*/
-											pdCellStart, pdCellEnd,
-											numAgents
-											);
-	cutilCheckMsg( "KNNBinningReorderData failed" );
+	// Call KNNBinningReorderDB to re-order the data in the DB.
+	KNNBinningReorderDB<<< grid, block >>>( pdPosition, pdAgentIndicesSorted, pdCellIndicesSorted, pdPositionSorted, pdCellStart, pdCellEnd, numAgents );
+	cutilCheckMsg( "KNNBinningReorderDB failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+#if defined TIMING
+	//
+	//	TIMING:
+	//
+	cudaEventRecord( stop, 0 );
+	cudaEventSynchronize( stop );
+	
+	float elapsedTime;
+	cudaEventElapsedTime( &elapsedTime, start, stop );
+	char szString[128] = {0};
+	sprintf_s( szString, "KNNBinningUpdateDBCUDA,%f\n", elapsedTime );
+	OutputDebugStringToFile( szString );
+
+	// Destroy the events.
+	cudaEventDestroy( start );
+	cudaEventDestroy( stop );
+#endif
+}
+
+void KNNBinningUpdateDBCUDA::close( void )
+{
+	// Unbind the texture.
+	KNNBinningCUDAUnbindTexture();
+
+	// The AgentGroup's database has now changed.
+	m_pAgentGroup->SetSyncHost();
+}
+#pragma endregion
+
+
+#pragma region KNNBinningCUDA
+
+KNNBinningCUDA::KNNBinningCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup )
+:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+	m_pKNNData( pKNNData ),
+	m_pKNNBinData( pKNNBinData ),
+	m_pOtherGroup( pOtherGroup )
+{
+}
+
+void KNNBinningCUDA::init( void )
+{
+	// Bind the cell indices texture.
+	//KNNBinningCUDABindTexture( m_pKNNBinData->pdCellIndexArray() );
+}
+
+void KNNBinningCUDA::run( void )
+{
+	dim3 grid = gridDim();
+	dim3 block = blockDim();
 
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
+
+	// Gather the required data.
+	float3 const*		pdAPositionSorted		= m_pAgentGroupData->pdPosition();
+	uint const*			pdAIndices				= m_pAgentGroup->GetKNNDatabase().pdAgentIndicesSorted();
+	uint const*			pdACellIndices			= m_pAgentGroup->GetKNNDatabase().pdCellIndicesSorted();
+
+	float3 const*		pdBPositionSorted		= m_pOtherGroup->pdPosition();
+	uint const*			pdBIndices				= m_pOtherGroup->GetKNNDatabase().pdAgentIndicesSorted();
+	uint const*			pdBCellIndices			= m_pOtherGroup->GetKNNDatabase().pdCellIndicesSorted();
+
+	uint const*			pdBCellStart			= m_pOtherGroup->GetKNNDatabase().pdCellStart();
+	uint const*			pdBCellEnd				= m_pOtherGroup->GetKNNDatabase().pdCellEnd();
+
+	uint const*			pdCellNeighbors			= m_pKNNBinData->pdCellNeighbors();
+	uint const&			neighborsPerCell		= m_pKNNBinData->neighborsPerCell();
+	uint const&			radius					= m_pKNNBinData->radius();
+
+	uint *				pdKNNIndices			= m_pKNNData->pdKNNIndices();
+	float *				pdKNNDistances			= m_pKNNData->pdKNNDistances();
+
+	uint const&			k						= m_pOtherGroup->GetKNNDatabase().k();
+	uint const&			numA					= getNumAgents();
+	uint const&			numB					= m_pOtherGroup->Size();
+
+	bool const			groupWithSelf			= m_pAgentGroup == m_pOtherGroup;
+
+	// Call the KNNBinning kernel.
+	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdAPositionSorted,
+													pdAIndices, pdACellIndices, 
+													pdBPositionSorted, pdBIndices, pdBCellIndices, pdBCellStart, pdBCellEnd,
+													pdCellNeighbors, neighborsPerCell, radius,
+													pdKNNIndices, pdKNNDistances, k,
+													numA, numB, groupWithSelf
+													);
+						
+
+
+
+
+
+#if defined TIMING
+	//
+	//	TIMING: hard to get exact times with profiling, too many operations.
+	//
+	// Events for timing the complete operation.
+	cudaEvent_t start, stop;
+	cudaEventCreate( &start );
+	cudaEventCreate( &stop );
+	cudaEventRecord( start, 0 );
+#endif
+
+
+
+	KNNBinningKernel( 
 
 /*
 	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted,
@@ -179,11 +273,11 @@ void KNNBinningCUDA::run( void )
 											);
 */
 	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdPositionSorted, pdAgentIndicesSorted, pdCellIndicesSorted,
-														pdPositionSorted, pdAgentIndicesSorted, pdCellIndicesSorted, 
-														pdCellStart, pdCellEnd,
-														pdCellNeighbors, neighborsPerCell, radius,
-														pdKNNIndices, pdKNNDistances, k,
-														numAgents, numAgents, true );
+													pdPositionSorted, pdAgentIndicesSorted, pdCellIndicesSorted, 
+													pdCellStart, pdCellEnd,
+													pdCellNeighbors, neighborsPerCell, radius,
+													pdKNNIndices, pdKNNDistances, k,
+													numAgents, numAgents, true );
 	cutilCheckMsg( "KNNBinningKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
@@ -197,8 +291,8 @@ void KNNBinningCUDA::run( void )
 	float elapsedTime;
 	cudaEventElapsedTime( &elapsedTime, start, stop );
 	char szString[128] = {0};
-	sprintf_s( szString, "%f\n", elapsedTime );
-	OutputDebugString( szString );
+	sprintf_s( szString, "KNNBinningCUDA,%f\n", elapsedTime );
+	OutputDebugStringToFile( szString );
 
 	// Destroy the events.
 	cudaEventDestroy( start );
@@ -210,4 +304,9 @@ void KNNBinningCUDA::close( void )
 {
 	// Unbind the texture.
 	KNNBinningCUDAUnbindTexture();
+
+	// The KNNData has most likely changed.
+	m_pKNNData->setSyncHost();
 }
+
+#pragma endregion

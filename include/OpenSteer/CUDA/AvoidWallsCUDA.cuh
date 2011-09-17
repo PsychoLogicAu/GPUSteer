@@ -11,7 +11,7 @@ protected:
 
 
 public:
-	AvoidWallsCUDA( VehicleGroup * pVehicleGroup, float const fWeight );
+	AvoidWallsCUDA( AgentGroup * pAgentGroup, float const fWeight );
 	virtual ~AvoidWallsCUDA( void ) {}
 
 	virtual void init( void );
