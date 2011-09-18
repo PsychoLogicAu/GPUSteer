@@ -36,26 +36,7 @@ extern "C"
 
 											size_t const	numAgents
 											);
-/*
-	__global__ void KNNBinningKernel(		float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
 
-											uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
-											uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
-
-											uint const*		pdCellStart,				// In:	Start index of each cell in pdCellIndices.
-											uint const*		pdCellEnd,					// In:	End index of each cell in pdCellIndices.
-
-											uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
-											size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
-
-											uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
-											float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
-
-											size_t const	k,							// In:	Number of neighbors to consider.
-											size_t const	radius,						// In:	Maximum radius (in cells) to consider.
-											size_t const	numAgents					// In:	Number of agents in the simulation.
-											);
-*/
 	__global__ void KNNBinningKernel(		// Group A
 											float3 const*	pdAPositionSorted,			// In:	Sorted group A positions.
 
@@ -206,11 +187,11 @@ void KNNBinningCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required data.
-	float3 const*		pdAPositionSorted		= m_pAgentGroupData->pdPosition();
+	float3 const*		pdAPositionSorted		= m_pAgentGroup->GetKNNDatabase().pdPositionSorted();
 	uint const*			pdAIndices				= m_pAgentGroup->GetKNNDatabase().pdAgentIndicesSorted();
 	uint const*			pdACellIndices			= m_pAgentGroup->GetKNNDatabase().pdCellIndicesSorted();
 
-	float3 const*		pdBPositionSorted		= m_pOtherGroup->pdPosition();
+	float3 const*		pdBPositionSorted		= m_pOtherGroup->pdPositionSorted();
 	uint const*			pdBIndices				= m_pOtherGroup->GetKNNDatabase().pdAgentIndicesSorted();
 	uint const*			pdBCellIndices			= m_pOtherGroup->GetKNNDatabase().pdCellIndicesSorted();
 
@@ -276,9 +257,6 @@ void KNNBinningCUDA::run( void )
 
 void KNNBinningCUDA::close( void )
 {
-	// Unbind the texture.
-	//KNNBinningCUDAUnbindTexture();
-
 	// The KNNData has most likely changed.
 	m_pKNNData->setSyncHost();
 }

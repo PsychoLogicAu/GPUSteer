@@ -34,6 +34,10 @@
 			<Tool
 				Name="Cudart Build Rule"
 				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
+				GPUDebugInfo="true"
+				Arch1="21"
+				Arch2="0"
+				Runtime="3"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -103,6 +107,9 @@
 			<Tool
 				Name="Cudart Build Rule"
 				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
+				Arch1="21"
+				Arch2="0"
+				Runtime="2"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -177,6 +184,14 @@
 					RelativePath="..\include\OpenSteer\CPU\AbstractCPUKernel.h"
 					>
 					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="true"
 						>
@@ -188,6 +203,22 @@
 				<File
 					RelativePath="..\include\OpenSteer\CPU\CPUGroupSteerLibrary.cu"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CPU\CPUGroupSteerLibrary.h"
@@ -403,6 +434,14 @@
 								Name="Cudart Build Rule"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AvoidObstacleCUDA.h"
@@ -429,6 +468,14 @@
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -486,12 +533,28 @@
 									Name="Cudart Build Rule"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32"
+								ExcludedFromBuild="true"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
 							>
 							<FileConfiguration
 								Name="Debug|Win32"
+								ExcludedFromBuild="true"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32"
 								ExcludedFromBuild="true"
 								>
 								<Tool

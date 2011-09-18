@@ -91,7 +91,7 @@ void CUDAGroupSteerLibrarySingleton::findKNearestNeighbors( AgentGroup * pAgentG
 	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup );
 
 	//KNNBruteForceCUDA kernel( pAgentGroup, &knnData, &otherGroup );
-	//KNNBruteForceCUDAV2 kernel( pAgentGroup, &knnData, &otherGroup );
+	//KNNBruteForceCUDAV2 kernel( pAgentGroup, pKNNData, pOtherGroup );
 	//KNNBruteForceCUDAV3 kernel( pAgentGroup, &knnData, &otherGroup );
 
 	kernel.init();

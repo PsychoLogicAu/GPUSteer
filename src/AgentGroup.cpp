@@ -6,8 +6,7 @@
 using namespace OpenSteer;
 
 AgentGroup::AgentGroup( uint3 const& worldCells, uint const knn )
-:	BaseGroup( knn, 0, worldCells.x*worldCells.y*worldCells.z ),
-	m_nCount( 0 )
+:	BaseGroup( knn, 0, worldCells.x*worldCells.y*worldCells.z )
 {
 }
 

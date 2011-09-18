@@ -168,21 +168,10 @@ __global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent 
 	__syncthreads();
 	
 	// Write the KNN indices and distances out to global memory.
-	if( blockIdx.x < gridDim.x-1 )
+	for( uint i = 0; i < k; i++ )
 	{
-		for( uint i = 0; i < k; i++ )
-		{
-			pdKNNDistances[index*k + THREADSPERBLOCK*i] = shKNNDistances[threadIdx.x*k + THREADSPERBLOCK*i];
-			pdKNNIndices[index*k + THREADSPERBLOCK*i] = shKNNIndices[threadIdx.x*k + THREADSPERBLOCK*i];
-		}
-	}
-	else
-	{
-		for( uint i = 0; i < k; i++ )
-		{
-			pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
-			pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
-		}
+		pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
+		pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
 	}
 }
 
@@ -253,21 +242,10 @@ __global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Ag
 	__syncthreads();
 
 	// Write the KNN indices and distances out to global memory.
-	if( blockIdx.x < gridDim.x-1 )
+	for( uint i = 0; i < k; i++ )
 	{
-		for( uint i = 0; i < k; i++ )
-		{
-			pdKNNDistances[index*k + THREADSPERBLOCK*i] = shKNNDistances[threadIdx.x*k + THREADSPERBLOCK*i];
-			pdKNNIndices[index*k + THREADSPERBLOCK*i] = shKNNIndices[threadIdx.x*k + THREADSPERBLOCK*i];
-		}
-	}
-	else
-	{
-		for( uint i = 0; i < k; i++ )
-		{
-			pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
-			pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
-		}
+		pdKNNDistances[index*k + i] = shKNNDistances[threadIdx.x*k + i];
+		pdKNNIndices[index*k + i] = shKNNIndices[threadIdx.x*k + i];
 	}
 }
 /*

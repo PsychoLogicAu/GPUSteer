@@ -23,12 +23,10 @@ protected:
 	void	SyncHost( void );
 
 	// Vehicle data.
-	AgentGroupData			m_agentGroupData;
-	AgentGroupConst			m_agentGroupConst;
+	AgentGroupData				m_agentGroupData;
+	AgentGroupConst				m_agentGroupConst;
 
 	IDToIndexMap				m_cIDToIndexMap;
-
-	size_t						m_nCount;
 
 public:
 	//AgentGroup( void );
@@ -52,8 +50,10 @@ public:
 	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
 
 	// Overloaded pure virtuals.
-	virtual uint		Size( void ) const					{ return m_nCount; }
 	virtual float3 *	pdPosition( void )					{ return m_agentGroupData.pdPosition(); }
+	virtual float3 *	pdDirection( void )					{ return m_agentGroupData.pdForward(); }
+	virtual float *		pdSpeed( void )						{ return m_agentGroupData.pdSpeed(); }
+	virtual float *		pdRadius( void )					{ return m_agentGroupConst.pdRadius(); }
 
 };	//class AgentGroup
 }	//namespace OpenSteer
