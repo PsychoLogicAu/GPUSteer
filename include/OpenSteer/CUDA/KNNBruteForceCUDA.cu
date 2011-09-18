@@ -95,12 +95,10 @@ void KNNBruteForceCUDA::run( void )
 	for( size_t i = 0; i < numAgents; i++ )
 	{
 		// Pointers to the matrix row start and end for this agent (keys).
-		//float * pdPositionStart = m_pdDistanceMatrix + (i * numAgents);
 		thrust::device_ptr< float > pdDistanceStart( m_pdDistanceMatrix + (i * numAgents) );
-		//float * pdPositionEnd = pdPositionStart + (numAgents);
 		thrust::device_ptr< float > pdDistanceEnd( m_pdDistanceMatrix + (i * numAgents) );
+		
 		// Pointer to the index matrix row for this agent (values).
-		//size_t * pdIndexBase = m_pdIndexMatrix + (i * numAgents);
 		thrust::device_ptr< size_t > pdIndexStart( m_pdIndexMatrix + (i * numAgents) );
 
 		// Sort the results (using thrust)
@@ -132,6 +130,9 @@ void KNNBruteForceCUDA::close( void )
 	// Deallocate the temporary device storage.
 	CUDA_SAFE_CALL( cudaFree( m_pdDistanceMatrix ) );
 	CUDA_SAFE_CALL( cudaFree( m_pdIndexMatrix ) );
+
+	// The KNNData has most likely changed.
+	m_pKNNData->setSyncHost();
 }
 #pragma endregion
 
@@ -179,6 +180,8 @@ void KNNBruteForceCUDAV2::run( void )
 
 void KNNBruteForceCUDAV2::close( void )
 {
+	// The KNNData has most likely changed.
+	m_pKNNData->setSyncHost();
 }
 #pragma endregion
 

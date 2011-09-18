@@ -71,6 +71,7 @@
 
 // Include the required KNN headers.
 #include "OpenSteer/CUDA/KNNBinData.cuh"
+#include "OpenSteer/CUDA/KNNBinningCUDA.cuh"
  
 using namespace OpenSteer;
 
@@ -78,7 +79,7 @@ using namespace OpenSteer;
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-#define ANNOTATION_LINES
+//#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
 //#define NO_DRAW
@@ -91,9 +92,9 @@ class CtfBase;
 
 // ----------------------------------------------------------------------------
 // globals
-const int gEnemyCount					= 1000;
-const float gDim						= 200;
-const int gCells						= 15;
+//const int gEnemyCount					= 1000;
+//const float gDim						= 200;
+//const int gCells						= 15;
 
 //const int gEnemyCount					= 3000000;
 //const float gDim						= 8000;
@@ -108,9 +109,9 @@ const int gCells						= 15;
 //const int gCells						= 47;
 
 // Using cell diameter of 7
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 91;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 91;
 
 //const int gEnemyCount					= 100000;
 //const float gDim						= 2000;
@@ -143,8 +144,11 @@ const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
 
 // Bin data to be used for KNN lookups.
-KNNBinData								g_KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
-KNNData									g_KNNDataEnemyGroupWithSelf( gEnemyCount, g_knn );
+//KNNBinData								g_KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
+//KNNData									g_KNNDataEnemyGroupWithSelf( gEnemyCount, g_knn );
+
+KNNBinData *							g_pKNNBinData;
+KNNData *								g_pKNNDataEnemyGroupWithSelf;
 
 const float gMinStartRadius				= 30.0f;
 //const float gMaxStartRadius				= 60.0f;
@@ -295,7 +299,12 @@ void CtfEnemyGroup::reset(void)
 	// Transfer the data to the device.
 	SyncDevice();
 	// Compute the initial KNN for this group with itself.
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, &g_KNNDataEnemyGroupWithSelf, &g_KNNBinData, this );
+	// Update the KNN database for the group.
+	KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
+	kernel.init();
+	kernel.run();
+	kernel.close();
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, g_pKNNDataEnemyGroupWithSelf, g_pKNNBinData, this );
 }
 
 // ----------------------------------------------------------------------------
@@ -361,7 +370,7 @@ void CtfEnemyGroup::draw(void)
 		//
 
 		// Pull the KNN data for this agent from the nearest neighbor database.
-		g_KNNDataEnemyGroupWithSelf.getAgentData( i, KNNIndices, KNNDistances );
+		g_pKNNDataEnemyGroupWithSelf->getAgentData( i, KNNIndices, KNNDistances );
 		
 #endif
 
@@ -411,15 +420,21 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Force the host to pull data on next call to SyncHost().
 	SetSyncHost();	// <-- TODO: This should be replaced by appropriate setSynsHost calls in the kernel close() methods.
 
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, &g_KNNDataEnemyGroupWithSelf, &g_KNNBinData, this );
+	// Update the KNN database for the group.
+	KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
+	kernel.init();
+	kernel.run();
+	kernel.close();
 
-	CUDAGroupSteerLibrary.steerToAvoidNeighbors( this, &g_KNNDataEnemyGroupWithSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, g_pKNNDataEnemyGroupWithSelf, g_pKNNBinData, this );
+
+	CUDAGroupSteerLibrary.steerToAvoidNeighbors( this, g_pKNNDataEnemyGroupWithSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
 
 	CUDAGroupSteerLibrary.steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
 	//CUDAGroupSteerLibrary.steerForSeek( *this, gSeeker->position(), g_fWeightPursuit );
 
 	// Maintain some semblence of separation.
-	CUDAGroupSteerLibrary.steerForSeparation( this, &g_KNNDataEnemyGroupWithSelf, this, g_fWeightSeparation );
+	CUDAGroupSteerLibrary.steerForSeparation( this, g_pKNNDataEnemyGroupWithSelf, this, g_fWeightSeparation );
 
 	CUDAGroupSteerLibrary.update( this, elapsedTime );
 
@@ -1136,6 +1151,9 @@ public:
 
 		gObstacles = new ObstacleGroup( gWorldCells, g_kno );
 
+		g_pKNNBinData = new KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
+		g_pKNNDataEnemyGroupWithSelf = new KNNData( gEnemyCount, g_knn );
+
 		initializeObstacles();
 
 		int numDevices;
@@ -1230,6 +1248,9 @@ public:
 
 		delete gObstacles;
 		delete gEnemies;
+
+		delete g_pKNNBinData;
+		delete g_pKNNDataEnemyGroupWithSelf;
 
         //// delete each enemy
         //for (int i = 0; i < ctfEnemyCount; i++)

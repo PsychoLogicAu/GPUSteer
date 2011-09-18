@@ -130,9 +130,7 @@ Texture addressing in CUDA operates as follows.
 
 	// Prepare the bin_cell index lookup texture.
 	cudaExtent const extent = make_cudaExtent( m_worldCells.x, m_worldCells.y, m_worldCells.z );
-	//cudaChannelFormatDesc const desc = cudaCreateChannelDesc< uint >();
-	
-	cudaChannelFormatDesc const desc = cudaCreateChannelDesc( 32, 0, 0, 0, cudaChannelFormatKindUnsigned );
+	cudaChannelFormatDesc const desc = cudaCreateChannelDesc< uint >();
 
 	cudaPitchedPtr srcPtr = make_cudaPitchedPtr( (void*)phCellIndices, m_worldCells.x * sizeof(uint), m_worldCells.x, m_worldCells.y );
 
@@ -148,10 +146,10 @@ Texture addressing in CUDA operates as follows.
 	CUDA_SAFE_CALL( cudaMemcpy3D( &copyParms ) );
 
 	// Copy the m_worldSize and m_worldCells values to constant memory.
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldSize", &m_worldSize, sizeof(float3), 0, cudaMemcpyHostToDevice ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldStep", &step, sizeof(float3), 0, cudaMemcpyHostToDevice ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldStepNormalized", &stepNormalized, sizeof(float3), 0, cudaMemcpyHostToDevice ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "cWorldCells", &m_worldCells, sizeof(uint3), 0, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSize", &m_worldSize, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &stepNormalized, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
 
 	// Free host memory.
 	free( phCellIndices );
