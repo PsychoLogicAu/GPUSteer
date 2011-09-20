@@ -37,7 +37,7 @@ public:
 	void RemoveVehicle( id_type const id );
 	/// Clear all vehicles from the group.
 	void Clear( void );
-	void SetSyncHost( void )
+	virtual void SetSyncHost( void )
 	{
 		m_agentGroupData.m_bSyncHost = true;
 		m_neighborDB.m_bSyncHost = true;

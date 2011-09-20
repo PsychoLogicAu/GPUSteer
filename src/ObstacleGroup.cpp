@@ -27,9 +27,6 @@ void ObstacleGroup::AddObstacle(  ObstacleData const& od )
 
 	// Resize the neighbor database.
 	m_neighborDB.resize( m_nCount );
-
-	// Will need to sync the device.
-	m_obstacleGroupData.m_bSyncDevice = true;
 }
 
 // Removes a vehicle from the group using the supplied id number.

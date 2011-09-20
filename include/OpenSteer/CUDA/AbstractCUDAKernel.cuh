@@ -23,10 +23,15 @@ namespace OpenSteer
 	public:
 		AbstractCUDAKernel( AgentGroup * pAgentGroup, float const fWeight )
 		:	AbstractKernel( pAgentGroup, fWeight ),
-			m_threadsPerBlock( THREADSPERBLOCK )
+			m_threadsPerBlock( THREADSPERBLOCK ),
+			m_pAgentGroupData( NULL ),
+			m_pAgentGroupConst( NULL )
 		{
-			m_pAgentGroupData = &m_pAgentGroup->GetAgentGroupData();
-			m_pAgentGroupConst = &m_pAgentGroup->GetAgentGroupConst();
+			if( pAgentGroup )
+			{
+				m_pAgentGroupData = &m_pAgentGroup->GetAgentGroupData();
+				m_pAgentGroupConst = &m_pAgentGroup->GetAgentGroupConst();
+			}
 		}
 
 		virtual void init( void ) = 0;
