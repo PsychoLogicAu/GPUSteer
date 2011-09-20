@@ -11,10 +11,11 @@ namespace OpenSteer
 class KNNBinningUpdateDBCUDA : public AbstractCUDAKernel
 {
 protected:
+	BaseGroup *		m_pGroup;
 	KNNBinData *	m_pKNNBinData;
 
 public:
-	KNNBinningUpdateDBCUDA( AgentGroup * pAgentGroup, KNNBinData * pKNNBinData );
+	KNNBinningUpdateDBCUDA( BaseGroup * pGroup, KNNBinData * pKNNBinData );
 	virtual ~KNNBinningUpdateDBCUDA( void ) {}
 
 	virtual void init( void );

@@ -45,7 +45,7 @@ __global__ void SteerForSeparationKernel(	uint const*		pdKNNIndices,
 	__syncthreads();
 
     // steering accumulator and count of neighbors, both initially zero
-	float3 steering = make_float3( 0.f, 0.f, 0.f );
+	float3 steering = { 0.f, 0.f, 0.f };
     uint neighbors = 0;
 	uint otherIndex;
 

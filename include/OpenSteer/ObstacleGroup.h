@@ -38,6 +38,8 @@ public:
 	virtual float3 *	pdDirection( void )		{ return NULL; }
 	virtual float *		pdSpeed( void )			{ return NULL; }
 	virtual float *		pdRadius( void )		{ return m_obstacleGroupData.pdRadius(); }
+
+	virtual void		SetSyncHost( void )		{}
 };	// class ObstacleGroup
 }	// namespace OpenSteer
 #endif

@@ -5,8 +5,7 @@
 
 #include "SteerForSeekCUDA.h"
 #include "UpdateCUDA.h"
-#include "AvoidObstaclesCUDA.h"
-#include "AvoidObstacleCUDA.h"
+#include "AvoidObstaclesCUDA.cuh"
 #include "SteerForFleeCUDA.h"
 #include "SteerForPursuitCUDA.h"
 #include "KNNBruteForceCUDA.cuh"
@@ -37,8 +36,7 @@ public:
 	virtual void steerToStayOnPath( AgentGroup * pAgentGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight );
 
 	// Obstacle avoidance
-	virtual void steerToAvoidObstacle( AgentGroup * pAgentGroup, const float minTimeToCollision, const SphericalObstacle& obstacle, float const fWeight );
-	virtual void steerToAvoidObstacles( AgentGroup * pAgentGroup, const float minTimeToCollision, ObstacleGroup const& obstacles, float const fWeight );
+	virtual void steerToAvoidObstacles(AgentGroup * pAgentGroup, ObstacleGroup * pObstacleGroup, KNNData * pKNNData, float const fMinTimeToCollision, float const fWeight );
 
 	// Pursuit/ Evasion
 	virtual void steerForPursuit( AgentGroup * pAgentGroup, const VehicleData &target, const float maxPredictionTime, float const fWeight );

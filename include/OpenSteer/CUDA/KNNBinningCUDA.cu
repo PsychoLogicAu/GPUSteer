@@ -70,13 +70,13 @@ extern "C"
 
 #pragma region KNNBinningUpdateDBCUDA
 
-KNNBinningUpdateDBCUDA::KNNBinningUpdateDBCUDA( AgentGroup * pAgentGroup, KNNBinData * pKNNBinData )
-:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+KNNBinningUpdateDBCUDA::KNNBinningUpdateDBCUDA( BaseGroup * pGroup, KNNBinData * pKNNBinData )
+:	AbstractCUDAKernel( NULL, 1.f ),
+	m_pGroup( pGroup ),
 	m_pKNNBinData( pKNNBinData )
 {
 	// Nothing to do.
 }
-
 
 void KNNBinningUpdateDBCUDA::init( void )
 {
@@ -86,22 +86,22 @@ void KNNBinningUpdateDBCUDA::init( void )
 
 void KNNBinningUpdateDBCUDA::run( void )
 {
-	dim3 grid = gridDim();
-	dim3 block = blockDim();
+	dim3 grid	= dim3( (m_pGroup->Size() + THREADSPERBLOCK - 1) / THREADSPERBLOCK );
+	dim3 block	= dim3( THREADSPERBLOCK );
 
 	// Gather required data.
-	float3 const*	pdPosition				= m_pAgentGroupData->pdPosition();
+	float3 const*	pdPosition				= m_pGroup->pdPosition();
 	
-	uint *			pdCellIndices			= m_pAgentGroup->GetKNNDatabase().pdCellIndices();
+	uint *			pdCellIndices			= m_pGroup->GetKNNDatabase().pdCellIndices();
 
-	uint *			pdAgentIndicesSorted	= m_pAgentGroup->GetKNNDatabase().pdAgentIndicesSorted();
-	uint *			pdCellIndicesSorted		= m_pAgentGroup->GetKNNDatabase().pdCellIndicesSorted();
+	uint *			pdAgentIndicesSorted	= m_pGroup->GetKNNDatabase().pdAgentIndicesSorted();
+	uint *			pdCellIndicesSorted		= m_pGroup->GetKNNDatabase().pdCellIndicesSorted();
 
-	float3 *		pdPositionSorted		= m_pAgentGroup->GetKNNDatabase().pdPositionSorted();
-	uint *			pdCellStart				= m_pAgentGroup->GetKNNDatabase().pdCellStart();
-	uint *			pdCellEnd				= m_pAgentGroup->GetKNNDatabase().pdCellEnd();
+	float3 *		pdPositionSorted		= m_pGroup->GetKNNDatabase().pdPositionSorted();
+	uint *			pdCellStart				= m_pGroup->GetKNNDatabase().pdCellStart();
+	uint *			pdCellEnd				= m_pGroup->GetKNNDatabase().pdCellEnd();
 
-	uint const&		numAgents				= getNumAgents();
+	uint const&		numAgents				= m_pGroup->Size();
 
 #if defined TIMING
 	//
@@ -160,7 +160,7 @@ void KNNBinningUpdateDBCUDA::close( void )
 	KNNBinningCUDAUnbindTexture();
 
 	// The AgentGroup's database has now changed.
-	m_pAgentGroup->SetSyncHost();
+	m_pGroup->SetSyncHost();
 }
 #pragma endregion
 
@@ -191,7 +191,7 @@ void KNNBinningCUDA::run( void )
 	uint const*			pdAIndices				= m_pAgentGroup->GetKNNDatabase().pdAgentIndicesSorted();
 	uint const*			pdACellIndices			= m_pAgentGroup->GetKNNDatabase().pdCellIndicesSorted();
 
-	float3 const*		pdBPositionSorted		= m_pOtherGroup->pdPositionSorted();
+	float3 const*		pdBPositionSorted		= m_pOtherGroup->GetKNNDatabase().pdPositionSorted();
 	uint const*			pdBIndices				= m_pOtherGroup->GetKNNDatabase().pdAgentIndicesSorted();
 	uint const*			pdBCellIndices			= m_pOtherGroup->GetKNNDatabase().pdCellIndicesSorted();
 

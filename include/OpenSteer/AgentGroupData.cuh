@@ -34,8 +34,8 @@ private:
 	dev_vector<float3>		m_dvUp;			// Up vectors
 	dev_vector<float3>		m_dvForward;	// Forward vector
 	dev_vector<float3>		m_dvPosition;	// Current position
-	dev_vector<float3>		m_dvSteering;	// Steering vector
 	// SimpleVehicle
+	dev_vector<float3>		m_dvSteering;	// Steering vector
 	dev_vector<float>		m_dvSpeed;		// Current speed
 
 	//
@@ -46,8 +46,8 @@ private:
 	std::vector<float3>		m_hvUp;			// Up vectors
 	std::vector<float3>		m_hvForward;	// Forward vector
 	std::vector<float3>		m_hvPosition;	// Current position
-	std::vector<float3>		m_hvSteering;	// Steering vector
 	// SimpleVehicle
+	std::vector<float3>		m_hvSteering;	// Steering vector
 	std::vector<float>		m_hvSpeed;		// Current speed
 
 public:
@@ -62,6 +62,7 @@ public:
 	float3 *	pdSide( void )		{ return m_dvSide.begin(); }
 	float3 *	pdUp( void )		{ return m_dvUp.begin(); }
 	float3 *	pdForward( void )	{ return m_dvForward.begin(); }
+	float3 *	pdDirection( void )	{ return m_dvForward.begin(); }
 	float3 *	pdPosition( void )	{ return m_dvPosition.begin(); }
 	float3 *	pdSteering( void )	{ return m_dvSteering.begin(); }
 	float *		pdSpeed( void )		{ return m_dvSpeed.begin(); }

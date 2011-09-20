@@ -50,22 +50,13 @@ void CUDAGroupSteerLibrarySingleton::steerToStayOnPath(AgentGroup * pAgentGroup,
 
 }
 
-void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacle( AgentGroup * pAgentGroup, const float minTimeToCollision, const SphericalObstacle& obstacle, float const fWeight )
+void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( AgentGroup * pAgentGroup, ObstacleGroup * pObstacleGroup, KNNData * pKNNData, float const fMinTimeToCollision, float const fWeight )
 {
-	//AvoidObstacleCUDA kernel( pAgentGroup, minTimeToCollision, &obstacle );
+	AvoidObstaclesCUDA kernel( pAgentGroup, pObstacleGroup, pKNNData, fMinTimeToCollision, fWeight );
 
-	//kernel.init();
-	//kernel.run();
-	//kernel.close();
-}
-
-void CUDAGroupSteerLibrarySingleton::steerToAvoidObstacles( AgentGroup * pAgentGroup, const float minTimeToCollision, ObstacleGroup const& obstacles, float const fWeight )
-{
-	//AvoidObstaclesCUDA kernel( pAgentGroup, minTimeToCollision, &obstacles );
-
-	//kernel.init();
-	//kernel.run();
-	//kernel.close();
+	kernel.init();
+	kernel.run();
+	kernel.close();
 }
 
 void CUDAGroupSteerLibrarySingleton::steerToAvoidNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, const float fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight )

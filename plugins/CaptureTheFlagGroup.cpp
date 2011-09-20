@@ -89,6 +89,7 @@ using namespace OpenSteer;
 class CtfEnemyGroup;
 class CtfSeeker;
 class CtfBase;
+class CtfObstacleGroup;
 
 // ----------------------------------------------------------------------------
 // globals
@@ -109,6 +110,7 @@ class CtfBase;
 //const int gCells						= 47;
 
 // Using cell diameter of 7
+
 const int gEnemyCount					= 10000;
 const float gDim						= 635;
 const int gCells						= 91;
@@ -116,6 +118,8 @@ const int gCells						= 91;
 //const int gEnemyCount					= 100000;
 //const float gDim						= 2000;
 //const int gCells						= 285;
+
+const int gObstacleCount				= 100;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
@@ -126,29 +130,21 @@ float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid
 float const g_fMinTimeToCollision		= 1.0f;		// Look-ahead time for neighbor avoidance.
 
 // Weights for behaviors.
-float const g_fWeightSeparation			= 0.5f;
-float const g_fWeightPursuit			= 1.f;
-float const g_fWeightObstacleAvoidance	= 1.f;
+//float const g_fWeightSeparation			= 0.5f;
+float const g_fWeightSeparation			= 0.1f;
+float const g_fWeightPursuit			= 0.1f;
+float const g_fWeightObstacleAvoidance	= 10.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
-//float const g_fPursuitWeight			= 1.f;
 
-
-
-
-const int gMaxObstacleCount				= 100;
 
 const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
-const float		gHomeBaseRadius			= 1.5f;
+const float		g_fHomeBaseRadius		= 1.5f;
 
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
 
 // Bin data to be used for KNN lookups.
-//KNNBinData								g_KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
-//KNNData									g_KNNDataEnemyGroupWithSelf( gEnemyCount, g_knn );
-
 KNNBinData *							g_pKNNBinData;
-KNNData *								g_pKNNDataEnemyGroupWithSelf;
 
 const float gMinStartRadius				= 30.0f;
 //const float gMaxStartRadius				= 60.0f;
@@ -182,14 +178,7 @@ void randomizeStartingPositionAndHeading( float3 & position, float const radius,
 CtfSeeker*			gSeeker;
 CtfSeeker*			ctfSeeker	= NULL;
 CtfEnemyGroup*		gEnemies;
-ObstacleGroup*		gObstacles;
-
-#define testOneObstacleOverlap(radius, center)               \
-{                                                            \
-    float d = float3_distance (c, center);                   \
-    float clearance = d - (r + (radius));                    \
-    if (minClearance > clearance) minClearance = clearance;  \
-}
+CtfObstacleGroup*	gObstacles;
 
 // ----------------------------------------------------------------------------
 // This PlugIn uses two vehicle types: CtfSeeker and CtfEnemy.  They have a
@@ -253,13 +242,25 @@ public:
 
 class CtfEnemyGroup : public AgentGroup
 {
+private:
+	KNNData * m_pKNNSelf;
+	KNNData * m_pKNNObstacles;
+
 public:
 	CtfEnemyGroup(void)
-		:AgentGroup( gWorldCells, g_knn )
+	:	AgentGroup( gWorldCells, g_knn ),
+		m_pKNNSelf( NULL ),
+		m_pKNNObstacles( NULL )
 	{
+		m_pKNNSelf = new KNNData( gEnemyCount, g_knn );
+		m_pKNNObstacles = new KNNData( gObstacleCount, g_kno );
 		reset();
 	}
-	~CtfEnemyGroup(void) {}
+	virtual ~CtfEnemyGroup(void)
+	{
+		delete m_pKNNSelf; m_pKNNSelf = NULL;
+		delete m_pKNNObstacles; m_pKNNObstacles = NULL;
+	}
 
 	void reset(void);
 	void draw(void);
@@ -268,6 +269,89 @@ public:
 
 	void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst);
 	void randomizeHeadingOnXZPlane(VehicleData &vehicleData);
+};
+
+#define testOneObstacleOverlap(radius, center)					\
+{																\
+    float d = float3_distance (od.position, center);			\
+    float clearance = d - (od.radius + (radius));				\
+    if (minClearance > clearance) minClearance = clearance;		\
+}
+
+class CtfObstacleGroup : public ObstacleGroup
+{
+private:
+	void addOneObstacle (void)
+	{
+		std::vector< float3 > & positions = m_obstacleGroupData.hvPosition();
+		std::vector< float > & radii = m_obstacleGroupData.hvRadius();
+
+		float minClearance;
+		const float requiredClearance = 2.0f; //gSeeker->radius() * 4; // 2 x diameter
+
+		ObstacleData od;
+
+		do
+		{
+			minClearance = FLT_MAX;
+
+			od.radius = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
+			od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), gMaxStartRadius * 1.1f);
+
+
+			// Make sure it doesn't overlap with the home base.
+			float d = float3_distance (od.position, gHomeBaseCenter);
+			float clearance = d - (od.radius + (g_fHomeBaseRadius - requiredClearance));
+			if ( clearance < minClearance )
+				minClearance = clearance;
+
+			for( size_t i = 0; i < Size(); i++ )
+			{
+				d = float3_distance( od.position, positions[i] );
+				clearance = d - (od.radius + radii[i]);
+				if ( clearance < minClearance )
+					minClearance = clearance;
+			}
+		} while (minClearance < requiredClearance);
+
+		// add new non-overlapping obstacle to registry
+		AddObstacle( od );
+	}
+
+public://gWorldCells, g_kno
+	CtfObstacleGroup( uint3 const& worldCells, uint const kno )
+	:	ObstacleGroup( worldCells, kno )
+	{
+	}
+	virtual ~CtfObstacleGroup( void ) {}
+
+	void reset(void)
+	{
+		while( Size() < gObstacleCount )
+			addOneObstacle();
+
+		// Send the data to the device.
+		SyncDevice();
+
+		// Update the KNN database for the group.
+		KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
+		kernel.init();
+		kernel.run();
+		kernel.close();
+	}
+
+	void draw(void)
+	{
+        const float3 color = make_float3(0.8f, 0.6f, 0.4f);
+
+		for( uint i = 0; i < m_nCount; i++ )
+		{
+			ObstacleData od;
+			GetDataForObstacle( i, od );
+
+			drawXZCircle( od.radius, od.position, color, 20 );
+		}
+	}
 };
 
 void CtfEnemyGroup::randomizeHeadingOnXZPlane(VehicleData &vehicleData)
@@ -298,13 +382,14 @@ void CtfEnemyGroup::reset(void)
 
 	// Transfer the data to the device.
 	SyncDevice();
+
 	// Compute the initial KNN for this group with itself.
 	// Update the KNN database for the group.
 	KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
 	kernel.init();
 	kernel.run();
 	kernel.close();
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, g_pKNNDataEnemyGroupWithSelf, g_pKNNBinData, this );
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
 }
 
 // ----------------------------------------------------------------------------
@@ -418,28 +503,34 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 
 	//SyncDevice();
 	// Force the host to pull data on next call to SyncHost().
-	SetSyncHost();	// <-- TODO: This should be replaced by appropriate setSynsHost calls in the kernel close() methods.
+	//SetSyncHost();	// <-- TODO: This should be replaced by appropriate setSynsHost calls in the kernel close() methods.
 
-	// Update the KNN database for the group.
+	// Update the positions in the KNNDatabase for the group.
 	KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
 	kernel.init();
 	kernel.run();
 	kernel.close();
 
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, g_pKNNDataEnemyGroupWithSelf, g_pKNNBinData, this );
+	// Update the KNNDatabases
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, m_pKNNObstacles, g_pKNNBinData, gObstacles );
+	CUDAGroupSteerLibrary.findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
 
-	CUDAGroupSteerLibrary.steerToAvoidNeighbors( this, g_pKNNDataEnemyGroupWithSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
+	// Avoid collision with obstacles.
+	CUDAGroupSteerLibrary.steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToCollision, g_fWeightObstacleAvoidance );
 
+	// Avoid collision with self.
+	CUDAGroupSteerLibrary.steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
+
+
+
+	// Pursue target.
 	CUDAGroupSteerLibrary.steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
-	//CUDAGroupSteerLibrary.steerForSeek( *this, gSeeker->position(), g_fWeightPursuit );
 
-	// Maintain some semblence of separation.
-	CUDAGroupSteerLibrary.steerForSeparation( this, g_pKNNDataEnemyGroupWithSelf, this, g_fWeightSeparation );
+	// Maintain separation.
+	CUDAGroupSteerLibrary.steerForSeparation( this, m_pKNNSelf, this, g_fWeightSeparation );
 
+	// Apply steering.
 	CUDAGroupSteerLibrary.update( this, elapsedTime );
-
-	// Pull the data back to the host so we can render the next frame.
-	//SyncHost();
 
 	/*
 {
@@ -988,7 +1079,7 @@ void CtfSeeker::updateState (const float currentTime)
     if (state == running)
     {
         const float baseDistance = float3_distance(position(),gHomeBaseCenter);
-        if (baseDistance < (radius() + gHomeBaseRadius))
+        if (baseDistance < (radius() + g_fHomeBaseRadius))
 			state = atGoal;
     }
 
@@ -1046,9 +1137,13 @@ void CtfSeeker::draw (void)
     // display status in the upper left corner of the window
     std::ostringstream status;
     status << seekerStateString << std::endl;
-    status << gObstacles->Size() << " obstacles [F1/F2]" << std::endl;
-	status << "position: " << position().x << ", " << position().z << std::endl;
-    status << resetCount << " restarts" << std::ends;
+	status << std::left << std::setw( 20 ) << "No. obstacles: " << std::setw( 10 ) << gObstacles->Size() << std::endl;
+	status << std::left << std::setw( 20 ) << "No. agents: " << std::setw( 10 ) << gEnemies->Size() << std::endl;
+	status << std::left << std::setw( 20 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
+	status << std::left << std::setw( 20 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
+	status << std::left << std::setw( 20 ) << "Search radius: " << std::setw( 10 ) << g_searchRadius << std::endl;
+	status << std::left << std::setw( 20 ) << "Position: " << position().x << ", " << position().z << std::endl;
+	status << std::left << std::setw( 20 ) << "Reset count: " << std::setw( 10 ) << resetCount << std::ends;
     const float h = drawGetWindowHeight ();
     const float3 screenLocation = make_float3(10, h-50, 0);
     draw2dTextAt2dLocation (status, screenLocation, gGray80);
@@ -1086,55 +1181,6 @@ void CtfSeeker::update (const float currentTime, const float elapsedTime)
 class CtfPlugIn : public PlugIn
 {
 private:
-	void initializeObstacles (void)
-	{
-		for (int i = 0; i < gMaxObstacleCount; i++)
-			addOneObstacle();
-	}
-
-	void addOneObstacle (void)
-	{
-		// pick a random center and radius,
-		// loop until no overlap with other obstacles and the home base
-		float r;
-		float3 c;
-		//float minClearance;
-		const float requiredClearance = 2.0f; //gSeeker->radius() * 4; // 2 x diameter
-		//SphericalObstacleDataVec obstacles = gObstacles->GetObstacles();
-
-		r = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
-		c = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), gMaxStartRadius * 1.1f);
-
-		/*	// TODO: Re-implement overlap checking.
-		do
-		{
-			r = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
-			c = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), gMaxStartRadius * 1.1f);
-			minClearance = FLT_MAX;
-
-			// Make sure it doesn't overlap with the home base.
-			testOneObstacleOverlap (gHomeBaseRadius - requiredClearance, gHomeBaseCenter);
-
-			// Make sure it doesn't overlap with another obstacle.
-			SphericalObstacleDataVec nearObstacles;
-			gObstacles->FindNearObstacles(c, 12.0f, nearObstacles);
-
-			for(SphericalObstacleDataIt o = nearObstacles.begin(); o != nearObstacles.end(); o++)
-			{
-				testOneObstacleOverlap((**o).radius, (**o).center);
-			}
-		} while (minClearance < requiredClearance);
-		*/
-
-		ObstacleData od;
-		od.position = c;
-		od.radius = r;
-		//SphericalObstacleData *pData = new SphericalObstacleData(r, c);
-
-		// add new non-overlapping obstacle to registry
-		gObstacles->AddObstacle( od );
-	}
-
 
 public:
 
@@ -1148,13 +1194,10 @@ public:
     {
 		OpenSteerDemo::setAnnotationOff();
 
-
-		gObstacles = new ObstacleGroup( gWorldCells, g_kno );
-
 		g_pKNNBinData = new KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
-		g_pKNNDataEnemyGroupWithSelf = new KNNData( gEnemyCount, g_knn );
 
-		initializeObstacles();
+		gObstacles = new CtfObstacleGroup( gWorldCells, g_kno );
+		gObstacles->reset();
 
 		int numDevices;
 		cudaGetDeviceCount(&numDevices);
@@ -1227,7 +1270,8 @@ public:
 
         // draw the seeker, obstacles and home base
         ctfSeeker->draw();
-        drawObstacles ();
+        //drawObstacles ();
+		gObstacles->draw();
         drawHomeBase();
 
         // draw each enemy
@@ -1250,7 +1294,6 @@ public:
 		delete gEnemies;
 
 		delete g_pKNNBinData;
-		delete g_pKNNDataEnemyGroupWithSelf;
 
         //// delete each enemy
         //for (int i = 0; i < ctfEnemyCount; i++)
@@ -1272,6 +1315,8 @@ public:
         ctfSeeker->reset ();
 
 		gEnemies->reset();
+
+		gObstacles->reset();
 
 		//AgentGroupData & vgd = gEnemies->GetAgentGroupData();
 		//AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
@@ -1297,13 +1342,13 @@ public:
 
     void handleFunctionKeys (int keyNumber)
     {
-        switch (keyNumber)
-        {
-		case 1: addOneObstacle();
-			break;
+        //switch (keyNumber)
+        //{
+		//case 1: addOneObstacle();
+		//	break;
 		//case 2: removeOneObstacle();
 		//	break;
-        }
+        //}
     }
 
     void printMiniHelpForFunctionKeys (void)
@@ -1312,8 +1357,8 @@ public:
         message << "Function keys handled by ";
         message << '"' << name() << '"' << ':' << std::ends;
         OpenSteerDemo::printMessage (message);
-        OpenSteerDemo::printMessage ("  F1     add one obstacle.");
-        OpenSteerDemo::printMessage ("  F2     remove one obstacle.");
+        //OpenSteerDemo::printMessage ("  F1     add one obstacle.");
+        //OpenSteerDemo::printMessage ("  F2     remove one obstacle.");
         OpenSteerDemo::printMessage ("");
     }
 
@@ -1326,22 +1371,22 @@ public:
         const float3 noColor = gGray50;
         const bool reached = ctfSeeker->state == CtfSeeker::atGoal;
         const float3 baseColor = (reached ? atColor : noColor);
-        drawXZDisk (gHomeBaseRadius,    gHomeBaseCenter, baseColor, 20);
-        drawXZDisk (gHomeBaseRadius/15, float3_add(gHomeBaseCenter, up), gBlack, 20);
+        drawXZDisk (g_fHomeBaseRadius,    gHomeBaseCenter, baseColor, 20);
+        drawXZDisk (g_fHomeBaseRadius/15, float3_add(gHomeBaseCenter, up), gBlack, 20);
     }
 
-    void drawObstacles (void)
-    {
-        const float3 color = make_float3(0.8f, 0.6f, 0.4f);
+  //  void drawObstacles (void)
+  //  {
+  //      const float3 color = make_float3(0.8f, 0.6f, 0.4f);
 
-		for( uint i = 0; i < gObstacles->Size(); i++ )
-		{
-			ObstacleData od;
-			gObstacles->GetDataForObstacle( i, od );
+		//for( uint i = 0; i < gObstacles->Size(); i++ )
+		//{
+		//	ObstacleData od;
+		//	gObstacles->GetDataForObstacle( i, od );
 
-			drawXZCircle( od.radius, od.position, color, 20 );
-		}
-    }
+		//	drawXZCircle( od.radius, od.position, color, 20 );
+		//}
+  //  }
 
     // a group (STL vector) of all vehicles in the PlugIn
     std::vector<CtfBase*> all;

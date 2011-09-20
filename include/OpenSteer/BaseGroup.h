@@ -20,18 +20,16 @@ public:
 	{}
 	virtual ~BaseGroup( void ) {}
 
-	KNNDatabase &			GetKNNDatabase( void )			{ return m_neighborDB; }
-
-	virtual float3 *	pdPositionSorted( void )			{ return m_neighborDB.pdPositionSorted(); }
-	
-	virtual uint		Size( void ) const					{ return m_nCount; }
-
+	KNNDatabase &		GetKNNDatabase( void )			{ return m_neighborDB; }
+	virtual uint		Size( void ) const				{ return m_nCount; }
 
 	// Pure virtual methods.
 	virtual float3 *		pdPosition( void ) = 0;
 	virtual float3 *		pdDirection( void ) = 0;
 	virtual float *			pdSpeed( void ) = 0;
 	virtual float *			pdRadius( void ) = 0;
+
+	virtual void			SetSyncHost( void ) = 0;
 };	// class BaseGroup
 }	// namespace OpenSteer
 
