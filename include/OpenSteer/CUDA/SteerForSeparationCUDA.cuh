@@ -16,7 +16,7 @@ protected:
 
 
 public:
-	SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight );
+	SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight, uint const doNotApplyWith );
 	virtual ~SteerForSeparationCUDA( void ) {}
 
 	virtual void init( void );

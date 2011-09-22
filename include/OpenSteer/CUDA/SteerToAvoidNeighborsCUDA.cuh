@@ -18,7 +18,7 @@ protected:
 	AgentGroup *	m_pOtherGroup;
 
 public:
-	SteerToAvoidNeighborsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight );
+	SteerToAvoidNeighborsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight, uint const doNotApplyWith );
 	~SteerToAvoidNeighborsCUDA( void ) {}
 
 	virtual void init( void );

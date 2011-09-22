@@ -28,7 +28,10 @@ extern "C"
 													
 													uint const		numAgents,				// In:	Number of agents.
 													uint const		numObstacles,			// In:	Number of obstacles.
-													float const		fWeight					// In:	Weight for this kernel
+													float const		fWeight,				// In:	Weight for this kernel
+
+													uint *			pdAppliedKernels,
+													uint const		doNotApplyWith
 													);
 }
 
@@ -130,12 +133,18 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 												
 												uint const		numAgents,				// In:	Number of agents.
 												uint const		numObstacles,			// In:	Number of obstacles.
-												float const		fWeight					// In:	Weight for this kernel
+												float const		fWeight,				// In:	Weight for this kernel
+
+												uint *			pdAppliedKernels,
+												uint const		doNotApplyWith
 												)
 {
 	uint index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	if( index >= numAgents )
+		return;
+
+	if( pdAppliedKernels[ index ] & doNotApplyWith )
 		return;
 
 	// Shared memory.
@@ -205,6 +214,10 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 
 	// Apply the weight.
 	steering = float3_scalar_multiply( steering, fWeight );
+
+	// Set the applied kernel bit.
+	if( ! float3_equals( steering, float3_zero() ) )
+		pdAppliedKernels[ index ] |= KERNEL_AVOID_OBSTACLES_BIT;
 
 	// Add into the steering vector.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );

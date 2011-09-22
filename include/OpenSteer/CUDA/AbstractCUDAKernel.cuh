@@ -14,18 +14,20 @@ namespace OpenSteer
 	class AbstractCUDAKernel : public AbstractKernel
 	{
 	protected:
-		int m_threadsPerBlock;
+		int		m_threadsPerBlock;
+		uint	m_doNotApplyWith;
 
 		// Structures containing device pointers.
 		AgentGroupData *	m_pAgentGroupData;
 		AgentGroupConst *	m_pAgentGroupConst;
 
 	public:
-		AbstractCUDAKernel( AgentGroup * pAgentGroup, float const fWeight )
+		AbstractCUDAKernel( AgentGroup * pAgentGroup, float const fWeight, uint const doNotApplyWith )
 		:	AbstractKernel( pAgentGroup, fWeight ),
 			m_threadsPerBlock( THREADSPERBLOCK ),
 			m_pAgentGroupData( NULL ),
-			m_pAgentGroupConst( NULL )
+			m_pAgentGroupConst( NULL ),
+			m_doNotApplyWith( doNotApplyWith )
 		{
 			if( pAgentGroup )
 			{

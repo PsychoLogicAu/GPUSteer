@@ -1,8 +1,6 @@
-#include "SteerForPursuitCUDA.h"
+#include "SteerForPursueCUDA.h"
 
 #include "CUDAKernelGlobals.cuh"
-
-#define CLOSE_CHECK
 
 extern "C"
 {
@@ -30,146 +28,12 @@ extern "C"
 														float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
 
 														size_t const	numAgents,
-														float const		fWeight
+														float const		fWeight,
+
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
 														);
-
-	//__global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			// In:		Indices of the KNN for each agent.
-	//													float const*	pdKNNDistances,			// In:		Distances to the KNN for each agent.
-	//													size_t const	k,						// In:		Number of KNN for each agent.
-
-	//													float3 const*	pdPosition,				// In:		Positions of each agent.
-	//													float3 const*	pdDirection,			// In:		Directions of facing for each agent.
-	//													float const*	pdRadius,				// In:		Radius of each agent.
-	//													float3 const*	pdSide,					// In:		Side direction for each agent.
-
-	//													float *			pdSpeed,				// In/Out:	Speed of each agent.
-	//													float3 *		pdSteering,				// Out:		Steering vectors for each agent.
-
-	//													float const		minTimeToCollision,		// In:		Look-ahead time for collision avoidance.
-	//													float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
-
-	//													size_t const	numAgents,
-	//													float const		fWeight
-	//													);
-/*
-	__global__ void SteerToAvoidCloseNeighborsCUDAKernel(	uint const*		pdKNNIndices,
-		float const*	pdKNNDistances,
-		size_t const	k,
-
-		float3 const*	pdPosition,
-		float3 const*	pdDirection,
-		float const*	pdRadius,
-
-		float3 *		pdSteering,
-		float *			pdSpeed,
-
-		float const		minSeparationDistance,
-
-		size_t const	numAgents
-		);
-*/
 }
-
-/*
-// DEPRECATED: this has been handled within SteerToAvoidNeighborsCUDAKernel
-__global__ void SteerToAvoidCloseNeighborsCUDAKernel(	uint const*		pdKNNIndices,
-													 float const*	pdKNNDistances,
-													 size_t const	k,
-
-													 float3 const*	pdPosition,
-													 float3 const*	pdDirection,
-													 float const*	pdRadius,
-													 float *			pdSpeed,
-
-													 float3 *		pdSteering,
-
-													 float const		minSeparationDistance,
-
-													 size_t const	numAgents
-														)
-{
-	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
-
-	if( index >= numAgents )
-		return;
-
-	extern __shared__ float shKNNDistances[];
-	uint *	shKNNIndices = (uint*)shKNNDistances + (THREADSPERBLOCK*k);
-
-	__shared__ float3 shPosition[THREADSPERBLOCK];
-	__shared__ float3 shDirection[THREADSPERBLOCK];
-	__shared__ float3 shSteering[THREADSPERBLOCK];
-	__shared__ float shRadius[THREADSPERBLOCK];
-	__shared__ float shSpeed[THREADSPERBLOCK];
-
-	// Copy required global memory to shared.
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
-	RADIUS_SH( threadIdx.x ) = RADIUS( index );
-	__syncthreads();
-	SPEED_SH( threadIdx.x ) = SPEED( index );
-	__syncthreads();
-	for( uint i = 0; i < k; i++ )
-	{
-		shKNNDistances[threadIdx.x*k + i] = pdKNNDistances[index*k + i];
-		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
-	}
-	__syncthreads();
-
-	uint threatIndex;
-
-	// For each of the KNN of this agent...
-	for( int i = 0; i < k; i++ )
-	{
-		threatIndex = shKNNIndices[(threadIdx.x * k) + i];
-
-		if( threatIndex >= numAgents )
-			break;
-
-		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + RADIUS( threatIndex );
-		float const minCenterToCenter = minSeparationDistance + sumOfRadii;
-		float3 const offset = float3_subtract( POSITION( threatIndex ), POSITION_SH( threadIdx.x ) );
-		//float const currentDistance = float3_length( offset );
-
-		// Distance was computed in KNN step. Don't waste time :)
-		float const currentDistance = shKNNDistances[(threadIdx.x * k) + i];
-
-		//if( currentDistance < sumOfRadii )
-		//{
-		//	// Agents are interpenetrating. Bad!
-
-		//	// If the agent at threatIndex is ahead of me...
-		//	if( float3_dot( DIRECTION_SH( threadIdx.x ), offset ) > 0.f )
-		//	{
-		//		// I should slow down.
-		//		SPEED_SH( threadIdx.x ) *= (currentDistance / minSeparationDistance);
-		//	}
-		//}
-
-		if( currentDistance < minCenterToCenter )	// Other agent is within critical range.
-		{
-			// Steer hard to dodge the other agent.
-			STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
-
-			// TESTING: slow down if collision iminent
-			// If the agent at threatIndex is ahead of me...
-			if( float3_dot( DIRECTION_SH( threadIdx.x ), offset ) > 0.f )
-			{
-				// I should slow down.
-				SPEED_SH( threadIdx.x ) *= (currentDistance / minCenterToCenter);
-			}
-		}
-	}
-
-	__syncthreads();
-
-	// Write the steering vectors back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
-
-	SPEED( index ) = SPEED_SH( threadIdx.x );
-}
-*/
 
 // Given the time until nearest approach (predictNearestApproachTime)
 // determine position of each agent at that time, and the distance
@@ -217,7 +81,6 @@ __inline__ __device__ float predictNearestApproachTime( float3 const& position, 
 	return projection / relSpeed;
 }
 
-// TODO: This needs to operate on two sets of data.
 __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			// In:		Indices of the KNN for each agent.
 													float const*	pdKNNDistances,			// In:		Distances to the KNN for each agent.
 													size_t const	k,						// In:		Number of KNN for each agent.
@@ -242,13 +105,21 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 													float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
 
 													size_t const	numAgents,
-													float const		fWeight
+													float const		fWeight,
+
+													uint *			pdAppliedKernels,
+													uint const		doNotApplyWith
 												)
 {
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	if( index >= numAgents )
 		return;
+
+	if( pdAppliedKernels[ index ] & doNotApplyWith )
+		return;
+
+	float3 steering = { 0.f, 0.f, 0.f };
 
 	extern __shared__ float shKNNDistances[];
 	uint *	shKNNIndices = (uint*)shKNNDistances + (THREADSPERBLOCK*k);
@@ -277,10 +148,6 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 	}
 	__syncthreads();
 
-	// If there is a steering vector set, it was done by SteerToAvoidCloseNeighbors. In that case, we should do nothing here.
-	if( ! float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
-		return;
-
 	// Find the agent which is closest to collision
 	float minTime = minTimeToCollision;
 	float steer = 0.f;
@@ -307,7 +174,6 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		// avoid when future positions are this close (or less)
 		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + pdBRadius[ BIndex ];
 
-#if defined CLOSE_CHECK
 		// Check for a 'close' neighbor.
 		if( BDistance < threatDistance && BDistance < (minSeparationDistance + sumOfRadii) )
 		{
@@ -319,7 +185,6 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 
 		if( minTime == 0.f )
 			continue;
-#endif
 
 		// predicted time until nearest approach of "this" and "other"
 		float const time = predictNearestApproachTime(	POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), SPEED_SH( threadIdx.x ),
@@ -349,7 +214,7 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 	// Was there a 'threat' found?
 	if( UINT_MAX != threatIndex )
 	{
-		// FIXME: already done
+		// TODO: this is already done, use the old result?
 		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + pdBRadius[ threatIndex ];
 		float const minCenterToCenter = minSeparationDistance + sumOfRadii;
 		float3 const offset = float3_subtract( pdBPosition[ threatIndex ], POSITION_SH( threadIdx.x ) );
@@ -358,11 +223,10 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		float const parallelness = float3_dot( DIRECTION_SH( threadIdx.x ), pdBDirection[ threatIndex ] );
 		float const angle = 0.707f;
 
-#if defined CLOSE_CHECK
 		if( threatDistance < minCenterToCenter )	// Other agent is within 'close' range.
 		{
 			// Steer hard to dodge the other agent.
-			//STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
+			//steering = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
 
 			// Slow down if collision iminent
 			// If the agent at threatIndex is ahead of me...
@@ -376,9 +240,6 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 		}
 		else
 		{
-#endif
-
-
 			if( parallelness < -angle )		// anti-parallel "head on" paths:
 			{
 				// steer away from future threat position
@@ -405,215 +266,23 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			//
 					}
 				}
 			}
-		STEERING_SH( threadIdx.x ) = float3_scalar_multiply( SIDE_SH( threadIdx.x ), steer );
-	
-#if defined CLOSE_CHECK
+		steering = float3_scalar_multiply( SIDE_SH( threadIdx.x ), steer );
 		}
-#endif
 	}
 
-
 	__syncthreads();
+
+	// Normalize and apply the weight.
+	steering = float3_scalar_multiply( float3_normalize( steering ), fWeight );
+
+	// Set the applied kernel bit.
+	if( ! float3_equals( steering, float3_zero() ) )
+		pdAppliedKernels[ index ] |= KERNEL_AVOID_NEIGHBORS_BIT;
+
+	// Add into the steering vector.
+	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write the steering vectors and speeds to global memory.
 	FLOAT3_GLOBAL_WRITE( pdASteering, shSteering );
 	pdASpeed[ index ] = SPEED_SH( threadIdx.x );
 }
-
-
-/*
-
-__global__ void SteerToAvoidNeighborsCUDAKernel(	uint const*		pdKNNIndices,			// In:		Indices of the KNN for each agent.
-													float const*	pdKNNDistances,			// In:		Distances to the KNN for each agent.
-													size_t const	k,						// In:		Number of KNN for each agent.
-
-													float3 const*	pdPosition,				// In:		Positions of each agent.
-													float3 const*	pdDirection,			// In:		Directions of facing for each agent.
-													float const*	pdRadius,				// In:		Radius of each agent.
-													float3 const*	pdSide,					// In:		Side direction for each agent.
-
-													float *			pdSpeed,				// In/Out:	Speed of each agent.
-													float3 *		pdSteering,				// Out:		Steering vectors for each agent.
-
-													float const		minTimeToCollision,		// In:		Look-ahead time for collision avoidance.
-													float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
-
-													size_t const	numAgents,
-													float const		fWeight
-												)
-{
-	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
-
-	if( index >= numAgents )
-		return;
-
-	extern __shared__ float shKNNDistances[];
-	uint *	shKNNIndices = (uint*)shKNNDistances + (THREADSPERBLOCK*k);
-
-	__shared__ float3 shPosition[THREADSPERBLOCK];
-	__shared__ float3 shDirection[THREADSPERBLOCK];
-	__shared__ float3 shSide[THREADSPERBLOCK];
-	__shared__ float shSpeed[THREADSPERBLOCK];
-	__shared__ float shRadius[THREADSPERBLOCK];
-	__shared__ float3 shSteering[THREADSPERBLOCK];
-
-	// Load this block's data into shared memory.
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shSide, pdSide );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
-	SPEED_SH( threadIdx.x ) = SPEED( index );
-	__syncthreads();
-	RADIUS_SH( threadIdx.x ) = RADIUS( index );
-	__syncthreads();
-	// Load the KNN data from global memory.
-	for( uint i = 0; i < k; i++ )
-	{
-		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
-		shKNNDistances[threadIdx.x*k + i] = pdKNNDistances[index*k + i];
-	}
-	__syncthreads();
-
-	// If there is a steering vector set, it was done by SteerToAvoidCloseNeighbors. In that case, we should do nothing here.
-	if( ! float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
-		return;
-
-	// Find the agent which is closest to collision
-	float minTime = minTimeToCollision;
-	float steer = 0.f;
-
-	uint threatIndex = UINT_MAX;				// Index of the nearest threat.
-	float threatDistance = FLT_MAX;				// Distance of the nearest threat.
-
-	float3 threatPositionAtNearestApproach;
-	float3 myPositionAtNearestApproach;
-
-	// For each of the neighboring vehicles, determine which (if any)
-	// pose the most immediate threat of collision.
-	uint otherIndex;
-	float otherDistance;
-	for( uint i = 0; i < k; i++ )
-	{
-		otherIndex = shKNNIndices[threadIdx.x * k + i];
-		otherDistance = shKNNDistances[threadIdx.x * k + i];
-
-		// Check for end of KNN (will be UINT_MAX if there are no more).
-		if( otherIndex >= numAgents )
-			break;
-
-		// avoid when future positions are this close (or less)
-		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + RADIUS( otherIndex );
-
-#if defined CLOSE_CHECK
-		// Check for a 'close' neighbor.
-		if( otherDistance < (minSeparationDistance + sumOfRadii) && otherDistance < threatDistance )
-		{
-			minTime = 0.f;
-			threatIndex = otherIndex;
-			threatDistance = otherDistance;
-			continue;
-		}
-
-		if( minTime == 0.f )
-			continue;
-#endif
-
-		// predicted time until nearest approach of "this" and "other"
-		float const time = predictNearestApproachTime(	POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), SPEED_SH( threadIdx.x ),
-														POSITION( otherIndex ), DIRECTION( otherIndex ), SPEED( otherIndex )
-														);
-
-		// If the time is in the future, sooner than any other threatened collision...
-		if(	time >= 0		&&	// Time is in the future.
-			time < minTime )	// Sooner than other threats.
-		{
-			// if the two will be close enough to collide, make a note of it
-			if( computeNearestApproachPositions(	POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), SPEED_SH( threadIdx.x ),
-													POSITION( otherIndex ), DIRECTION( otherIndex ), SPEED( otherIndex ),
-													time,
-													threatPositionAtNearestApproach, myPositionAtNearestApproach
-													)
-				<
-				sumOfRadii )
-			{
-				minTime = time;
-				threatIndex = otherIndex;
-				threatDistance = otherDistance;
-			}
-		}
-	}
-
-	// Was there a 'threat' found?
-	if( UINT_MAX != threatIndex )
-	{
-		// FIXME: already done
-		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + RADIUS( threatIndex );
-		float const minCenterToCenter = minSeparationDistance + sumOfRadii;
-		float3 const offset = float3_subtract( POSITION( threatIndex ), POSITION_SH( threadIdx.x ) );
-
-		// parallel: +1, perpendicular: 0, anti-parallel: -1
-		float const parallelness = float3_dot( DIRECTION_SH( threadIdx.x ), DIRECTION( threatIndex ) );
-		float const angle = 0.707f;
-
-#if defined CLOSE_CHECK
-		if( threatDistance < minCenterToCenter )	// Other agent is within 'close' range.
-		{
-			// Steer hard to dodge the other agent.
-			//STEERING_SH( threadIdx.x ) = float3_perpendicularComponent( float3_minus( offset ), DIRECTION_SH( threadIdx.x ) );
-
-			// Slow down if collision iminent
-			// If the agent at threatIndex is ahead of me...
-			if(	float3_dot( DIRECTION_SH( threadIdx.x ), offset ) > 0.f &&		// Other agent is in front.
-				SPEED_SH( threadIdx.x ) > SPEED( threatIndex )					// I am moving faster than the threat agent.
-				)
-			{
-				// I should slow down.
-				SPEED_SH( threadIdx.x ) *= (threatDistance / minCenterToCenter);
-			}
-		}
-		else
-		{
-#endif
-
-
-			if( parallelness < -angle )		// anti-parallel "head on" paths:
-			{
-				// steer away from future threat position
-				float3 offset = float3_subtract( threatPositionAtNearestApproach, POSITION_SH( threadIdx.x ) );
-				float sideDot = float3_dot( offset, SIDE_SH( threadIdx.x ) );
-				steer = (sideDot > 0) ? -1.0f : 1.0f;
-			}
-			else
-			{
-				if (parallelness > angle)	// parallel paths: steer away from threat
-				{
-
-					float3 offset = float3_subtract( POSITION( threatIndex ), POSITION_SH( threadIdx.x ) );
-					float sideDot = float3_dot( offset, SIDE_SH( threadIdx.x ) );
-					steer = (sideDot > 0) ? -1.0f : 1.0f;
-				}
-				else						// perpendicular paths: steer behind threat
-				{
-					// (only the slower of the two does this)
-					if( SPEED_SH( threadIdx.x ) <= SPEED( threatIndex ) )
-					{
-						float sideDot = float3_dot( SIDE_SH( threadIdx.x ), float3_scalar_multiply( DIRECTION( threatIndex ), SPEED( threatIndex ) ) );
-						steer = (sideDot > 0) ? -1.0f : 1.0f;
-					}
-				}
-			}
-		STEERING_SH( threadIdx.x ) = float3_scalar_multiply( SIDE_SH( threadIdx.x ), steer );
-	
-#if defined CLOSE_CHECK
-		}
-#endif
-	}
-
-
-	__syncthreads();
-
-	// Write the steering vectors and speeds to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
-	SPEED( index ) = SPEED_SH( threadIdx.x );
-}
-*/

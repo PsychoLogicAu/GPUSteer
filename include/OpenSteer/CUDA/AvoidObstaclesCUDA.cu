@@ -25,13 +25,16 @@ extern "C"
 													
 													uint const		numAgents,				// In:	Number of agents.
 													uint const		numObstacles,			// In:	Number of obstacles.
-													float const		fWeight					// In:	Weight for this kernel
+													float const		fWeight,				// In:	Weight for this kernel
+
+													uint *			pdAppliedKernels,
+													uint const		doNotApplyWith
 													);
 }
 
 
-AvoidObstaclesCUDA::AvoidObstaclesCUDA( AgentGroup * pAgentGroup, ObstacleGroup * pObstacleGroup, KNNData * pKNNData, float const fMinTimeToCollision, float const fWeight )
-:	AbstractCUDAKernel( pAgentGroup, fWeight ),
+AvoidObstaclesCUDA::AvoidObstaclesCUDA( AgentGroup * pAgentGroup, ObstacleGroup * pObstacleGroup, KNNData * pKNNData, float const fMinTimeToCollision, float const fWeight, uint const doNotApplyWith )
+:	AbstractCUDAKernel( pAgentGroup, fWeight, doNotApplyWith ),
 	m_pObstacleGroup( pObstacleGroup ),
 	m_fMinTimeToCollision( fMinTimeToCollision ),
 	m_pKNNData( pKNNData )
@@ -68,6 +71,8 @@ void AvoidObstaclesCUDA::run(void)
 	uint const&		numAgents			= m_pAgentGroup->Size();
 	uint const&		numObstacles		= m_pObstacleGroup->Size();
 
+	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
+
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(uint) + sizeof(float));
 
 	SteerToAvoidObstaclesKernel<<< grid, block, shMemSize >>>(	pdKNNIndices, pdKNNDistances, k,
@@ -76,7 +81,8 @@ void AvoidObstaclesCUDA::run(void)
 																m_fMinTimeToCollision, 
 																pdSteering, 
 																numAgents, numObstacles,
-																m_fWeight
+																m_fWeight,
+																pdAppliedKernels, m_doNotApplyWith
 																);
 	cutilCheckMsg( "AvoidObstaclesCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );

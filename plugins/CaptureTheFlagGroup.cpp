@@ -62,8 +62,10 @@
 
 #include "OpenSteer/AgentGroup.h"
 
-#include "OpenSteer/CUDA/CUDAGroupSteerLibrary.h"
-#include "OpenSteer/CUDA/CUDAGlobals.cuh"
+#include "OpenSteer/CUDA/CUDAKernelGlobals.cuh"
+#include "OpenSteer/CUDA/GroupSteerLibrary.cuh"
+
+//#include "OpenSteer/CUDA/CUDAGlobals.cuh"
 
 #include "OpenSteer/AgentData.h"
 
@@ -128,12 +130,12 @@ uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
 float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 1.0f;		// Look-ahead time for neighbor avoidance.
+float const g_fMinTimeToObstacle		= 3.0f;		// Look-ahead time for obstacle avoidance.
 
 // Weights for behaviors.
-//float const g_fWeightSeparation			= 0.5f;
-float const g_fWeightSeparation			= 0.1f;
-float const g_fWeightPursuit			= 0.1f;
-float const g_fWeightObstacleAvoidance	= 10.f;
+float const g_fWeightSeparation			= 0.5f;
+float const g_fWeightPursuit			= 1.f;
+float const g_fWeightObstacleAvoidance	= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
 
 
@@ -253,7 +255,8 @@ public:
 		m_pKNNObstacles( NULL )
 	{
 		m_pKNNSelf = new KNNData( gEnemyCount, g_knn );
-		m_pKNNObstacles = new KNNData( gObstacleCount, g_kno );
+		//m_pKNNObstacles = new KNNData( gObstacleCount, g_kno );
+		m_pKNNObstacles = new KNNData( gEnemyCount, g_kno );
 		reset();
 	}
 	virtual ~CtfEnemyGroup(void)
@@ -389,7 +392,7 @@ void CtfEnemyGroup::reset(void)
 	kernel.init();
 	kernel.run();
 	kernel.close();
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
 }
 
 // ----------------------------------------------------------------------------
@@ -512,25 +515,23 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	kernel.close();
 
 	// Update the KNNDatabases
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, m_pKNNObstacles, g_pKNNBinData, gObstacles );
-	CUDAGroupSteerLibrary.findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
+	findKNearestNeighbors( this, m_pKNNObstacles, g_pKNNBinData, gObstacles );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
 
 	// Avoid collision with obstacles.
-	CUDAGroupSteerLibrary.steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToCollision, g_fWeightObstacleAvoidance );
+	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, 0 );
 
 	// Avoid collision with self.
-	CUDAGroupSteerLibrary.steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors );
-
-
+	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, KERNEL_AVOID_OBSTACLES_BIT );
 
 	// Pursue target.
-	CUDAGroupSteerLibrary.steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit );
+	steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
 
 	// Maintain separation.
-	CUDAGroupSteerLibrary.steerForSeparation( this, m_pKNNSelf, this, g_fWeightSeparation );
+	steerForSeparation( this, m_pKNNSelf, this, g_fWeightSeparation, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
 
 	// Apply steering.
-	CUDAGroupSteerLibrary.update( this, elapsedTime );
+	updateGroup( this, elapsedTime );
 
 	/*
 {

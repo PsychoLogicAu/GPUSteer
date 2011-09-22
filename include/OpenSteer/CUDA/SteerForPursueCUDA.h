@@ -5,7 +5,7 @@
 
 namespace OpenSteer
 {
-class SteerForPursuitCUDA : public AbstractCUDAKernel
+class SteerForPursueCUDA : public AbstractCUDAKernel
 {
 protected:
 	float					m_fMaxPredictionTime;
@@ -16,14 +16,16 @@ protected:
 	float					m_targetSpeed;
 
 public:
-	SteerForPursuitCUDA(	AgentGroup * pAgentGroup, 
+	SteerForPursueCUDA(		AgentGroup * pAgentGroup, 
 							float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
-							const float fMaxPredictionTime, float const fWeight );
-	~SteerForPursuitCUDA( void ) {}
+							const float fMaxPredictionTime,
+							float const fWeight, uint const doNotApplyWith
+							);
+	~SteerForPursueCUDA( void ) {}
 
 	virtual void init( void );
 	virtual void run( void );
 	virtual void close( void );
-};	// class SteerForPursuitCUDA
+};	// class SteerForPursueCUDA
 } // namespace OpenSteer
 #endif
