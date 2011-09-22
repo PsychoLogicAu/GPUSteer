@@ -14,13 +14,17 @@ extern "C"
 										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
 										// vehicle_group_const members.
 										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
-										float const elapsedTime, size_t const numAgents );
+										float const elapsedTime, size_t const numAgents,
+										uint * pdAppliedKernels
+										);
 }
 
 __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDirection,
 										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
 										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
-										float const elapsedTime, size_t const numAgents )
+										float const elapsedTime, size_t const numAgents,
+										uint * pdAppliedKernels
+										)
 {
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -100,5 +104,7 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDi
 	FLOAT3_GLOBAL_WRITE( pdPosition, shPosition );
 	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 
+	// Set the applied kernels back to zero.
+	pdAppliedKernels[ index ] = 0;
 	SPEED( index ) = SPEED_SH( threadIdx.x );
 }

@@ -18,7 +18,7 @@ namespace OpenSteer
 		KNNData *			m_pKNNData;
 
 	public:
-		AvoidObstaclesCUDA( AgentGroup * pAgentGroup, ObstacleGroup * pObstacleGroup, KNNData * pKNNData, float const fMinTimeToCollision, float const fWeight );
+		AvoidObstaclesCUDA( AgentGroup * pAgentGroup, ObstacleGroup * pObstacleGroup, KNNData * pKNNData, float const fMinTimeToCollision, float const fWeight, uint const doNotApplyWith );
 		virtual ~AvoidObstaclesCUDA(void) {}
 
 		virtual void init(void);

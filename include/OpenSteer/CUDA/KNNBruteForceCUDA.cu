@@ -48,7 +48,7 @@ using namespace OpenSteer;
 
 #pragma region KNNBruteForceCUDA
 KNNBruteForceCUDA::KNNBruteForceCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
-:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+:	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup )
 { }
@@ -142,7 +142,7 @@ void KNNBruteForceCUDA::close( void )
 //	V2 implementation.
 //
 KNNBruteForceCUDAV2::KNNBruteForceCUDAV2( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
-:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+:	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup )
 {
@@ -191,7 +191,7 @@ void KNNBruteForceCUDAV2::close( void )
 //	V3 implementation.
 //
 KNNBruteForceCUDAV3::KNNBruteForceCUDAV3( AgentGroup * pAgentGroup, KNNData * pKNNData, BaseGroup * pOtherGroup )
-:	AbstractCUDAKernel( pAgentGroup, 1.f ),
+:	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup )
 {

@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include "CUDA\CUDAGlobals.cuh"
+
 #include "AgentData.h"
 #include "VectorUtils.cuh"
 
@@ -30,25 +32,29 @@ private:
 	//	Device vectors
 	//
 	// LocalSpace
-	dev_vector<float3>		m_dvSide;		// Side vectors
-	dev_vector<float3>		m_dvUp;			// Up vectors
-	dev_vector<float3>		m_dvForward;	// Forward vector
-	dev_vector<float3>		m_dvPosition;	// Current position
+	dev_vector<float3>		m_dvSide;			// Side vectors
+	dev_vector<float3>		m_dvUp;				// Up vectors
+	dev_vector<float3>		m_dvForward;		// Forward vector
+	dev_vector<float3>		m_dvPosition;		// Current position
 	// SimpleVehicle
-	dev_vector<float3>		m_dvSteering;	// Steering vector
-	dev_vector<float>		m_dvSpeed;		// Current speed
+	dev_vector<float3>		m_dvSteering;		// Steering vector
+	dev_vector<float>		m_dvSpeed;			// Current speed
+	// Bitmask
+	dev_vector<uint>		m_dvAppliedKernels;	// Bitmask of applied kernels this update.
 
 	//
 	//	Host vectors
 	//
 	// LocalSpace
-	std::vector<float3>		m_hvSide;		// Side vectors
-	std::vector<float3>		m_hvUp;			// Up vectors
-	std::vector<float3>		m_hvForward;	// Forward vector
-	std::vector<float3>		m_hvPosition;	// Current position
+	std::vector<float3>		m_hvSide;			// Side vectors
+	std::vector<float3>		m_hvUp;				// Up vectors
+	std::vector<float3>		m_hvForward;		// Forward vector
+	std::vector<float3>		m_hvPosition;		// Current position
 	// SimpleVehicle
-	std::vector<float3>		m_hvSteering;	// Steering vector
-	std::vector<float>		m_hvSpeed;		// Current speed
+	std::vector<float3>		m_hvSteering;		// Steering vector
+	std::vector<float>		m_hvSpeed;			// Current speed
+	// Bitmask
+	std::vector<uint>		m_hvAppliedKernels;	// Bitmask of applied kernels this update.
 
 public:
 	vehicle_group_data( void )
@@ -59,13 +65,14 @@ public:
 	~vehicle_group_data( void )	{ }
 
 	// Accessors for the device data.
-	float3 *	pdSide( void )		{ return m_dvSide.begin(); }
-	float3 *	pdUp( void )		{ return m_dvUp.begin(); }
-	float3 *	pdForward( void )	{ return m_dvForward.begin(); }
-	float3 *	pdDirection( void )	{ return m_dvForward.begin(); }
-	float3 *	pdPosition( void )	{ return m_dvPosition.begin(); }
-	float3 *	pdSteering( void )	{ return m_dvSteering.begin(); }
-	float *		pdSpeed( void )		{ return m_dvSpeed.begin(); }
+	float3 *	pdSide( void )				{ return m_dvSide.begin(); }
+	float3 *	pdUp( void )				{ return m_dvUp.begin(); }
+	float3 *	pdForward( void )			{ return m_dvForward.begin(); }
+	float3 *	pdDirection( void )			{ return m_dvForward.begin(); }
+	float3 *	pdPosition( void )			{ return m_dvPosition.begin(); }
+	float3 *	pdSteering( void )			{ return m_dvSteering.begin(); }
+	float *		pdSpeed( void )				{ return m_dvSpeed.begin(); }
+	uint *		pdAppliedKernels( void )	{ return m_dvAppliedKernels.begin(); }
 
 	// Accessors for the host data.
 	std::vector<float3> const& hvSide( void ) const			{ return m_hvSide; }
@@ -78,8 +85,10 @@ public:
 	std::vector<float3> & hvPosition( void )				{ m_bSyncDevice = true; return m_hvPosition; }
 	std::vector<float3> const& hvSteering( void ) const		{ return m_hvSteering; }
 	std::vector<float3> & hvSteering( void )				{ m_bSyncDevice = true; return m_hvSteering; }
-	std::vector<float> const& hvSpeed( void ) const	{ return m_hvSpeed; }
+	std::vector<float> const& hvSpeed( void ) const			{ return m_hvSpeed; }
 	std::vector<float> & hvSpeed( void )					{ m_bSyncDevice = true; return m_hvSpeed; }
+	std::vector<uint> const& hvAppliedKernels( void ) const	{ return m_hvAppliedKernels; }
+	std::vector<uint> & hvAppliedKernels( void )			{ m_bSyncDevice = true; return m_hvAppliedKernels; }
 
 	size_t size( void ) const	{ return m_nSize; }
 
@@ -92,6 +101,7 @@ public:
 		m_hvPosition.push_back( vd.position );
 		m_hvSteering.push_back( vd.steering );
 		m_hvSpeed.push_back( vd.speed );
+		m_hvAppliedKernels.push_back( 0 );
 
 		m_nSize++;
 		m_bSyncDevice = true;
@@ -107,6 +117,8 @@ public:
 			m_hvPosition.erase( m_hvPosition.begin() + index );
 			m_hvSteering.erase( m_hvSteering.begin() + index );
 			m_hvSpeed.erase( m_hvSpeed.begin() + index );
+
+			m_hvAppliedKernels.erase( m_hvAppliedKernels.begin() + index );
 			
 			m_nSize--;
 			m_bSyncDevice = true;
@@ -139,6 +151,8 @@ public:
 			cudaMemcpy( &m_hvSteering[0], pdSteering(), m_nSize * sizeof(float3), cudaMemcpyDeviceToHost );
 			cudaMemcpy( &m_hvSpeed[0], pdSpeed(), m_nSize * sizeof(float), cudaMemcpyDeviceToHost );
 
+			cudaMemcpy( &m_hvAppliedKernels[0], pdAppliedKernels(), m_nSize * sizeof(uint), cudaMemcpyDeviceToHost );
+
 			m_bSyncHost = false;
 		}
 	}
@@ -153,6 +167,8 @@ public:
 			m_dvPosition = m_hvPosition;
 			m_dvSteering = m_hvSteering;
 			m_dvSpeed = m_hvSpeed;
+
+			m_dvAppliedKernels = m_hvAppliedKernels;
 
 			m_bSyncDevice = false;
 		}
@@ -170,6 +186,7 @@ public:
 		m_dvPosition.clear();
 		m_dvSteering.clear();
 		m_dvSpeed.clear();
+		m_dvAppliedKernels.clear();
 
 		m_hvSide.clear();
 		m_hvUp.clear();
@@ -177,6 +194,7 @@ public:
 		m_hvPosition.clear();
 		m_hvSteering.clear();
 		m_hvSpeed.clear();
+		m_hvAppliedKernels.clear();
 	}
 };
 typedef vehicle_group_data AgentGroupData;
