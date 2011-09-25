@@ -47,19 +47,22 @@ public:
 	KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius );
 	~KNNBinData( void ) {}
 
-	uint		radius( void )				{ return m_nSearchRadius; }
-	uint		neighborsPerCell( void )	{ return m_nNeighborsPerCell; }
+	uint		radius( void )								{ return m_nSearchRadius; }
+	uint		neighborsPerCell( void )					{ return m_nNeighborsPerCell; }
 
 	// Get methods for device data.
-	uint *		pdCellNeighbors( void )		{ return m_dvCellNeighbors.begin(); }
+	uint *		pdCellNeighbors( void )						{ return m_dvCellNeighbors.begin(); }
 
-	bin_cell *	pdCells( void )				{ return m_dvCells.begin(); }
-	cudaArray *	pdCellIndexArray( void )	{ return m_pdCellIndexArray; }
+	bin_cell *	pdCells( void )								{ return m_dvCells.begin(); }
+	cudaArray *	pdCellIndexArray( void )					{ return m_pdCellIndexArray; }
+
+	// Get methods for host data.
+	std::vector< bin_cell > const& hvCells( void ) const	{ return m_hvCells; }
 
 	// Get methods for the number of cells and the world size.
-	uint3 const& WorldCells( void ) const	{ return m_worldCells; }
-	float3 const& WorldSize( void ) const	{ return m_worldSize; }
-	uint getNumCells( void ) const			{ return m_nCells; }
+	uint3 const& WorldCells( void ) const					{ return m_worldCells; }
+	float3 const& WorldSize( void ) const					{ return m_worldSize; }
+	uint getNumCells( void ) const							{ return m_nCells; }
 };	// class bin_data
 }	// namespace OpenSteer
 #endif

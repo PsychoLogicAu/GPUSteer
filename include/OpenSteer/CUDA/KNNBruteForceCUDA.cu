@@ -92,11 +92,11 @@ void KNNBruteForceCUDA::run( void )
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// For each agent...
-	for( size_t i = 0; i < numAgents; i++ )
+	for( uint i = 0; i < numAgents; i++ )
 	{
 		// Pointers to the matrix row start and end for this agent (keys).
 		thrust::device_ptr< float > pdDistanceStart( m_pdDistanceMatrix + (i * numAgents) );
-		thrust::device_ptr< float > pdDistanceEnd( m_pdDistanceMatrix + (i * numAgents) );
+		thrust::device_ptr< float > pdDistanceEnd( m_pdDistanceMatrix + (i * numAgents + numAgents) );
 		
 		// Pointer to the index matrix row for this agent (values).
 		thrust::device_ptr< size_t > pdIndexStart( m_pdIndexMatrix + (i * numAgents) );

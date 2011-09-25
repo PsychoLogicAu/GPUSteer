@@ -74,6 +74,8 @@
 // Include the required KNN headers.
 #include "OpenSteer/CUDA/KNNBinData.cuh"
 #include "OpenSteer/CUDA/KNNBinningCUDA.cuh"
+
+#include "OpenSteer/CUDA/WallData.cuh"
  
 using namespace OpenSteer;
 
@@ -93,35 +95,61 @@ class CtfSeeker;
 class CtfBase;
 class CtfObstacleGroup;
 
+#define SAFE_DELETE( x )	{ if( x ){ delete x; x = NULL; } }
+
+class CtfWorld
+{
+private:
+// Bin data to be used for KNN lookups.
+	KNNBinData *							m_pKNNBinData;
+	WallData *								m_pWallData;
+
+
+
+
+public:
+	CtfWorld( void );
+	~CtfWorld( void )
+	{
+		SAFE_DELETE( m_pKNNBinData ); 
+		SAFE_DELETE( m_pWallData );
+	}
+
+
+
+
+
+};
+
 // ----------------------------------------------------------------------------
 // globals
-//const int gEnemyCount					= 1000;
-//const float gDim						= 200;
-//const int gCells						= 15;
 
-//const int gEnemyCount					= 3000000;
-//const float gDim						= 8000;
-//const int gCells						= 1500;
-
-//const int gEnemyCount					= 100000;
-//const float gDim						= 2000;
-//const int gCells						= 550;
-
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 47;
 
 // Using cell diameter of 7
 
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 91;
+//const int	gEnemyCount					= 100;
+//const float	gDim						= 63;
+//const int	gCells						= 9;
+
+//const int gEnemyCount					= 1000;
+//const float gDim						= 200;
+//const int gCells						= 28;
+
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 91;
 
 //const int gEnemyCount					= 100000;
 //const float gDim						= 2000;
 //const int gCells						= 285;
 
-const int gObstacleCount				= 100;
+
+
+const int gEnemyCount					= 1000;
+const float gDim						= 50;
+const int gCells						= 10;
+
+const int gObstacleCount				= 300;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
@@ -144,9 +172,6 @@ const float		g_fHomeBaseRadius		= 1.5f;
 
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
-
-// Bin data to be used for KNN lookups.
-KNNBinData *							g_pKNNBinData;
 
 const float gMinStartRadius				= 30.0f;
 //const float gMaxStartRadius				= 60.0f;
@@ -522,7 +547,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, 0 );
 
 	// Avoid collision with self.
-	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, KERNEL_AVOID_OBSTACLES_BIT );
+	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
 
 	// Pursue target.
 	steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
@@ -1196,6 +1221,8 @@ public:
 		OpenSteerDemo::setAnnotationOff();
 
 		g_pKNNBinData = new KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
+		g_pWallData = new wall_data;
+		g_pWallData->SplitWalls( g_pKNNBinData->hvCells() );
 
 		gObstacles = new CtfObstacleGroup( gWorldCells, g_kno );
 		gObstacles->reset();

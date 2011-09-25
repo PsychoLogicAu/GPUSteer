@@ -23,7 +23,6 @@ extern "C"
 														float const*	pdBSpeed,
 														float const*	pdBRadius,
 
-
 														float const		minTimeToCollision,		// In:		Look-ahead time for collision avoidance.
 														float const		minSeparationDistance,	// In:		Distance to consider 'close' neighbors.
 

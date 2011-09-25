@@ -284,9 +284,9 @@ __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent po
 
 __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
 											float *			pdDistanceMatrix,	// Global storage for distance matrix.
-											size_t *		pdIndexMatrix,		// The indices which match postions in pdDistanceMatrix.
-											size_t const	k,					// Number of neighbors to consider.
-											size_t const	numAgents,			// Number of agents in the simulation.
+											uint *			pdIndexMatrix,		// The indices which match postions in pdDistanceMatrix.
+											uint const		k,					// Number of neighbors to consider.
+											uint const		numAgents,			// Number of agents in the simulation.
 											float3 const*	pdPositionOther,
 											uint const		numOther,
 											bool const		groupWithSelf
@@ -303,15 +303,20 @@ __global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent po
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 
-	// TODO: This could be sped up by paging the read of pdPositionOther.
+	// TODO: This could be sped up by paging the read of pdPositionOther, and the writes of pdDistanceMatrix and pdIndexMatrix.
 
 	// For each agent in the simulation...
-	for( size_t i = 0; i < numOther; i++ )
+	for( uint i = 0; i < numOther; i++ )
 	{
 		if( groupWithSelf && index == i )
-			continue;
+		{
+			pdDistanceMatrix[ outputIndex + i ] = FLT_MAX;
+		}
+		else
+		{
+			pdDistanceMatrix[ outputIndex + i ] = float3_distance( POSITION_SH( threadIdx.x ), pdPositionOther[ i ] );
+		}
 
-		pdDistanceMatrix[ outputIndex + i ] = float3_distance( POSITION_SH( threadIdx.x ), pdPositionOther[ i ] );
 		pdIndexMatrix[ outputIndex + i ] = i;
 	}
 
