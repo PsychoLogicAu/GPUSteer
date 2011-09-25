@@ -78,9 +78,9 @@ static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData,
 {
 	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup );
 
-	//KNNBruteForceCUDA kernel( pAgentGroup, &knnData, &otherGroup );
+	//KNNBruteForceCUDA kernel( pAgentGroup, pKNNData, pOtherGroup );
 	//KNNBruteForceCUDAV2 kernel( pAgentGroup, pKNNData, pOtherGroup );
-	//KNNBruteForceCUDAV3 kernel( pAgentGroup, &knnData, &otherGroup );
+	//KNNBruteForceCUDAV3 kernel( pAgentGroup, pKNNData, pOtherGroup );
 
 	kernel.init();
 	kernel.run();
