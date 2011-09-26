@@ -86,7 +86,7 @@ using namespace OpenSteer;
 //#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
-//#define NO_DRAW
+#define NO_DRAW
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -96,30 +96,6 @@ class CtfBase;
 class CtfObstacleGroup;
 
 #define SAFE_DELETE( x )	{ if( x ){ delete x; x = NULL; } }
-
-class CtfWorld
-{
-private:
-// Bin data to be used for KNN lookups.
-	KNNBinData *							m_pKNNBinData;
-	WallData *								m_pWallData;
-
-
-
-
-public:
-	CtfWorld( void );
-	~CtfWorld( void )
-	{
-		SAFE_DELETE( m_pKNNBinData ); 
-		SAFE_DELETE( m_pWallData );
-	}
-
-
-
-
-
-};
 
 // ----------------------------------------------------------------------------
 // globals
@@ -143,17 +119,24 @@ public:
 //const float gDim						= 2000;
 //const int gCells						= 285;
 
+const int gEnemyCount					= 1000000;
+const float gDim						= 6350;
+//const int gCells						= 907;
+const int gCells						= 1814;
 
 
-const int gEnemyCount					= 1000;
-const float gDim						= 50;
-const int gCells						= 10;
 
-const int gObstacleCount				= 300;
+//const int gEnemyCount					= 1000;
+//const float gDim						= 100;
+//const int gCells						= 25;
+
+const int gObstacleCount				= 100;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
-uint const	g_searchRadius				= 1;		// Distance in cells to search for neighbors.
+uint const	g_maxSearchRadius			= 1;		// Distance in cells for the maximum search radius.
+uint const	g_searchRadiusNeighbors		= 1;		// Distance in cells to search for neighbors.
+uint const	g_searchRadiusObstacles		= 2;		// Distance in cells to search for obstacles.
 
 float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
@@ -196,6 +179,33 @@ int resetCount = 0;
 // Function prototypes.
 void randomizeStartingPositionAndHeading( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side );
 
+class CtfWorld
+{
+private:
+// Bin data to be used for KNN lookups.
+	KNNBinData *							m_pKNNBinData;
+	WallData *								m_pWallData;
+
+public:
+	CtfWorld( uint3 const& worldCells, float3 const& worldSize, uint const maxSearchRadius )
+	:	m_pKNNBinData( NULL ),
+		m_pWallData( NULL )
+	{
+		m_pKNNBinData = new KNNBinData( worldCells, worldSize, maxSearchRadius );
+		m_pWallData = new WallData;
+
+		m_pWallData->SplitWalls( m_pKNNBinData->hvCells() );
+	}
+
+	~CtfWorld( void )
+	{
+		SAFE_DELETE( m_pKNNBinData ); 
+		SAFE_DELETE( m_pWallData );
+	}
+
+	KNNBinData * GetBinData( void )		{ return m_pKNNBinData; }
+};
+
 
 // ----------------------------------------------------------------------------
 // state for OpenSteerDemo PlugIn
@@ -206,6 +216,7 @@ CtfSeeker*			gSeeker;
 CtfSeeker*			ctfSeeker	= NULL;
 CtfEnemyGroup*		gEnemies;
 CtfObstacleGroup*	gObstacles;
+CtfWorld *			g_pWorld;
 
 // ----------------------------------------------------------------------------
 // This PlugIn uses two vehicle types: CtfSeeker and CtfEnemy.  They have a
@@ -362,7 +373,7 @@ public://gWorldCells, g_kno
 		SyncDevice();
 
 		// Update the KNN database for the group.
-		KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
+		KNNBinningUpdateDBCUDA kernel( this, g_pWorld->GetBinData() );
 		kernel.init();
 		kernel.run();
 		kernel.close();
@@ -413,11 +424,11 @@ void CtfEnemyGroup::reset(void)
 
 	// Compute the initial KNN for this group with itself.
 	// Update the KNN database for the group.
-	KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
+	KNNBinningUpdateDBCUDA kernel( this, g_pWorld->GetBinData() );
 	kernel.init();
 	kernel.run();
 	kernel.close();
-	findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this );
 }
 
 // ----------------------------------------------------------------------------
@@ -483,7 +494,7 @@ void CtfEnemyGroup::draw(void)
 		//
 
 		// Pull the KNN data for this agent from the nearest neighbor database.
-		g_pKNNDataEnemyGroupWithSelf->getAgentData( i, KNNIndices, KNNDistances );
+		m_pKNNSelf->getAgentData( i, KNNIndices, KNNDistances );
 		
 #endif
 
@@ -534,14 +545,14 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	//SetSyncHost();	// <-- TODO: This should be replaced by appropriate setSynsHost calls in the kernel close() methods.
 
 	// Update the positions in the KNNDatabase for the group.
-	KNNBinningUpdateDBCUDA kernel( this, g_pKNNBinData );
+	KNNBinningUpdateDBCUDA kernel( this, g_pWorld->GetBinData() );
 	kernel.init();
 	kernel.run();
 	kernel.close();
 
 	// Update the KNNDatabases
-	findKNearestNeighbors( this, m_pKNNObstacles, g_pKNNBinData, gObstacles );
-	findKNearestNeighbors( this, m_pKNNSelf, g_pKNNBinData, this );
+	findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this );
 
 	// Avoid collision with obstacles.
 	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, 0 );
@@ -995,7 +1006,7 @@ float3 CtfSeeker::steeringForSeeker (float const elapsedTime)
 	const float3 obstacleAvoidance = steerToAvoidObstacles(*this, gAvoidancePredictTime, *gObstacles);
 	
 	float3 const& seekerPosition = position();
-	float const halfDim = 0.5f * gDim;
+	float const halfDim = 0.75f * gDim;
 
     // saved for annotation
     avoiding = !float3_equals(obstacleAvoidance, float3_zero());
@@ -1163,13 +1174,14 @@ void CtfSeeker::draw (void)
     // display status in the upper left corner of the window
     std::ostringstream status;
     status << seekerStateString << std::endl;
-	status << std::left << std::setw( 20 ) << "No. obstacles: " << std::setw( 10 ) << gObstacles->Size() << std::endl;
-	status << std::left << std::setw( 20 ) << "No. agents: " << std::setw( 10 ) << gEnemies->Size() << std::endl;
-	status << std::left << std::setw( 20 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
-	status << std::left << std::setw( 20 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
-	status << std::left << std::setw( 20 ) << "Search radius: " << std::setw( 10 ) << g_searchRadius << std::endl;
-	status << std::left << std::setw( 20 ) << "Position: " << position().x << ", " << position().z << std::endl;
-	status << std::left << std::setw( 20 ) << "Reset count: " << std::setw( 10 ) << resetCount << std::ends;
+	status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << gObstacles->Size() << std::endl;
+	status << std::left << std::setw( 25 ) << "No. agents: " << std::setw( 10 ) << gEnemies->Size() << std::endl;
+	status << std::left << std::setw( 25 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
+	status << std::left << std::setw( 25 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
+	status << std::left << std::setw( 25 ) << "Search radius neighbors: " << std::setw( 10 ) << g_searchRadiusNeighbors << std::endl;
+	status << std::left << std::setw( 25 ) << "Search radius obstacles: " << std::setw( 10 ) << g_searchRadiusObstacles << std::endl;
+	status << std::left << std::setw( 25 ) << "Position: " << position().x << ", " << position().z << std::endl;
+	status << std::left << std::setw( 25 ) << "Reset count: " << std::setw( 10 ) << resetCount << std::ends;
     const float h = drawGetWindowHeight ();
     const float3 screenLocation = make_float3(10, h-50, 0);
     draw2dTextAt2dLocation (status, screenLocation, gGray80);
@@ -1220,9 +1232,11 @@ public:
     {
 		OpenSteerDemo::setAnnotationOff();
 
-		g_pKNNBinData = new KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
-		g_pWallData = new wall_data;
-		g_pWallData->SplitWalls( g_pKNNBinData->hvCells() );
+		g_pWorld = new CtfWorld( gWorldCells, gWorldSize, g_maxSearchRadius );
+
+		//g_pKNNBinData = new KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
+		//g_pWallData = new wall_data;
+		//g_pWallData->SplitWalls( g_pKNNBinData->hvCells() );
 
 		gObstacles = new CtfObstacleGroup( gWorldCells, g_kno );
 		gObstacles->reset();
@@ -1321,7 +1335,8 @@ public:
 		delete gObstacles;
 		delete gEnemies;
 
-		delete g_pKNNBinData;
+		//delete g_pKNNBinData;
+		delete g_pWorld;
 
         //// delete each enemy
         //for (int i = 0; i < ctfEnemyCount; i++)
