@@ -86,7 +86,7 @@ using namespace OpenSteer;
 //#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 #define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
-#define NO_DRAW
+//#define NO_DRAW
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -111,18 +111,18 @@ class CtfObstacleGroup;
 //const float gDim						= 200;
 //const int gCells						= 28;
 
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 91;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 91;
 
 //const int gEnemyCount					= 100000;
 //const float gDim						= 2000;
 //const int gCells						= 285;
 
-const int gEnemyCount					= 1000000;
-const float gDim						= 6350;
-//const int gCells						= 907;
-const int gCells						= 1814;
+//const int gEnemyCount					= 1000000;
+//const float gDim						= 6350;
+////const int gCells						= 907;
+//const int gCells						= 1814;
 
 
 
@@ -130,21 +130,21 @@ const int gCells						= 1814;
 //const float gDim						= 100;
 //const int gCells						= 25;
 
-const int gObstacleCount				= 100;
+const int gObstacleCount				= 500;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
-uint const	g_maxSearchRadius			= 1;		// Distance in cells for the maximum search radius.
+uint const	g_maxSearchRadius			= 2;		// Distance in cells for the maximum search radius.
 uint const	g_searchRadiusNeighbors		= 1;		// Distance in cells to search for neighbors.
 uint const	g_searchRadiusObstacles		= 2;		// Distance in cells to search for obstacles.
 
-float const g_fMaxPursuitPredictionTime	= 3.0f;		// Look-ahead time for pursuit.
+float const g_fMaxPursuitPredictionTime	= 10.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
-float const g_fMinTimeToCollision		= 1.0f;		// Look-ahead time for neighbor avoidance.
-float const g_fMinTimeToObstacle		= 3.0f;		// Look-ahead time for obstacle avoidance.
+float const g_fMinTimeToCollision		= 2.0f;		// Look-ahead time for neighbor avoidance.
+float const g_fMinTimeToObstacle		= 5.0f;		// Look-ahead time for obstacle avoidance.
 
 // Weights for behaviors.
-float const g_fWeightSeparation			= 0.5f;
+float const g_fWeightSeparation			= 0.2f;
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightObstacleAvoidance	= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
@@ -192,7 +192,7 @@ public:
 		m_pWallData( NULL )
 	{
 		m_pKNNBinData = new KNNBinData( worldCells, worldSize, maxSearchRadius );
-		m_pWallData = new WallData;
+		m_pWallData = new WallData( "10kAgentsChoke.map" );
 
 		m_pWallData->SplitWalls( m_pKNNBinData->hvCells() );
 	}
@@ -201,6 +201,26 @@ public:
 	{
 		SAFE_DELETE( m_pKNNBinData ); 
 		SAFE_DELETE( m_pWallData );
+	}
+
+	void draw( void )
+	{
+		// Get references to the vectors.
+		std::vector< float3 > const& start = m_pWallData->hvLineStart();
+		std::vector< float3 > const& mid = m_pWallData->hvLineMid();
+		std::vector< float3 > const& end = m_pWallData->hvLineEnd();
+		std::vector< float3 > const& normal = m_pWallData->hvLineNormal();
+
+		float3 const lineColor = { 1.f, 0.f, 0.f };
+
+		// For each line in the host data...
+		for( uint i = 0; i < start.size(); i++ )
+		{
+			// Draw the line.
+			drawLine( start[i], end[i], lineColor );
+			// Draw the normal.
+			drawLine( mid[i], float3_add( mid[i], normal[i] ), lineColor );
+		}
 	}
 
 	KNNBinData * GetBinData( void )		{ return m_pKNNBinData; }
@@ -428,7 +448,7 @@ void CtfEnemyGroup::reset(void)
 	kernel.init();
 	kernel.run();
 	kernel.close();
-	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
 }
 
 // ----------------------------------------------------------------------------
@@ -551,8 +571,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	kernel.close();
 
 	// Update the KNNDatabases
-	findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles );
-	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this );
+	findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
 
 	// Avoid collision with obstacles.
 	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, 0 );
@@ -1319,6 +1339,8 @@ public:
         // draw each enemy
         //for (int i = 0; i < ctfEnemyCount; i++) ctfEnemies[i]->draw ();
 		gEnemies->draw();
+
+		g_pWorld->draw();
 
         // highlight vehicle nearest mouse
         OpenSteerDemo::highlightVehicleUtility (nearMouse);

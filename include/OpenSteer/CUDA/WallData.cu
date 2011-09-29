@@ -5,15 +5,20 @@
 #include <algorithm>
 #include <list>
 
+#include <fstream>
+
 using namespace OpenSteer;
 
-WallData::WallData( void )
+WallData::WallData( char const* szFilename )
 {
+	// Load the map.
+	LoadFromFile( szFilename );
+
 	// Add a testing line.
-	m_hvLineStart.push_back( make_float3( 10.f, 0.f, 10.f ) );
-	m_hvLineMid.push_back( make_float3( 15.f, 0.f, 15.f ) );
-	m_hvLineEnd.push_back( make_float3( 20.f, 0.f, 20.f ) );
-	m_hvLineNormal.push_back( float3_normalize( make_float3( 10.f, 0.f, -10.f ) ) );
+	//m_hvLineStart.push_back( make_float3( 10.f, 0.f, 10.f ) );
+	//m_hvLineMid.push_back( make_float3( 15.f, 0.f, 15.f ) );
+	//m_hvLineEnd.push_back( make_float3( 20.f, 0.f, 20.f ) );
+	//m_hvLineNormal.push_back( float3_normalize( make_float3( 10.f, 0.f, -10.f ) ) );
 }
 
 void WallData::syncDevice( void )
@@ -25,10 +30,9 @@ void WallData::syncDevice( void )
 }
 
 // Following is based on: http://www.garagegames.com/community/blogs/view/309
-bool intersects(	float3 const& start, float3 const& end,			// Start and end of line segment.
-					float3 const& cellMin, float3 const& cellMax,	// Min and max of cell.
-					float3 & intersectPoint
-					//F32 *time
+bool WallData::intersects(	float3 const& start, float3 const& end,		// Start and end of line segment.
+					float3 const& cellMin, float3 const& cellMax,		// Min and max of cell.
+					float3 & intersectPoint								// The point of intersection with the cell.
 					)
 {
 	float st, et, fst = 0, fet = 1;
@@ -68,6 +72,37 @@ bool intersects(	float3 const& start, float3 const& end,			// Start and end of l
 
 	intersectPoint = float3_add( start, float3_scalar_multiply( float3_subtract(end, start), fst ) );
 	//*time = fst;
+	return true;
+}
+
+bool WallData::LoadFromFile( char const* szFilename )
+{
+	std::ifstream inFile( szFilename );
+
+	if( ! inFile.is_open() )
+		return false;
+
+	while( ! inFile.eof() )
+	{
+		float3 start, mid, end, normal;
+
+		inFile >> start.x >> start.y >> start.z;
+		inFile >> end.x >> end.y >> end.z;
+		inFile >> normal.x >> normal.y >> normal.z;
+		mid.x = 0.5f * (start.x + end.x);
+		mid.y = 0.5f * (start.y + end.y);
+		mid.z = 0.5f * (start.z + end.z);
+
+		if( ! inFile.good() )
+			break;
+
+		m_hvLineStart.push_back( start );
+		m_hvLineEnd.push_back( end );
+		m_hvLineNormal.push_back( normal );
+		m_hvLineMid.push_back( mid );
+	}
+	inFile.close();
+
 	return true;
 }
 

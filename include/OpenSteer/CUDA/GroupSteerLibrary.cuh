@@ -74,9 +74,9 @@ static void steerToAvoidNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData,
 	kernel.close();
 }
 
-static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup )
+static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
 {
-	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup );
+	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup, searchRadius );
 
 	//KNNBruteForceCUDA kernel( pAgentGroup, pKNNData, pOtherGroup );
 	//KNNBruteForceCUDAV2 kernel( pAgentGroup, pKNNData, pOtherGroup );

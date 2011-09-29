@@ -18,6 +18,13 @@ extern "C"
 														int const		radius,				// In:	Search radius.
 														size_t const	numCells			// In:	Number of cells.
 														);
+
+	__global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// In:	Cell data.
+														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
+														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
+														uint const		radius,				// In:	Search radius.
+														size_t const	numCells			// In:	Number of cells.
+														);
 }
 
 KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
@@ -50,8 +57,7 @@ void KNNBinData::ComputeCellNeighbors( bool b3D )
 
 	if( b3D )
 	{
-		// TODO: Implement.
-		//KNNBinningComputeCellNeighbors3D<<< grid, block >>>( ... );
+		KNNBinningComputeCellNeighbors3D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
 	}
 	else
 	{

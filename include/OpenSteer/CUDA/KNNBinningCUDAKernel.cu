@@ -32,7 +32,14 @@ extern "C"
 	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
 														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
 														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
-														int const		radius,				// In:	Search radius.
+														uint const		radius,				// In:	Search radius.
+														size_t const	numCells			// In:	Number of cells.
+														);
+
+	__global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// In:	Cell data.
+														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
+														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
+														uint const		radius,				// In:	Search radius.
 														size_t const	numCells			// In:	Number of cells.
 														);
 
@@ -56,26 +63,6 @@ extern "C"
 
 														size_t const	numAgents
 														);
-/*
-	__global__ void KNNBinningKernel(					float3 const*	pdPositionSorted,			// In:	(sorted) Agent positions.
-
-														uint const*		pdAgentIndices,				// In:	(sorted) Indices of each agent.
-														uint const*		pdCellIndices,				// In:	(sorted) Indices of the cell each agent is currently in.
-
-														uint const*		pdCellStart,				// In:	Start index of each cell in pdCellIndices.
-														uint const*		pdCellEnd,					// In:	End index of each cell in pdCellIndices.
-
-														uint const*		pdCellNeighbors,			// In:	Indices of the neighbors to radius distance of each cell.
-														size_t const	neighborsPerCell,			// In:	Number of neighbors per cell in the pdCellNeighbors array.
-
-														uint *			pdKNNIndices,				// Out:	Indices of K Nearest Neighbors in pdPosition.
-														float *			pdKNNDistances,				// Out:	Distances of the K Nearest Neighbors in pdPosition.
-
-														size_t const	k,							// In:	Number of neighbors to consider.
-														size_t const	radius,						// In:	Maximum radius (in cells) to consider.
-														size_t const	numAgents					// In:	Number of agents in the simulation.
-														);
-*/
 
 	__global__ void KNNBinningKernel(					// Group A
 														float3 const*	pdAPositionSorted,			// In:	Sorted group A positions.
@@ -108,10 +95,85 @@ extern "C"
 														);
 }
 
+__global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// In:	Cell data.
+													uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
+													size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
+													uint const		radius,				// In:	Search radius.
+													size_t const	numCells			// In:	Number of cells.
+													)
+{
+	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+	if( index >= numCells )
+		return;
+
+	__shared__ float3 shPosition[THREADSPERBLOCK];
+	extern __shared__ uint shNeighboringCells[];
+	
+	// Read the position of this thread's cell to shared memory.
+	shPosition[ threadIdx.x ] = pdCells[index].position;
+
+	// Normalize the positions.
+	POSITION_SH( threadIdx.x ).x = (POSITION_SH( threadIdx.x ).x + 0.5f * constWorldSize.x) / constWorldSize.x;
+	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
+	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
+
+	__syncthreads();
+
+	// Get the first cell index (radius 0).
+	shNeighboringCells[ threadIdx.x * neighborsPerCell ] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
+
+	int i = 1;
+	// Compute the start offset into shNeighboringCells for this radius.
+	int offset = threadIdx.x * neighborsPerCell;
+
+	// For increasing radius...
+	for( int iCurrentRadius = 1; iCurrentRadius <= radius; iCurrentRadius++ )
+	{
+		for( int dy = -iCurrentRadius; dy <= iCurrentRadius; dy++ )			// World height.
+		{
+			for( int dz = -iCurrentRadius; dz <= iCurrentRadius; dz++ )		// World depth.
+			{
+				for( int dx = -iCurrentRadius; dx <= iCurrentRadius; dx++ )	// World width.
+				{
+					// Only do for the outside cells.
+					if( dz == -iCurrentRadius || dz == iCurrentRadius || dx == -iCurrentRadius || dx == iCurrentRadius || dy == -iCurrentRadius || dy == iCurrentRadius )
+					{
+						float3 queryPosition = make_float3(	POSITION_SH( threadIdx.x ).x + dx * constWorldStepNormalized.x,
+															POSITION_SH( threadIdx.x ).y + dy * constWorldStepNormalized.y,
+															POSITION_SH( threadIdx.x ).z + dz * constWorldStepNormalized.z
+															);
+
+						uint cellIndex = CELL_INDEX_NORMALIZED( queryPosition );
+
+						// Do not add duplicate cells.
+						for( int iDup = 0; iDup < i; iDup++ )
+						{
+							if( shNeighboringCells[offset+iDup] == cellIndex )
+							{
+								cellIndex = UINT_MAX;
+								break;
+							}
+						}
+
+						shNeighboringCells[offset + i++] = cellIndex;
+					}
+				}
+			}
+		}
+	}
+
+	__syncthreads();
+	for( int i = 0; i < neighborsPerCell; i++ )
+	{
+		pdCellNeighbors[ index * neighborsPerCell + i ] = shNeighboringCells[ offset + i ];
+	}
+}
+
 __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
 													uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
 													size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
-													int const		radius,				// In:	Search radius.
+													uint const		radius,				// In:	Search radius.
 													size_t const	numCells			// In:	Number of cells.
 													)
 {

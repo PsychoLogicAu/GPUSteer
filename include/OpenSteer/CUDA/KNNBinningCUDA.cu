@@ -165,11 +165,12 @@ void KNNBinningUpdateDBCUDA::close( void )
 
 #pragma region KNNBinningCUDA
 
-KNNBinningCUDA::KNNBinningCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup )
+KNNBinningCUDA::KNNBinningCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
 :	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
 	m_pKNNData( pKNNData ),
 	m_pKNNBinData( pKNNBinData ),
-	m_pOtherGroup( pOtherGroup )
+	m_pOtherGroup( pOtherGroup ),
+	m_searchRadius( searchRadius )
 {
 }
 
@@ -198,7 +199,7 @@ void KNNBinningCUDA::run( void )
 
 	uint const*			pdCellNeighbors			= m_pKNNBinData->pdCellNeighbors();
 	uint const&			neighborsPerCell		= m_pKNNBinData->neighborsPerCell();
-	uint const&			radius					= m_pKNNBinData->radius();
+	//uint const&			radius					= m_pKNNBinData->radius();
 
 	uint *				pdKNNIndices			= m_pKNNData->pdKNNIndices();
 	float *				pdKNNDistances			= m_pKNNData->pdKNNDistances();
@@ -227,7 +228,7 @@ void KNNBinningCUDA::run( void )
 	KNNBinningKernel<<< grid, block, shMemSize >>>(	pdAPositionSorted,
 													pdAIndices, pdACellIndices, 
 													pdBPositionSorted, pdBIndices, pdBCellIndices, pdBCellStart, pdBCellEnd,
-													pdCellNeighbors, neighborsPerCell, radius,
+													pdCellNeighbors, neighborsPerCell, m_searchRadius,
 													pdKNNIndices, pdKNNDistances, k,
 													numA, numB, groupWithSelf
 													);

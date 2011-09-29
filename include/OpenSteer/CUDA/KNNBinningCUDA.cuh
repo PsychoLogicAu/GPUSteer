@@ -30,8 +30,10 @@ protected:
 	KNNBinData *	m_pKNNBinData;
 	BaseGroup *		m_pOtherGroup;
 
+	uint			m_searchRadius;
+
 public:
-	KNNBinningCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup );
+	KNNBinningCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius );
 	virtual ~KNNBinningCUDA( void ) {}
 
 	virtual void init( void );
