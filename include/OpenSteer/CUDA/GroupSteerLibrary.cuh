@@ -1,15 +1,23 @@
 #ifndef OPENSTEER_GROUPSTEERLIBRARY_CUH
 #define OPENSTEER_GROUPSTEERLIBRARY_CUH
 
-#include "SteerForSeekCUDA.h"
-#include "UpdateCUDA.h"
-#include "AvoidObstaclesCUDA.cuh"
-#include "SteerForFleeCUDA.h"
-#include "SteerForPursueCUDA.h"
+#include "../WallGroup.h"
+
 #include "KNNBruteForceCUDA.cuh"
 #include "KNNBinningCUDA.cuh"
+
+#include "SteerForSeekCUDA.h"
+#include "SteerForFleeCUDA.h"
+#include "SteerForPursueCUDA.h"
+
 #include "SteerToAvoidNeighborsCUDA.cuh"
+#include "AvoidObstaclesCUDA.cuh"
+#include "AvoidWallsCUDA.cuh"
+
 #include "SteerForSeparationCUDA.cuh"
+
+#include "UpdateCUDA.h"
+
 
 namespace OpenSteer
 {
@@ -68,6 +76,24 @@ static void steerToAvoidObstacles( AgentGroup * pAgentGroup, ObstacleGroup * pOb
 static void steerToAvoidNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, const float fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight, uint const doNotApplyWith )
 {
 	SteerToAvoidNeighborsCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, fMinTimeToCollision, fMinSeparationDistance, fWeight, doNotApplyWith );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
+
+static void steerToAvoidWalls( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, float const fMinTimeToCollision, float const fWeight, uint const doNotApplyWith )
+{
+	AvoidWallsCUDA kernel( pAgentGroup, pKNNData, pWallGroup, fMinTimeToCollision, fWeight, doNotApplyWith );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
+
+static void updateKNNDatabase( BaseGroup * pGroup, KNNBinData * pKNNBinData )
+{
+	KNNBinningUpdateDBCUDA kernel( pGroup, pKNNBinData );
 
 	kernel.init();
 	kernel.run();

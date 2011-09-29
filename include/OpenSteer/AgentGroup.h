@@ -43,7 +43,7 @@ public:
 		m_neighborDB.m_bSyncHost = true;
 	}
 
-	AgentGroupConst &		GetAgentGroupConst( void )	{ return m_agentGroupConst; }
+	AgentGroupConst &		GetAgentGroupConst( void )		{ return m_agentGroupConst; }
 	AgentGroupData &		GetAgentGroupData( void )		{ return m_agentGroupData; }
 
 	/// Use to extract data for an individual vehicle

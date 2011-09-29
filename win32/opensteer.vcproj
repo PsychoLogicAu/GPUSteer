@@ -210,11 +210,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\WallData.cu"
+					RelativePath="..\include\OpenSteer\CUDA\WallGroupData.cu"
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\WallData.cuh"
+					RelativePath="..\include\OpenSteer\CUDA\WallGroupData.cuh"
 					>
 				</File>
 				<Filter
@@ -536,6 +536,10 @@
 				RelativePath="..\include\OpenSteer\Utilities.h"
 				>
 			</File>
+			<File
+				RelativePath="..\include\OpenSteer\WallGroup.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="src"
@@ -606,6 +610,10 @@
 			</File>
 			<File
 				RelativePath="..\src\SteerLibrary.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\WallGroup.cpp"
 				>
 			</File>
 		</Filter>

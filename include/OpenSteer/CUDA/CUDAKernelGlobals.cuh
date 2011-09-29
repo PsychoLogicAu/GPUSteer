@@ -8,6 +8,8 @@
 
 #define THREADSPERBLOCK 256
 
+#define EPSILON	0.001f
+
 //#define TIMING
 
 // Kernel bit masks.

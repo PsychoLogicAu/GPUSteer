@@ -1,6 +1,8 @@
-#include "WallData.cuh"
+#include "WallGroupData.cuh"
 
 #include "KNNBinData.cuh"
+
+#include "CUDAKernelGlobals.cuh"
 
 #include <algorithm>
 #include <list>
@@ -9,19 +11,11 @@
 
 using namespace OpenSteer;
 
-WallData::WallData( char const* szFilename )
+WallGroupData::WallGroupData( void )
 {
-	// Load the map.
-	LoadFromFile( szFilename );
-
-	// Add a testing line.
-	//m_hvLineStart.push_back( make_float3( 10.f, 0.f, 10.f ) );
-	//m_hvLineMid.push_back( make_float3( 15.f, 0.f, 15.f ) );
-	//m_hvLineEnd.push_back( make_float3( 20.f, 0.f, 20.f ) );
-	//m_hvLineNormal.push_back( float3_normalize( make_float3( 10.f, 0.f, -10.f ) ) );
 }
 
-void WallData::syncDevice( void )
+void WallGroupData::syncDevice( void )
 {
 	m_dvLineStart = m_hvLineStart;
 	m_dvLineMid = m_hvLineMid;
@@ -30,10 +24,10 @@ void WallData::syncDevice( void )
 }
 
 // Following is based on: http://www.garagegames.com/community/blogs/view/309
-bool WallData::intersects(	float3 const& start, float3 const& end,		// Start and end of line segment.
-					float3 const& cellMin, float3 const& cellMax,		// Min and max of cell.
-					float3 & intersectPoint								// The point of intersection with the cell.
-					)
+bool WallGroupData::intersects(	float3 const& start, float3 const& end,		// Start and end of line segment.
+								float3 const& cellMin, float3 const& cellMax,		// Min and max of cell.
+								float3 & intersectPoint								// The point of intersection with the cell.
+								)
 {
 	float st, et, fst = 0, fet = 1;
 	float const* bmin = &cellMin.x;
@@ -75,7 +69,7 @@ bool WallData::intersects(	float3 const& start, float3 const& end,		// Start and
 	return true;
 }
 
-bool WallData::LoadFromFile( char const* szFilename )
+bool WallGroupData::LoadFromFile( char const* szFilename )
 {
 	std::ifstream inFile( szFilename );
 
@@ -106,10 +100,8 @@ bool WallData::LoadFromFile( char const* szFilename )
 	return true;
 }
 
-void WallData::SplitWalls( std::vector< bin_cell > const& cells )
+void WallGroupData::SplitWalls( std::vector< bin_cell > const& cells )
 {
-	// Epsilon value used to determine whether two points are different.
-	float const EPSILON = 0.001f;
 	size_t count = m_hvLineStart.size();
 
 	// Copy the vectors to lists as the vectors don't like what I have planned for them.
