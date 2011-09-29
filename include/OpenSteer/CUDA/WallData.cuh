@@ -25,17 +25,30 @@ private:
 
 	void syncDevice( void );
 
+	bool intersects(	float3 const& start, float3 const& end,	// Start and end of line segment.
+						float3 const& cellMin, float3 const& cellMax,		// Min and max of cell.
+						float3 & intersectPoint								// The point of intersection with the cell.
+						);
+
 public:
-	WallData( void );
+	WallData( char const* szFilename );
 	~WallData( void )
 	{}
 
 	void SplitWalls( std::vector< bin_cell > const& cells );
+	bool LoadFromFile( char const* szFilename );
 
 	float3 *	pdLineStart( void )		{ return m_dvLineStart.begin(); }
 	float3 *	pdLineMid( void )		{ return m_dvLineMid.begin(); }
 	float3 *	pdLineEnd( void )		{ return m_dvLineEnd.begin(); }
 	float3 *	pdLineNormal( void )	{ return m_dvLineNormal.begin(); }
+
+	std::vector< float3 > const&	hvLineStart( void ) const	{ return m_hvLineStart; }
+	std::vector< float3 > const&	hvLineMid( void ) const		{ return m_hvLineMid; }
+	std::vector< float3 > const&	hvLineEnd( void ) const		{ return m_hvLineEnd; }
+	std::vector< float3 > const&	hvLineNormal( void ) const	{ return m_hvLineNormal; }
+
+	uint							size( void ) const			{ return m_hvLineStart.size(); }
 
 
 };	// class WallData
