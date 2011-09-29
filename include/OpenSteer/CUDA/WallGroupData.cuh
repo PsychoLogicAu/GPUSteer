@@ -10,7 +10,7 @@
 
 namespace OpenSteer
 {
-class WallData
+class WallGroupData
 {
 private:
 	dev_vector< float3 >	m_dvLineStart;		// Start points of the line segments.
@@ -25,14 +25,14 @@ private:
 
 	void syncDevice( void );
 
-	bool intersects(	float3 const& start, float3 const& end,	// Start and end of line segment.
+	bool intersects(	float3 const& start, float3 const& end,				// Start and end of line segment.
 						float3 const& cellMin, float3 const& cellMax,		// Min and max of cell.
 						float3 & intersectPoint								// The point of intersection with the cell.
 						);
 
 public:
-	WallData( char const* szFilename );
-	~WallData( void )
+	WallGroupData( void );
+	~WallGroupData( void )
 	{}
 
 	void SplitWalls( std::vector< bin_cell > const& cells );
@@ -49,9 +49,7 @@ public:
 	std::vector< float3 > const&	hvLineNormal( void ) const	{ return m_hvLineNormal; }
 
 	uint							size( void ) const			{ return m_hvLineStart.size(); }
-
-
-};	// class WallData
+};	// class WallGroupData
 }	// namespace OpenSteer
 
 #endif

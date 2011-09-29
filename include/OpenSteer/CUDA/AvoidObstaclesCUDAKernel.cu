@@ -212,6 +212,8 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 		steering = float3_perpendicularComponent( obstacleOffset, DIRECTION_SH( threadIdx.x ) );
 	}
 
+	__syncthreads();
+
 	// Apply the weight.
 	steering = float3_scalar_multiply( steering, fWeight );
 

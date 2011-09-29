@@ -73,9 +73,8 @@
 
 // Include the required KNN headers.
 #include "OpenSteer/CUDA/KNNBinData.cuh"
-#include "OpenSteer/CUDA/KNNBinningCUDA.cuh"
 
-#include "OpenSteer/CUDA/WallData.cuh"
+#include "OpenSteer/WallGroup.h"
  
 using namespace OpenSteer;
 
@@ -134,6 +133,7 @@ const int gObstacleCount				= 500;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
+uint const	g_knw						= 2;		// Number of near walls to keep track of.
 uint const	g_maxSearchRadius			= 2;		// Distance in cells for the maximum search radius.
 uint const	g_searchRadiusNeighbors		= 1;		// Distance in cells to search for neighbors.
 uint const	g_searchRadiusObstacles		= 2;		// Distance in cells to search for obstacles.
@@ -147,6 +147,7 @@ float const g_fMinTimeToObstacle		= 5.0f;		// Look-ahead time for obstacle avoid
 float const g_fWeightSeparation			= 0.2f;
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightObstacleAvoidance	= 1.f;
+float const g_fWeightWallAvoidance		= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
 
 
@@ -184,32 +185,47 @@ class CtfWorld
 private:
 // Bin data to be used for KNN lookups.
 	KNNBinData *							m_pKNNBinData;
-	WallData *								m_pWallData;
+
+	WallGroup *								m_pWallGroup;
+	//WallGroupData *							m_pWallData;
 
 public:
 	CtfWorld( uint3 const& worldCells, float3 const& worldSize, uint const maxSearchRadius )
 	:	m_pKNNBinData( NULL ),
-		m_pWallData( NULL )
+		m_pWallGroup( NULL )
+		//m_pWallData( NULL )
 	{
 		m_pKNNBinData = new KNNBinData( worldCells, worldSize, maxSearchRadius );
-		m_pWallData = new WallData( "10kAgentsChoke.map" );
+		m_pWallGroup = new WallGroup( worldCells, g_knw );
 
-		m_pWallData->SplitWalls( m_pKNNBinData->hvCells() );
+		// Load the walls from a file.
+		m_pWallGroup->LoadFromFile( "10kAgentsChoke.map" );
+		// Clip the walls to the edges of the cells.
+		m_pWallGroup->SplitWalls( m_pKNNBinData->hvCells() );
+
+		// Send the data to the device.
+		m_pWallGroup->SyncDevice();
+
+		// Update the KNN Database for the WallGroup.
+		updateKNNDatabase( m_pWallGroup, m_pKNNBinData );
 	}
 
 	~CtfWorld( void )
 	{
 		SAFE_DELETE( m_pKNNBinData ); 
-		SAFE_DELETE( m_pWallData );
+		//SAFE_DELETE( m_pWallData );
+		SAFE_DELETE( m_pWallGroup );
 	}
+
+	WallGroup * GetWalls( void )	{ return m_pWallGroup; }
 
 	void draw( void )
 	{
 		// Get references to the vectors.
-		std::vector< float3 > const& start = m_pWallData->hvLineStart();
-		std::vector< float3 > const& mid = m_pWallData->hvLineMid();
-		std::vector< float3 > const& end = m_pWallData->hvLineEnd();
-		std::vector< float3 > const& normal = m_pWallData->hvLineNormal();
+		std::vector< float3 > const& start		= m_pWallGroup->GetWallGroupData().hvLineStart();
+		std::vector< float3 > const& mid		= m_pWallGroup->GetWallGroupData().hvLineMid();
+		std::vector< float3 > const& end		= m_pWallGroup->GetWallGroupData().hvLineEnd();
+		std::vector< float3 > const& normal		= m_pWallGroup->GetWallGroupData().hvLineNormal();
 
 		float3 const lineColor = { 1.f, 0.f, 0.f };
 
@@ -303,22 +319,25 @@ class CtfEnemyGroup : public AgentGroup
 private:
 	KNNData * m_pKNNSelf;
 	KNNData * m_pKNNObstacles;
+	KNNData * m_pKNNWalls;
 
 public:
-	CtfEnemyGroup(void)
+	CtfEnemyGroup( CtfWorld * pWorld )
 	:	AgentGroup( gWorldCells, g_knn ),
 		m_pKNNSelf( NULL ),
-		m_pKNNObstacles( NULL )
+		m_pKNNObstacles( NULL ),
+		m_pKNNWalls( NULL )
 	{
 		m_pKNNSelf = new KNNData( gEnemyCount, g_knn );
-		//m_pKNNObstacles = new KNNData( gObstacleCount, g_kno );
 		m_pKNNObstacles = new KNNData( gEnemyCount, g_kno );
+		m_pKNNWalls = new KNNData( gEnemyCount, g_knw );
 		reset();
 	}
 	virtual ~CtfEnemyGroup(void)
 	{
 		delete m_pKNNSelf; m_pKNNSelf = NULL;
 		delete m_pKNNObstacles; m_pKNNObstacles = NULL;
+		delete m_pKNNWalls; m_pKNNWalls = NULL;
 	}
 
 	void reset(void);
@@ -377,7 +396,7 @@ private:
 		AddObstacle( od );
 	}
 
-public://gWorldCells, g_kno
+public:
 	CtfObstacleGroup( uint3 const& worldCells, uint const kno )
 	:	ObstacleGroup( worldCells, kno )
 	{
@@ -393,10 +412,7 @@ public://gWorldCells, g_kno
 		SyncDevice();
 
 		// Update the KNN database for the group.
-		KNNBinningUpdateDBCUDA kernel( this, g_pWorld->GetBinData() );
-		kernel.init();
-		kernel.run();
-		kernel.close();
+		updateKNNDatabase( this, g_pWorld->GetBinData() );
 	}
 
 	void draw(void)
@@ -444,10 +460,7 @@ void CtfEnemyGroup::reset(void)
 
 	// Compute the initial KNN for this group with itself.
 	// Update the KNN database for the group.
-	KNNBinningUpdateDBCUDA kernel( this, g_pWorld->GetBinData() );
-	kernel.init();
-	kernel.run();
-	kernel.close();
+	updateKNNDatabase( this, g_pWorld->GetBinData() );
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
 }
 
@@ -554,28 +567,18 @@ void CtfEnemyGroup::draw(void)
 
 void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 {
-	//CUDAGroupSteerLibrary.steerToAvoidObstacles(*this, 3.0f, *gObstacles);
-
-	// TODO: add time prediction to the seek kernel instead of the hack second parameter.
-	// This should be accomplished with a pursuit kernel instead.
-	//CUDAGroupSteerLibrary.steerForSeek(*this, gSeeker->position());
-
-	//SyncDevice();
-	// Force the host to pull data on next call to SyncHost().
-	//SetSyncHost();	// <-- TODO: This should be replaced by appropriate setSynsHost calls in the kernel close() methods.
-
 	// Update the positions in the KNNDatabase for the group.
-	KNNBinningUpdateDBCUDA kernel( this, g_pWorld->GetBinData() );
-	kernel.init();
-	kernel.run();
-	kernel.close();
+	updateKNNDatabase( this, g_pWorld->GetBinData() );
 
 	// Update the KNNDatabases
 	findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
+	findKNearestNeighbors( this, m_pKNNWalls, g_pWorld->GetBinData(), g_pWorld->GetWalls(), g_searchRadiusObstacles );
+
+	steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToObstacle, g_fWeightWallAvoidance, 0 );
 
 	// Avoid collision with obstacles.
-	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, 0 );
+	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, KERNEL_AVOID_WALLS_BIT );
 
 	// Avoid collision with self.
 	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
@@ -1274,7 +1277,7 @@ public:
 
         // create the specified number of enemies, 
         // storing pointers to them in an array.
-		gEnemies = new CtfEnemyGroup;
+		gEnemies = new CtfEnemyGroup( g_pWorld );
 		//for (int i = 0; i < gEnemyCount; i++)
   //      {
 		//	CtfBase *enemy = new CtfBase;
