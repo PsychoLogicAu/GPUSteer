@@ -12,7 +12,9 @@ extern "C"
 	__global__ void AvoidWallsCUDAKernel(	// Agent data.
 											float3 const*	pdPosition,
 											float3 const*	pdDirection,
+											float3 const*	pdSide,
 											float const*	pdSpeed,
+											float const*	pdRadius,
 
 											// Wall data.
 											float3 const*	pdLineStart,
@@ -34,7 +36,7 @@ extern "C"
 											);
 }
 
-//enum IntersectResult { PARALLEL, COINCIDENT, NOT_INTERESECTING, INTERESECTING };
+#define FEELER_LENGTH 4
 
 __inline__ __device__ bool Intersect( float3 const& startA, float3 const& endA, float3 const& startB, float3 const& endB, float3 & intersectPoint )
 {
@@ -79,7 +81,9 @@ __inline__ __device__ bool Intersect( float3 const& startA, float3 const& endA, 
 __global__ void AvoidWallsCUDAKernel(	// Agent data.
 										float3 const*	pdPosition,
 										float3 const*	pdDirection,
+										float3 const*	pdSide,
 										float const*	pdSpeed,
+										float const*	pdRadius,
 
 										// Wall data.
 										float3 const*	pdLineStart,
@@ -115,14 +119,18 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	__shared__ float3 shDirection[THREADSPERBLOCK];
+	__shared__ float3 shSide[THREADSPERBLOCK];
 	__shared__ float3 shSteering[THREADSPERBLOCK];
 	__shared__ float shSpeed[THREADSPERBLOCK];
+	__shared__ float shRadius[THREADSPERBLOCK];
 
 	// Copy this block's data to shared memory.
 	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
 	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
+	FLOAT3_GLOBAL_READ( shSide, pdSide );
 	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
 	SPEED_SH( threadIdx.x ) = SPEED( index );
+	RADIUS_SH( threadIdx.x ) = RADIUS( index );
 	for( uint i = 0; i < k; i++ )
 	{
 		shKNLIndices[ threadIdx.x * k + i ] = pdKNLIndices[ index * k + i ];
@@ -132,13 +140,46 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 	// Get the agent's current velocity.
 	float3 const vel = VELOCITY_SH( threadIdx.x );
 
-	// Compute the position of the agent after lookAheadTime time.
-	float3 const futurePosition = float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( VELOCITY_SH( threadIdx.x ), minTimeToCollision ) );
+	// TODO: Check where this array is stored in memory. If local, use shared mem.
+	// Compute the position of the agent after lookAheadTime time, and the position of the two feelers.
+	float3 feelers[] = {
+		float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( VELOCITY_SH( threadIdx.x ), minTimeToCollision ) ),
+		float3_add( 
+			POSITION_SH( threadIdx.x ), 
+			float3_add( 
+				float3_scalar_multiply( 
+					SIDE_SH( threadIdx.x ), 
+					FEELER_LENGTH * RADIUS_SH( threadIdx.x )
+					), 
+				float3_scalar_multiply( 
+					DIRECTION_SH( threadIdx.x ), 
+					FEELER_LENGTH * RADIUS_SH( threadIdx.x )
+					)
+				)
+			),
+		float3_add(
+			POSITION_SH( threadIdx.x ),
+			float3_add(
+				float3_scalar_multiply(
+					float3_minus(
+						SIDE_SH( threadIdx.x )
+						),
+					FEELER_LENGTH * RADIUS_SH( threadIdx.x )
+				),
+				float3_scalar_multiply(
+					DIRECTION_SH( threadIdx.x ),
+					FEELER_LENGTH * RADIUS_SH( threadIdx.x )
+					)
+				)
+			)
+	};
+	//float3 const futurePosition = 
 
 	// Index of the nearest intersecting line.
-	float nearestLineDistance = FLT_MAX;
-	uint nearestLineIndex = UINT_MAX;
-	float3 nearestLineIntersectPoint;
+	uint	feelerIndex;
+	float	nearestLineDistance = FLT_MAX;
+	uint	nearestLineIndex = UINT_MAX;
+	float3	nearestLineIntersectPoint;
 
 	// For each of the K Nearest Lines...
 	for( uint i = 0; i < k; i++ )
@@ -149,18 +190,23 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 		if( UINT_MAX == lineIndex )
 			break;
 
-		float intersectDistance;
-		float3 intersectPoint;
-		if( Intersect( POSITION_SH( threadIdx.x ), futurePosition, pdLineStart[ lineIndex ], pdLineEnd[ lineIndex ], intersectPoint ) )
+		// For each of the feelers...
+		for( uint iFeeler = 0; iFeeler < 3; iFeeler++ )
 		{
-			intersectDistance = float3_distance( POSITION_SH( threadIdx.x ), intersectPoint );
-
-			if( intersectDistance < nearestLineDistance )
+			float intersectDistance;
+			float3 intersectPoint;
+			if( Intersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], pdLineStart[ lineIndex ], pdLineEnd[ lineIndex ], intersectPoint ) )
 			{
-				// New nearest line.
-				nearestLineDistance = intersectDistance;
-				nearestLineIndex = lineIndex;
-				nearestLineIntersectPoint = intersectPoint;
+				intersectDistance = float3_distance( POSITION_SH( threadIdx.x ), intersectPoint );
+
+				if( intersectDistance < nearestLineDistance )
+				{
+					// New nearest line.
+					nearestLineDistance = intersectDistance;
+					nearestLineIndex = lineIndex;
+					nearestLineIntersectPoint = intersectPoint;
+					feelerIndex = iFeeler;
+				}
 			}
 		}
 	}
@@ -168,7 +214,7 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 	if( UINT_MAX != nearestLineIndex )
 	{
 		// Calculate the penetration distance.
-		float penetrationDistance = float3_length( float3_subtract( futurePosition, nearestLineIntersectPoint ) );
+		float penetrationDistance = float3_length( float3_subtract( feelers[ feelerIndex ], nearestLineIntersectPoint ) );
 		steering = float3_scalar_multiply( pdLineNormal[ nearestLineIndex ], penetrationDistance );
 	}
 
