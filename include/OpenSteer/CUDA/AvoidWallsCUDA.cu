@@ -7,7 +7,9 @@ extern "C"
 	__global__ void AvoidWallsCUDAKernel(	// Agent data.
 											float3 const*	pdPosition,
 											float3 const*	pdDirection,
+											float3 const*	pdSide,
 											float const*	pdSpeed,
+											float const*	pdRadius,
 
 											// Wall data.
 											float3 const*	pdLineStart,
@@ -51,7 +53,9 @@ void AvoidWallsCUDA::run( void )
 	// Gather the required device pointers.
 	float3 const*		pdPosition			= m_pAgentGroupData->pdPosition();
 	float3 const*		pdDirection			= m_pAgentGroupData->pdDirection();
+	float3 const*		pdSide				= m_pAgentGroupData->pdSide();
 	float const*		pdSpeed				= m_pAgentGroupData->pdSpeed();
+	float const*		pdRadius			= m_pAgentGroupConst->pdRadius();
 
 	float3 *			pdSteering			= m_pAgentGroupData->pdSteering();
 
@@ -68,7 +72,7 @@ void AvoidWallsCUDA::run( void )
 
 	size_t shMemSize = k * THREADSPERBLOCK * sizeof( uint );
 
-	AvoidWallsCUDAKernel<<<grid, block, shMemSize>>>(	pdPosition, pdDirection, pdSpeed,
+	AvoidWallsCUDAKernel<<<grid, block, shMemSize>>>(	pdPosition, pdDirection, pdSide, pdSpeed, pdRadius,
 														pdLineStart, pdLineEnd, pdLineNormal,
 														pdKNLIndices,
 														k, m_fMinTimeToCollision,

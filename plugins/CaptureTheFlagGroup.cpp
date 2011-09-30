@@ -129,7 +129,7 @@ const int gCells						= 91;
 //const float gDim						= 100;
 //const int gCells						= 25;
 
-const int gObstacleCount				= 500;
+const int gObstacleCount				= 1;
 
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
@@ -142,24 +142,33 @@ float const g_fMaxPursuitPredictionTime	= 10.0f;		// Look-ahead time for pursuit
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 2.0f;		// Look-ahead time for neighbor avoidance.
 float const g_fMinTimeToObstacle		= 5.0f;		// Look-ahead time for obstacle avoidance.
+float const g_fMinTimeToWall			= 10.0f;		// Look-ahead time for wall avoidance.
 
 // Weights for behaviors.
-float const g_fWeightSeparation			= 0.2f;
+float const	g_fWeightSeparation			= 1.f;
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightObstacleAvoidance	= 1.f;
 float const g_fWeightWallAvoidance		= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
 
-
-const float3	gHomeBaseCenter			= make_float3(0, 0, 0);
-const float		g_fHomeBaseRadius		= 1.5f;
-
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
 
-const float gMinStartRadius				= 30.0f;
-//const float gMaxStartRadius				= 60.0f;
-const float gMaxStartRadius				= 0.5f * min( gWorldSize.x, gWorldSize.z );
+// Start position.
+float3 const g_f3StartBaseCenter		= make_float3( 0.f, 0.f, 0.25f * gWorldSize.z );
+float const g_fMinStartRadius			= 0.0f;
+float const g_fMaxStartRadius			= 0.20f * min( gWorldSize.x, gWorldSize.z );
+
+// Goal position.
+float3 const g_f3GoalPosition			= make_float3( 0.f, 0.f, -0.25f * gWorldSize.z );
+
+float3 const g_f3HomeBaseCenter			= make_float3( 0.f, 0.f, 0.f );
+const float g_fHomeBaseRadius			= 1.5f;
+
+
+
+//const float g_fMaxStartRadius				= 60.0f;
+
 
 const float gBrakingRate				= 0.75f;
 
@@ -374,19 +383,21 @@ private:
 			minClearance = FLT_MAX;
 
 			od.radius = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
-			od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), gMaxStartRadius * 1.1f);
+			od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), g_fMaxStartRadius * 1.1f);
 
-
+/*
 			// Make sure it doesn't overlap with the home base.
-			float d = float3_distance (od.position, gHomeBaseCenter);
+			float d = float3_distance (od.position, make_float3( 0.f, 0.f, 0.f ) );
 			float clearance = d - (od.radius + (g_fHomeBaseRadius - requiredClearance));
 			if ( clearance < minClearance )
 				minClearance = clearance;
+*/
 
+			// Make sure it doesn't overlap with any of the other obstacles.
 			for( size_t i = 0; i < Size(); i++ )
 			{
-				d = float3_distance( od.position, positions[i] );
-				clearance = d - (od.radius + radii[i]);
+				float d = float3_distance( od.position, positions[i] );
+				float clearance = d - (od.radius + radii[i]);
 				if ( clearance < minClearance )
 					minClearance = clearance;
 			}
@@ -469,9 +480,9 @@ void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
-    const float rRadius = frandom2 (gMinStartRadius, gMaxStartRadius);
+    const float rRadius = frandom2 (g_fMinStartRadius, g_fMaxStartRadius);
     const float3 randomOnRing = float3_scalar_multiply(float3_RandomUnitVectorOnXZPlane (), rRadius);
-	vehicleData.position = float3_add(gHomeBaseCenter, randomOnRing);
+	vehicleData.position = float3_add(g_f3StartBaseCenter, randomOnRing);
 
     // are we are too close to an obstacle?
 	//float distance;
@@ -575,7 +586,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
 	findKNearestNeighbors( this, m_pKNNWalls, g_pWorld->GetBinData(), g_pWorld->GetWalls(), g_searchRadiusObstacles );
 
-	steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToObstacle, g_fWeightWallAvoidance, 0 );
+	steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToWall, g_fWeightWallAvoidance, 0 );
 
 	// Avoid collision with obstacles.
 	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, KERNEL_AVOID_WALLS_BIT );
@@ -584,10 +595,12 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
 
 	// Pursue target.
-	steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
+	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT );
+
+	steerForSeek( this, g_f3GoalPosition, 1.f, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT );//  gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT );
 
 	// Maintain separation.
-	steerForSeparation( this, m_pKNNSelf, this, g_fWeightSeparation, KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT );
+	steerForSeparation( this, m_pKNNSelf, this, g_fWeightSeparation, KERNEL_AVOID_OBSTACLES_BIT /*| KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT */);
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
@@ -707,9 +720,9 @@ void randomizeStartingPositionAndHeading( float3 & position, float const radius,
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
-    const float rRadius = frandom2 ( gMinStartRadius, gMaxStartRadius );
+    const float rRadius = frandom2 ( g_fMinStartRadius, g_fMaxStartRadius );
     const float3 randomOnRing = float3_scalar_multiply( float3_RandomUnitVectorOnXZPlane(), rRadius );
-    position =  float3_add( gHomeBaseCenter, randomOnRing );
+    position =  float3_add( g_f3StartBaseCenter, randomOnRing );
 
     // are we are too close to an obstacle?
 	//float distance;
@@ -796,11 +809,11 @@ bool CtfSeeker::clearPathToGoal (void)
     const float sideThreshold = radius() * 8.0f;
     const float behindThreshold = radius() * 2.0f;
 
-    const float3 goalOffset = float3_subtract(gHomeBaseCenter, position());
+    const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, position());
     const float goalDistance = float3_length(goalOffset);
     const float3 goalDirection = float3_scalar_divide(goalOffset, goalDistance);
 
-    const bool goalIsAside = isAside (*this, gHomeBaseCenter, 0.5);
+    const bool goalIsAside = isAside (*this, g_f3HomeBaseCenter, 0.5);
 
     // for annotation: loop over all and save result, instead of early return 
     bool xxxReturn = true;
@@ -893,7 +906,7 @@ void CtfSeeker::clearPathAnnotation (const float sideThreshold,
     const float3 pbb = float3_add(position(), behindBack);
     const float3 gun = localRotateForwardToSide (goalDirection);
 	const float3 gn = float3_scalar_multiply(gun, sideThreshold);
-    const float3 hbc = gHomeBaseCenter;
+    const float3 hbc = g_f3HomeBaseCenter;
     annotationLine (float3_add(pbb, gn), float3_add(hbc, gn), clearPathColor);
     annotationLine (float3_subtract(pbb, gn), float3_subtract(hbc, gn), clearPathColor);
     annotationLine (float3_subtract(hbc, gn), float3_add(hbc, gn), clearPathColor);
@@ -930,7 +943,7 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
 {
     float3 evade = float3_zero();
 
-    const float goalDistance = float3_distance(gHomeBaseCenter, position());
+    const float goalDistance = float3_distance(g_f3HomeBaseCenter, position());
 
 	VehicleConst econst;
 	VehicleData edata;
@@ -1049,7 +1062,7 @@ float3 CtfSeeker::steeringForSeeker (float const elapsedTime)
 		)
 	{
 		// Seeker has strayed outside of the world bounds. Seek back in.
-		float3 seek = steerForSeek( *this, gHomeBaseCenter );
+		float3 seek = steerForSeek( *this, g_f3HomeBaseCenter );
 		seek.y = 0.f;
 		wandering = false;
 		return seek;
@@ -1118,8 +1131,8 @@ void CtfSeeker::adjustObstacleAvoidanceLookAhead (const bool clearPath)
     if (clearPath)
     {
         evading = false;
-        const float goalDistance = float3_distance(gHomeBaseCenter,position());
-        const bool headingTowardGoal = isAhead (*this, gHomeBaseCenter, 0.98f);
+        const float goalDistance = float3_distance(g_f3HomeBaseCenter,position());
+        const bool headingTowardGoal = isAhead (*this, g_f3HomeBaseCenter, 0.98f);
         const bool isNear = (goalDistance/speed()) < gAvoidancePredictTimeMax;
         const bool useMax = headingTowardGoal && !isNear;
         gAvoidancePredictTime = (useMax ? gAvoidancePredictTimeMax : gAvoidancePredictTimeMin);
@@ -1138,7 +1151,7 @@ void CtfSeeker::updateState (const float currentTime)
     // if we reach the goal before being tagged, switch to atGoal state
     if (state == running)
     {
-        const float baseDistance = float3_distance(position(),gHomeBaseCenter);
+        const float baseDistance = float3_distance(position(),g_f3HomeBaseCenter);
         if (baseDistance < (radius() + g_fHomeBaseRadius))
 			state = atGoal;
     }
@@ -1323,14 +1336,14 @@ public:
         OpenSteerDemo::updateCamera (currentTime, elapsedTime, selected);
 
         // draw "ground plane" centered between base and selected vehicle
-        const float3 goalOffset = float3_subtract(gHomeBaseCenter, OpenSteerDemo::camera.position());
+		const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, OpenSteerDemo::camera.position());
         const float3 goalDirection = float3_normalize(goalOffset);
         const float3 cameraForward = OpenSteerDemo::camera.xxxls().forward();
         const float goalDot = float3_dot(cameraForward, goalDirection);
         const float blend = remapIntervalClip (goalDot, 1, 0, 0.5, 0);
         const float3 gridCenter = interpolate (blend,
                                              selected.position(),
-                                             gHomeBaseCenter);
+                                             g_f3HomeBaseCenter);
         OpenSteerDemo::gridUtility (gridCenter);
 
         // draw the seeker, obstacles and home base
@@ -1439,8 +1452,8 @@ public:
         const float3 noColor = gGray50;
         const bool reached = ctfSeeker->state == CtfSeeker::atGoal;
         const float3 baseColor = (reached ? atColor : noColor);
-        drawXZDisk (g_fHomeBaseRadius,    gHomeBaseCenter, baseColor, 20);
-        drawXZDisk (g_fHomeBaseRadius/15, float3_add(gHomeBaseCenter, up), gBlack, 20);
+        drawXZDisk (g_fHomeBaseRadius,    g_f3HomeBaseCenter, baseColor, 20);
+        drawXZDisk (g_fHomeBaseRadius/15, float3_add(g_f3HomeBaseCenter, up), gBlack, 20);
     }
 
   //  void drawObstacles (void)
