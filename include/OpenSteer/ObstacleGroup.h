@@ -33,7 +33,7 @@ public:
 	bool MinDistanceToObstacle( const float3 &position, const float radius, float &distance );
 
 	// Overloaded pure virtuals.
-	virtual uint		Size( void ) const		{ return m_nCount; }
+	virtual uint const&	Size( void ) const		{ return m_nCount; }
 	virtual float3 *	pdPosition( void )		{ return m_obstacleGroupData.pdPosition(); }
 	virtual float3 *	pdDirection( void )		{ return NULL; }
 	virtual float *		pdSpeed( void )			{ return NULL; }

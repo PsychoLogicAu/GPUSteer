@@ -30,6 +30,8 @@ private:
 						float3 & intersectPoint								// The point of intersection with the cell.
 						);
 
+	uint					m_nCount;
+
 public:
 	WallGroupData( void );
 	~WallGroupData( void )
@@ -48,7 +50,7 @@ public:
 	std::vector< float3 > const&	hvLineEnd( void ) const		{ return m_hvLineEnd; }
 	std::vector< float3 > const&	hvLineNormal( void ) const	{ return m_hvLineNormal; }
 
-	uint							size( void ) const			{ return m_hvLineStart.size(); }
+	uint const&						size( void ) const			{ return m_nCount; }
 };	// class WallGroupData
 }	// namespace OpenSteer
 

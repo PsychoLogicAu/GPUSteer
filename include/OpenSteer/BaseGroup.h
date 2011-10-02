@@ -21,7 +21,7 @@ public:
 	virtual ~BaseGroup( void ) {}
 
 	KNNDatabase &		GetKNNDatabase( void )			{ return m_neighborDB; }
-	virtual uint		Size( void ) const				{ return m_nCount; }
+	virtual uint const&	Size( void ) const				{ return m_nCount; }
 
 	// Pure virtual methods.
 	virtual float3 *		pdPosition( void ) = 0;

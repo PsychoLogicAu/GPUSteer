@@ -199,6 +199,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cu"
+					>
+				</File>
+				<File
+					RelativePath="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cuh"
+					>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\UpdateCUDA.cu"
 					>
 				</File>
@@ -309,6 +317,10 @@
 				<Filter
 					Name="Behaviors"
 					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\FlockingCommon.cuh"
+						>
+					</File>
 					<Filter
 						Name="Separation"
 						>
@@ -444,6 +456,54 @@
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForSeekCUDAKernel.cu"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="Follow Path"
+						>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerToFollowPathCUDAKernel.cu"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="Cohesion"
+						>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDAKernel.cu"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="Alignment"
+						>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDAKernel.cu"
 							>
 						</File>
 					</Filter>

@@ -66,7 +66,7 @@ public:
 	//
 	// Accessor/mutators
 	//
-	uint	k( void ) const										{ return m_nK; }
+	uint const&	k( void ) const									{ return m_nK; }
 
 	// Device data.
 	uint *		pdCellStart( void )								{ return m_dvCellStart.begin(); }
