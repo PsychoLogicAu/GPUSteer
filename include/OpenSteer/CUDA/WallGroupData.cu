@@ -12,6 +12,7 @@
 using namespace OpenSteer;
 
 WallGroupData::WallGroupData( void )
+:	m_nCount( 0 )
 {
 }
 
@@ -96,6 +97,8 @@ bool WallGroupData::LoadFromFile( char const* szFilename )
 		m_hvLineMid.push_back( mid );
 	}
 	inFile.close();
+
+	m_nCount = m_hvLineStart.size();
 
 	return true;
 }
@@ -198,6 +201,7 @@ void WallGroupData::SplitWalls( std::vector< bin_cell > const& cells )
 	std::copy( endList.begin(), endList.end(), m_hvLineEnd.begin() );
 	std::copy( normalList.begin(), normalList.end(), m_hvLineNormal.begin() );
 
+	m_nCount = m_hvLineStart.size();
 
 	syncDevice();
 }

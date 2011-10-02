@@ -27,7 +27,7 @@ public:
 	void SyncDevice( void );
 
 	// Overloaded pure virtuals.
-	virtual uint		Size( void ) const		{ return m_wallGroupData.size(); }
+	virtual uint const&	Size( void ) const		{ return m_wallGroupData.size(); }
 	virtual float3 *	pdPosition( void )		{ return m_wallGroupData.pdLineMid(); }
 	virtual float3 *	pdDirection( void )		{ return NULL; }
 	virtual float *		pdSpeed( void )			{ return NULL; }

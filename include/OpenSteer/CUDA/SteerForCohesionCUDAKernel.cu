@@ -1,4 +1,4 @@
-#include "SteerForSeparationCUDA.cuh"
+#include "SteerForCohesionCUDA.cuh"
 
 #include "CUDAKernelGlobals.cuh"
 
@@ -6,7 +6,7 @@
 
 extern "C"
 {
-	__global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
+	__global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
 												float3 const*	pdADirection,
 												float3 *		pdASteering,
 												size_t const	numA,
@@ -26,8 +26,7 @@ extern "C"
 												);
 }
 
-
-__global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
+__global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
 											float3 const*	pdADirection,
 											float3 *		pdASteering,
 											size_t const	numA,
@@ -46,7 +45,7 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 											uint const		doNotApplyWith
 											)
 {
-	uint const index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	if( index >= numA )
 		return;
@@ -56,9 +55,9 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 
 	extern __shared__ uint shKNNIndices[];
 
-	__shared__ float3	shSteering[THREADSPERBLOCK];
-	__shared__ float3	shPosition[THREADSPERBLOCK];
-	__shared__ float3	shDirection[THREADSPERBLOCK];
+	__shared__ float3 shSteering[THREADSPERBLOCK];
+	__shared__ float3 shPosition[THREADSPERBLOCK];
+	__shared__ float3 shDirection[THREADSPERBLOCK];
 
 	// Copy required from global memory.
 	FLOAT3_GLOBAL_READ( shSteering, pdASteering );
@@ -69,7 +68,7 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
 	__syncthreads();
 
-    // steering accumulator and count of neighbors, both initially zero
+	    // steering accumulator and count of neighbors, both initially zero
 	float3 steering = { 0.f, 0.f, 0.f };
     uint neighbors = 0;
 
@@ -82,28 +81,28 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 		if( BIndex >= numB )
 			break;
 
+		// TODO: texture memory.
 		float3 const bPosition = pdBPosition[ BIndex ];
 
 		if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, maxDistance, cosMaxAngle ) )
 		{
-			float3 const offset = float3_subtract( bPosition, POSITION_SH( threadIdx.x ) );
-			float const distanceSquared = float3_dot( offset, offset );
-			steering = float3_add( steering, float3_scalar_divide( offset, -distanceSquared ) );
+			// accumulate sum of neighbor's positions
+			steering = float3_add( steering, bPosition );
 
+			// count neighbors
 			neighbors++;
 		}
 	}
 
-    // divide by neighbors, then normalize to pure direction
 	if( neighbors > 0 )
-		steering = float3_normalize( float3_scalar_divide( steering, (float)neighbors ) );
+		steering = float3_normalize( float3_subtract( float3_scalar_divide( steering, (float)neighbors ), POSITION_SH( threadIdx.x ) ) );
 
 	// Apply the weight.
 	steering = float3_scalar_multiply( steering, fWeight );
 
 	// Set the applied kernel bit.
 	if( ! float3_equals( steering, float3_zero() ) )
-		pdAppliedKernels[ index ] |= KERNEL_SEPARATION_BIT;
+		pdAppliedKernels[ index ] |= KERNEL_COHESION_BIT;
 
 	// Add into the steering vector.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );

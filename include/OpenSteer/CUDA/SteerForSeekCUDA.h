@@ -12,7 +12,7 @@ namespace OpenSteer
 
 	public:
 		SteerForSeekCUDA( AgentGroup *pAgentGroup, const float3 &target, float const fWeight, uint const doNotApplyWith );
-		~SteerForSeekCUDA( void ) {}
+		virtual ~SteerForSeekCUDA( void ) {}
 
 		virtual void init( void );
 		virtual void run( void );

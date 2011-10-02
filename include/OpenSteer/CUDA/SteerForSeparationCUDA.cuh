@@ -13,10 +13,11 @@ protected:
 	KNNData *		m_pKNNData;
 	AgentGroup *	m_pOtherGroup;
 
-
+	float			m_fMaxDistance;
+	float			m_fCosMaxAngle;
 
 public:
-	SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight, uint const doNotApplyWith );
+	SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith );
 	virtual ~SteerForSeparationCUDA( void ) {}
 
 	virtual void init( void );

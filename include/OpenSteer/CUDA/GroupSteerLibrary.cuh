@@ -15,6 +15,10 @@
 #include "AvoidWallsCUDA.cuh"
 
 #include "SteerForSeparationCUDA.cuh"
+#include "SteerForCohesionCUDA.cuh"
+#include "SteerForAlignmentCUDA.cuh"
+
+#include "SteerToFollowPathCUDA.cuh"
 
 #include "UpdateCUDA.h"
 
@@ -54,9 +58,13 @@ static void steerForEvade( AgentGroup * pAgentGroup, const VehicleData &target, 
 
 }
 
-static void steerToFollowPath(AgentGroup * pAgentGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight)
+static void steerToFollowPath(AgentGroup * pAgentGroup, PolylinePathwayCUDA * pPath, float const predictionTime, float const fWeight, uint const doNotApplyWith )
 {
+	SteerToFollowPathCUDA kernel( pAgentGroup, pPath, predictionTime, fWeight, doNotApplyWith );
 
+	kernel.init();
+	kernel.run();
+	kernel.close();
 }
 
 static void steerToStayOnPath(AgentGroup * pAgentGroup, const float predictionTime, const std::vector<float3> &path, float const fWeight)
@@ -115,23 +123,31 @@ static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData,
 
 
 
-static void steerForSeparation(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight, uint const doNotApplyWith )
+static void steerForSeparation(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
 {
-	SteerForSeparationCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, fWeight, doNotApplyWith );
+	SteerForSeparationCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, maxDistance, cosMaxAngle, fWeight, doNotApplyWith );
 
 	kernel.init();
 	kernel.run();
 	kernel.close();
 }
 
-static void steerForAlignment(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight, uint const doNotApplyWith )
+static void steerForAlignment( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
 {
+	SteerForAlignmentCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, maxDistance, cosMaxAngle, fWeight, doNotApplyWith );
 
+	kernel.init();
+	kernel.run();
+	kernel.close();
 }
 
-static void steerForCohesion(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fWeight, uint const doNotApplyWith )
+static void steerForCohesion( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
 {
+	SteerForCohesionCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, maxDistance, cosMaxAngle, fWeight, doNotApplyWith );
 
+	kernel.init();
+	kernel.run();
+	kernel.close();
 }
 
 // Applies the newly compute steering vector to the vehicles.
