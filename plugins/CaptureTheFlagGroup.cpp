@@ -148,8 +148,8 @@ float const g_fMinTimeToWall			= 5.0f;		// Look-ahead time for wall avoidance.
 float const g_fPathPredictionTime		= 10.f;
 
 // Weights for behaviors.
-float const	g_fWeightAlignment			= 15.f;
-float const	g_fWeightCohesion			= 5.f;
+float const	g_fWeightAlignment			= 1.f;
+float const	g_fWeightCohesion			= 1.f;
 float const	g_fWeightSeparation			= 5.f;
 
 float const g_fWeightPursuit			= 1.f;
@@ -157,8 +157,8 @@ float const g_fWeightSeek				= 2.f;
 
 float const g_fWeightFollowPath			= 6.f;
 
-float const g_fWeightObstacleAvoidance	= 1.f;
-float const g_fWeightWallAvoidance		= 6.0f;
+float const g_fWeightObstacleAvoidance	= 10.f;
+float const g_fWeightWallAvoidance		= 10.f;
 float const g_fWeightAvoidNeighbors		= 2.f;
 
 // Masks for behaviors.
@@ -262,6 +262,37 @@ public:
 
 	void draw( void )
 	{
+		//
+		//	Draw the cells.
+		//
+		std::vector< bin_cell > const& cells	= m_pKNNBinData->hvCells();
+		float3 const cellColor = { 0.1f, 0.1f, 0.1f };
+		// For each of the cells...
+		for( std::vector< bin_cell >::const_iterator it = cells.begin(); it != cells.end(); ++it )
+		{
+			/*
+			0    1
+			+----+
+			|    |
+			|    |
+			+----+
+			2    3
+			*/
+			float3 const p0		= { it->minBound.x, 0.f, it->maxBound.z };
+			float3 const p1		= { it->maxBound.x, 0.f, it->maxBound.z };
+			float3 const p2		= { it->minBound.x, 0.f, it->minBound.z };
+			float3 const p3		= { it->maxBound.x, 0.f, it->minBound.z };
+
+			drawLine( p0, p1, cellColor );
+			drawLine( p0, p2, cellColor );
+			drawLine( p1, p3, cellColor );
+			drawLine( p2, p3, cellColor );
+		}
+
+		//
+		//	Draw the walls.
+		//
+
 		// Get references to the vectors.
 		std::vector< float3 > const& start		= m_pWallGroup->GetWallGroupData().hvLineStart();
 		std::vector< float3 > const& mid		= m_pWallGroup->GetWallGroupData().hvLineMid();
@@ -625,14 +656,15 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	updateKNNDatabase( this, g_pWorld->GetBinData() );
 
 	// Update the KNNDatabases
-	findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
+	//findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
 	findKNearestNeighbors( this, m_pKNNWalls, g_pWorld->GetBinData(), g_pWorld->GetWalls(), g_searchRadiusObstacles );
 
+	// Avoid collisions with walls.
 	steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToWall, g_fWeightWallAvoidance, g_maskWallAvoidance );
 
 	// Avoid collision with obstacles.
-	steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, g_maskObstacleAvoidance );
+	//steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, g_maskObstacleAvoidance );
 
 	// Avoid collision with self.
 	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
@@ -640,11 +672,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 
-	
-
 	steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
 	//steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
-
 
 	// Flocking.
 	steerForSeparation( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );

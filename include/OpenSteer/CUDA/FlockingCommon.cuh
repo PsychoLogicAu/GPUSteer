@@ -11,6 +11,8 @@ __inline__ __device__ bool	inBoidNeighborhood(	// Agent data.
 												float const&	cosMaxAngle
 											   )
 {
+	return true;
+
 	float3 const offset = float3_subtract( otherPosition, position );
 	float const distanceSquared = float3_lengthSquared( offset );
 
