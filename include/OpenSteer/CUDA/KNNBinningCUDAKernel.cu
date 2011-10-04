@@ -107,7 +107,7 @@ __global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// 
 	if( index >= numCells )
 		return;
 
-	__shared__ float3 shPosition[THREADSPERBLOCK];
+	__shared__ float3 shPosition[KNN_THREADSPERBLOCK];
 	extern __shared__ uint shNeighboringCells[];
 	
 	// Read the position of this thread's cell to shared memory.
@@ -182,7 +182,7 @@ __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// 
 	if( index >= numCells )
 		return;
 
-	__shared__ float3 shPosition[THREADSPERBLOCK];
+	__shared__ float3 shPosition[KNN_THREADSPERBLOCK];
 	extern __shared__ uint shNeighboringCells[];
 	
 	// Read the position of this thread's cell to shared memory.

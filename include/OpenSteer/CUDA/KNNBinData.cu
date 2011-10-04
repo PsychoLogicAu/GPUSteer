@@ -47,7 +47,7 @@ void KNNBinData::ComputeCellNeighbors( bool b3D )
 	dim3 block = blockDim();
 
 	m_nNeighborsPerCell		=  ipow( (m_nSearchRadius * 2 + 1), (b3D ? 3 : 2) );
-	size_t const shMemSize	= sizeof(uint) * THREADSPERBLOCK * m_nNeighborsPerCell;
+	size_t const shMemSize	= sizeof(uint) * KNN_THREADSPERBLOCK * m_nNeighborsPerCell;
 
 	// Allocate enough device memory.
 	m_dvCellNeighbors.resize( m_nCells * m_nNeighborsPerCell );
