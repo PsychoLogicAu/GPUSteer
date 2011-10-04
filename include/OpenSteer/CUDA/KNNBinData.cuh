@@ -8,6 +8,8 @@
 
 #include <vector>
 
+#define KNN_THREADSPERBLOCK 64
+
 namespace OpenSteer
 {
 
@@ -40,8 +42,8 @@ private:
 	void CreateCells( void );
 	void ComputeCellNeighbors( bool b3D );
 
-	virtual dim3 gridDim( void )	{	return dim3( ( getNumCells() + THREADSPERBLOCK - 1 ) / THREADSPERBLOCK );	}
-	virtual dim3 blockDim( void )	{	return dim3( THREADSPERBLOCK );	}
+	virtual dim3 gridDim( void )	{	return dim3( ( getNumCells() + KNN_THREADSPERBLOCK - 1 ) / KNN_THREADSPERBLOCK );	}
+	virtual dim3 blockDim( void )	{	return dim3( KNN_THREADSPERBLOCK );	}
 
 public:
 	KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius );

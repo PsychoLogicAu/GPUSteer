@@ -1212,29 +1212,31 @@ OpenSteer::drawBasic2dCircularVehicle (	float const& radius,
 
 
 void 
-OpenSteer::drawBasic3dSphericalVehicle (const AbstractVehicle& vehicle,
-                                        const float3& color)
+OpenSteer::drawBasic3dSphericalVehicle (
+										float const		radius,
+										float3 const&	position,
+										float3 const&	forward,
+										float3 const&	side,
+										float3 const&	up,
+                                        float3 const&	color
+										)
 {
     // "aspect ratio" of body (as seen from above)
     const float x = 0.5f;
     const float y = sqrtXXX (1 - (x * x));
 
-    // radius and position of vehicle
-    const float r = vehicle.radius();
-    const float3& p = vehicle.position();
-
     // body shape parameters
-	const float3 f = float3_scalar_multiply(vehicle.forward(), r);
-	const float3 s = float3_scalar_multiply(vehicle.side(), r* x);
-    const float3 u = float3_scalar_multiply(vehicle.up(), r * x * 0.5f);
-	const float3 b = float3_scalar_multiply(vehicle.forward(), r * -y);
+	const float3 f = float3_scalar_multiply(forward, radius);
+	const float3 s = float3_scalar_multiply(side, radius* x);
+    const float3 u = float3_scalar_multiply(up, radius * x * 0.5f);
+	const float3 b = float3_scalar_multiply(forward, radius * -y);
 
     // vertex positions
-    const float3 nose   = float3_add(p, f);
-	const float3 side1  = float3_subtract(float3_add(p, b), s);
-	const float3 side2  = float3_add(float3_add(p, b), s);
-    const float3 top    = float3_add(float3_add(p, b), u);
-    const float3 bottom = float3_subtract(float3_add(p, b), u);
+    const float3 nose   = float3_add(position, f);
+	const float3 side1  = float3_subtract(float3_add(position, b), s);
+	const float3 side2  = float3_add(float3_add(position, b), s);
+    const float3 top    = float3_add(float3_add(position, b), u);
+    const float3 bottom = float3_subtract(float3_add(position, b), u);
 
     // colors
     const float j = +0.05f;

@@ -73,7 +73,7 @@
 #include "OpenSteer/WallGroup.h"
 
 #include "OpenSteer/CUDA/PolylinePathwayCUDA.cuh"
- 
+
 using namespace OpenSteer;
 
 #ifndef min
@@ -153,7 +153,7 @@ float const	g_fWeightCohesion			= 1.f;
 float const	g_fWeightSeparation			= 5.f;
 
 float const g_fWeightPursuit			= 1.f;
-float const g_fWeightSeek				= 2.f;
+float const g_fWeightSeek				= 6.f;
 
 float const g_fWeightFollowPath			= 6.f;
 
@@ -166,7 +166,7 @@ uint const	g_maskAlignment				= 0;
 uint const	g_maskCohesion				= 0;
 uint const	g_maskSeparation			= 0;
 
-uint const	g_maskSeek					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
+uint const	g_maskSeek					= KERNEL_AVOID_OBSTACLES_BIT /*| KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT*/;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
@@ -672,8 +672,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 
-	steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
-	//steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
+	//steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
+	steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
 	// Flocking.
 	steerForSeparation( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
@@ -799,7 +799,8 @@ void randomizeStartingPositionAndHeading( float3 & position, float const radius,
     // randomize position on a ring between inner and outer radii
     // centered around the home base
     const float rRadius = frandom2 ( g_fMinStartRadius, g_fMaxStartRadius );
-    const float3 randomOnRing = float3_scalar_multiply( float3_RandomUnitVectorOnXZPlane(), rRadius );
+	float3 const randomOnRing = float3_scalar_multiply( float3_RandomUnitVectorOnXZPlane(), rRadius );
+
     position =  float3_add( g_f3StartBaseCenter, randomOnRing );
 
     // are we are too close to an obstacle?
@@ -1336,7 +1337,7 @@ private:
 
 public:
 
-    const char* name (void) {return "Capture the Flag";}
+    const char* name (void) {return "Choke Point";}
 
     float selectionOrderSortKey (void) {return 0.01f;}
 

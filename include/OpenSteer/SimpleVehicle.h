@@ -351,18 +351,19 @@ namespace OpenSteer {
         }
     };
 
-	/*inline void randomizeHeadingOnXZPlane(VehicleData &vehicleData)
-    {
-		vehicleData.up = float3_up();
-		vehicleData.forward = float3_RandomUnitVectorOnXZPlane ();
-		vehicleData.side = make_float3(-vehicleData.forward.z, vehicleData.forward.y, vehicleData.forward.x);
-    }*/
-
 	inline void randomizeHeadingOnXZPlane( float3 & up, float3 & forward, float3 & side )
     {
 		up = float3_up();
 		forward = float3_RandomUnitVectorOnXZPlane ();
-		side = make_float3( -forward.z, forward.y, forward.x );
+		side = make_float3(-forward.z, forward.y, forward.x);
+    }
+
+	inline void randomizeHeading( float3 & up, float3 & forward, float3 & side )
+    {
+		float3 tempUp = float3_up();
+		forward = float3_RandomVectorInUnitRadiusSphere();
+		side = float3_cross( forward, tempUp );
+		up = float3_cross( side, forward );
     }
 
 
