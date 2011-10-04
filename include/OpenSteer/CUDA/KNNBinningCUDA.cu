@@ -8,6 +8,8 @@ using namespace OpenSteer;
 
 #include "DebugUtils.h"
 
+#define TIMING
+
 // Kernel file function prototypes.
 extern "C"
 {
@@ -144,7 +146,8 @@ void KNNBinningUpdateDBCUDA::run( void )
 	cudaEventElapsedTime( &elapsedTime, start, stop );
 	char szString[128] = {0};
 	sprintf_s( szString, "KNNBinningUpdateDBCUDA,%f\n", elapsedTime );
-	OutputDebugStringToFile( szString );
+	//OutputDebugStringToFile( szString );
+	OutputDebugString( szString );
 
 	// Destroy the events.
 	cudaEventDestroy( start );
@@ -246,7 +249,8 @@ void KNNBinningCUDA::run( void )
 	cudaEventElapsedTime( &elapsedTime, start, stop );
 	char szString[128] = {0};
 	sprintf_s( szString, "KNNBinningCUDA,%f\n", elapsedTime );
-	OutputDebugStringToFile( szString );
+	//OutputDebugStringToFile( szString );
+	OutputDebugString( szString );
 
 	// Destroy the events.
 	cudaEventDestroy( start );
