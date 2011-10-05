@@ -20,12 +20,12 @@ static __device__ bool	inBoidNeighborhood(	// Agent data.
 	if( distanceSquared > (maxDistance * maxDistance) )
 		return false;
 
-	//return true;
+	return true;
 
 	// otherwise, test angular offset from forward axis
 	float3 const unitOffset = float3_scalar_divide( offset, sqrtf( distanceSquared ) );
 	float const forwardness = float3_dot( direction, unitOffset );
-	return forwardness < cosMaxAngle;
+	return forwardness > cosMaxAngle;
 }
 
 #endif
