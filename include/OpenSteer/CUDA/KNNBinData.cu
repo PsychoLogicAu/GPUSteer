@@ -91,8 +91,12 @@ Texture addressing in CUDA operates as follows.
 	| /
 	|/_________x
 */
+	size_t const numCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
+
+	m_hvCells.resize( numCells );
+
 	// Allocate host memory to temporarily store the 3D texture data.
-	uint * phCellIndices = (uint*)malloc( m_worldCells.x * m_worldCells.y * m_worldCells.z * sizeof(uint) );
+	uint * phCellIndices = (uint*)malloc( numCells * sizeof(uint) );
 
 	uint index = 0;
 
@@ -109,7 +113,7 @@ Texture addressing in CUDA operates as follows.
 				bc.index = iWidth + (iDepth * m_worldCells.x) + (iHeight * m_worldCells.z * m_worldCells.x);
 
 				// Set the offset value for the cell lookup texture.
-				phCellIndices[index++] = bc.index;
+				phCellIndices[index] = bc.index;
 
 				// Set the minBounds of the cell.
 				bc.minBound.x = iWidth * step.x - 0.5f * m_worldSize.x;
@@ -126,7 +130,9 @@ Texture addressing in CUDA operates as follows.
 				bc.maxBound.y = bc.minBound.y + step.y;
 				bc.maxBound.z = bc.minBound.z + step.z;
 
-				m_hvCells.push_back( bc );
+				//m_hvCells.push_back( bc );
+				m_hvCells[index] = bc;
+				index++;
 			}
 		}
 	}

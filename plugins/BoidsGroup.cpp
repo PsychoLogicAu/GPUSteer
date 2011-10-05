@@ -82,9 +82,9 @@ using namespace OpenSteer;
 
 #define M_PI       3.14159265358979323846
 
-//#define ANNOTATION_LINES
+#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
-//#define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
+#define ANNOTATION_CELLS
 //#define NO_DRAW
 
 // ----------------------------------------------------------------------------
@@ -102,9 +102,9 @@ class BoidsWanderer;
 
 // Using cell diameter of 7
 
-//const int	gEnemyCount					= 100;
-//const float	gDim						= 63;
-//const int	gCells						= 9;
+const int	gEnemyCount					= 100;
+const float	gDim						= 63;
+const int	gCells						= 9;
 
 //const int gEnemyCount					= 1000;
 //const float gDim						= 200;
@@ -114,9 +114,12 @@ class BoidsWanderer;
 //const float gDim						= 635;
 //const int gCells						= 91;
 
+/*
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
-const int gCells						= 285;
+//const int gCells						= 285;
+const int gCells						= 200;
+*/
 
 //const int gEnemyCount					= 1000000;
 //const float gDim						= 6350;
@@ -134,9 +137,9 @@ const int gObstacleCount				= 1;
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
 uint const	g_knw						= 3;		// Number of near walls to keep track of.
-uint const	g_maxSearchRadius			= 2;		// Distance in cells for the maximum search radius.
+uint const	g_maxSearchRadius			= 1;		// Distance in cells for the maximum search radius.
 uint const	g_searchRadiusNeighbors		= 1;		// Distance in cells to search for neighbors.
-uint const	g_searchRadiusObstacles		= 2;		// Distance in cells to search for obstacles.
+uint const	g_searchRadiusObstacles		= 1;		// Distance in cells to search for obstacles.
 
 float const g_fMaxPursuitPredictionTime	= 10.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
@@ -151,7 +154,7 @@ float const	g_fWeightCohesion			= 16.f;
 float const	g_fWeightSeparation			= 1.f;
 
 float const g_fWeightPursuit			= 1.f;
-float const g_fWeightSeek				= 100.f;
+float const g_fWeightSeek				= 10.f;
 
 float const g_fWeightFollowPath			= 6.f;
 
@@ -166,7 +169,7 @@ uint const	g_maskSeparation			= 0;
 
 uint const	g_maskSeek					= KERNEL_SEPARATION_BIT; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
-uint const	g_maskPursuit				= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
+uint const	g_maskPursuit				= KERNEL_SEPARATION_BIT;//KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 
 uint const	g_maskFollowPath			= /*KERNEL_AVOID_WALLS_BIT |*/ KERNEL_AVOID_OBSTACLES_BIT;
@@ -331,12 +334,30 @@ public:
     // per frame simulation update
     void update (const float currentTime, const float elapsedTime )
 	{
-		steerForWander( *this, elapsedTime );
+		float3 steer;
+		
+		float const halfDim = 0.4f * gDim;
+		float3 const& position = _data.position;
+
+		if( position.x < -halfDim || position.x > halfDim ||
+			position.y < -halfDim || position.y > halfDim ||
+			position.z < -halfDim || position.z > halfDim  )
+		{
+			// Outside of the world bounds. Seek back in.
+			steer = steerForSeek( *this, make_float3( 0.f, 0.f, 0.f ) );
+		}
+		else
+		{
+			// Inside of the world bonds. Wander.
+			steer = steerForWander( *this, elapsedTime );
+		}
+
+		applySteeringForce (steer, elapsedTime);
 	}
 
     void draw (void)
 	{
-		float3 const bodyColor = { 0.4f, 0.4f, 0.6f };	// bluish
+		float3 const bodyColor = { 0.1f, 0.1f, 0.9f };	// very bluish
 		drawBasic3dSphericalVehicle( radius(), position(), forward(), side(), up(), bodyColor );
 	}
 };
@@ -447,7 +468,8 @@ public:
 			ObstacleData od;
 			GetDataForObstacle( i, od );
 
-			drawXZCircle( od.radius, od.position, color, 20 );
+			//drawXZCircle( od.radius, od.position, color, 20 );
+			draw3dCircle( od.radius, od.position, OpenSteerDemo::camera.forward(), color, 20 );
 		}
 	}
 };
@@ -580,12 +602,13 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 
 	// Flocking.
 	steerForSeparation( this, m_pKNNSelf, this, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
-	steerForCohesion( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
-	steerForAlignment( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
+	//steerForCohesion( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	//steerForAlignment( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
 
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
-	steerForSeek( this, g_pWanderer->position(), g_fWeightSeek, g_maskSeek );
+	//steerForPursuit( this, g_pWanderer->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
+	steerForSeek( this, g_pWanderer->position(), 1/*g_fWeightSeek*/, 0/*g_maskSeek*/ );
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
@@ -659,11 +682,22 @@ public:
 		g_pWanderer = new BoidsWanderer;
 		all.push_back( g_pWanderer );
 
+		/*
         // initialize camera
 		OpenSteerDemo::init3dCamera( *g_pWanderer );
 		OpenSteerDemo::camera.mode = Camera::cmFixedDistanceOffset;
         OpenSteerDemo::camera.fixedTarget = make_float3(15, 0, 0);
         OpenSteerDemo::camera.fixedPosition = make_float3(0, 0, 500);
+		*/
+
+		// initialize camera
+        OpenSteerDemo::init3dCamera ( *g_pWanderer );
+		OpenSteerDemo::camera.mode = Camera::cmFixedDistanceOffset;
+        OpenSteerDemo::camera.fixedDistDistance = 100.f;
+        OpenSteerDemo::camera.fixedDistVOffset = 1.f;
+        OpenSteerDemo::camera.lookdownDistance = 20;
+        OpenSteerDemo::camera.aimLeadTime = 0.5;
+        OpenSteerDemo::camera.povOffset = make_float3( 0, 0.5, -2 );
     }
 
     void update (const float currentTime, const float elapsedTime)
@@ -676,7 +710,7 @@ public:
 
     void redraw (const float currentTime, const float elapsedTime)
     {
-		AbstractVehicle& selected = *OpenSteerDemo::selectedVehicle;
+		AbstractVehicle& selected = *g_pWanderer;
 
 		// update camera
         OpenSteerDemo::updateCamera (currentTime, elapsedTime, selected);
@@ -689,6 +723,19 @@ public:
 
 		// draw the world
 		g_pWorld->draw();
+
+		// display status in the upper left corner of the window
+		std::ostringstream status;
+		status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << g_pObstacles->Size() << std::endl;
+		status << std::left << std::setw( 25 ) << "No. agents: " << std::setw( 10 ) << g_pBoids->Size() << std::endl;
+		status << std::left << std::setw( 25 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
+		status << std::left << std::setw( 25 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
+		status << std::left << std::setw( 25 ) << "Search radius neighbors: " << std::setw( 10 ) << g_searchRadiusNeighbors << std::endl;
+		status << std::left << std::setw( 25 ) << "Search radius obstacles: " << std::setw( 10 ) << g_searchRadiusObstacles << std::endl;
+		status << std::left << std::setw( 25 ) << "Wanderer position: " << selected.position().x << ", " << selected.position().y << ", " << selected.position().z << std::endl;
+		const float h = drawGetWindowHeight ();
+		const float3 screenLocation = make_float3(10, h-50, 0);
+		draw2dTextAt2dLocation (status, screenLocation, gGray80);
     }
 
     void close (void)
@@ -708,8 +755,10 @@ public:
 
 		g_pObstacles->reset();
 
+		g_pWanderer->reset();
+
         // reset camera position
-		OpenSteerDemo::camera.reset();
+		//OpenSteerDemo::camera.reset();
 
         // make camera jump immediately to new position
         OpenSteerDemo::camera.doNotSmoothNextMove ();

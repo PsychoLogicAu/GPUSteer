@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#define KNN_THREADSPERBLOCK 64
+#define KNN_THREADSPERBLOCK 128
 
 namespace OpenSteer
 {
