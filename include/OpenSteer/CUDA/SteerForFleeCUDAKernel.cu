@@ -1,4 +1,4 @@
-#include "SteerForFleeCUDA.h"
+#include "SteerForFleeCUDA.cuh"
 
 #include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
@@ -26,6 +26,7 @@ extern "C"
 											float3 *		pdSteering,
 
 											float3 const	target,
+
 											size_t const	numAgents,
 											float const		fWeight,
 											uint *			pdAppliedKernels,

@@ -180,6 +180,7 @@ uint const	g_maskWallAvoidance			= 0;
 
 //float const g_fMaxFlockingDistance		= 2 * g_searchRadiusNeighbors * gDim / gCells;
 //float const g_fCosMaxFlockingAngle		= 360 * (float)M_PI / 180.f;	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
+float const g_fMinFlockingDistance		= 0.5f;
 float const g_fMaxFlockingDistance		= FLT_MAX;
 float const g_fCosMaxFlockingAngle		= cosf( 2 * (float)M_PI );
 
@@ -676,9 +677,9 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
-	steerForCohesion( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
-	steerForAlignment( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
+	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
+	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );

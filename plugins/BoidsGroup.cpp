@@ -82,9 +82,9 @@ using namespace OpenSteer;
 
 #define M_PI       3.14159265358979323846
 
-#define ANNOTATION_LINES
+//#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
-#define ANNOTATION_CELLS
+//#define ANNOTATION_CELLS
 //#define NO_DRAW
 
 // ----------------------------------------------------------------------------
@@ -102,9 +102,9 @@ class BoidsWanderer;
 
 // Using cell diameter of 7
 
-const int	gEnemyCount					= 100;
-const float	gDim						= 63;
-const int	gCells						= 9;
+//const int	gEnemyCount					= 100;
+//const float	gDim						= 63;
+//const int	gCells						= 10;
 
 //const int gEnemyCount					= 1000;
 //const float gDim						= 200;
@@ -114,12 +114,12 @@ const int	gCells						= 9;
 //const float gDim						= 635;
 //const int gCells						= 91;
 
-/*
+
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
 //const int gCells						= 285;
-const int gCells						= 200;
-*/
+const int gCells						= 150;
+
 
 //const int gEnemyCount					= 1000000;
 //const float gDim						= 6350;
@@ -155,6 +155,7 @@ float const	g_fWeightSeparation			= 1.f;
 
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightSeek				= 10.f;
+float const g_fWeightEvade				= 10.f;
 
 float const g_fWeightFollowPath			= 6.f;
 
@@ -181,6 +182,7 @@ uint const	g_maskWallAvoidance			= 0;
 
 //float const g_fMaxFlockingDistance		= 2 * g_searchRadiusNeighbors * gDim / gCells;
 //float const g_fCosMaxFlockingAngle		= 360 * (float)M_PI / 180.f;	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
+float const g_fMinFlockingDistance		= 0.5f;
 float const g_fMaxSeparationDistance	= 2.f;
 float const g_fMaxFlockingDistance		= 7.f;
 
@@ -295,7 +297,7 @@ public:
 // XXX consider moving this inside CtfPlugIn
 // XXX consider using STL (any advantage? consistency?)
 BoidsGroup *			g_pBoids;
-BoidsObstacleGroup *	g_pObstacles;
+//BoidsObstacleGroup *	g_pObstacles;
 BoidsWorld *			g_pWorld;
 BoidsWanderer *			g_pWanderer;
 
@@ -601,14 +603,16 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 	//steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
-	//steerForCohesion( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
-	//steerForAlignment( this, m_pKNNSelf, this, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
+	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
+	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
 
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 	//steerForPursuit( this, g_pWanderer->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
-	steerForSeek( this, g_pWanderer->position(), 1/*g_fWeightSeek*/, 0/*g_maskSeek*/ );
+	steerForSeek( this, g_pWanderer->position(), g_fWeightSeek, g_maskSeek );
+
+	//steerForEvade( this, g_pWanderer->position(), g_pWanderer->forward(), g_pWanderer->speed(), g_fMaxPursuitPredictionTime, g_fWeightEvade, g_maskEvade );
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
@@ -665,8 +669,8 @@ public:
 		//g_pWallData = new wall_data;
 		//g_pWallData->SplitWalls( g_pKNNBinData->hvCells() );
 
-		g_pObstacles = new BoidsObstacleGroup( gWorldCells, g_kno );
-		g_pObstacles->reset();
+		//g_pObstacles = new BoidsObstacleGroup( gWorldCells, g_kno );
+		//g_pObstacles->reset();
 
 		int numDevices;
 		cudaGetDeviceCount(&numDevices);
@@ -716,7 +720,7 @@ public:
         OpenSteerDemo::updateCamera (currentTime, elapsedTime, selected);
 
 		// draw the obstacles
-		g_pObstacles->draw();
+		//g_pObstacles->draw();
 
         // draw the enemy
 		g_pBoids->draw();
@@ -726,7 +730,7 @@ public:
 
 		// display status in the upper left corner of the window
 		std::ostringstream status;
-		status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << g_pObstacles->Size() << std::endl;
+		//status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << g_pObstacles->Size() << std::endl;
 		status << std::left << std::setw( 25 ) << "No. agents: " << std::setw( 10 ) << g_pBoids->Size() << std::endl;
 		status << std::left << std::setw( 25 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
 		status << std::left << std::setw( 25 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
@@ -742,7 +746,7 @@ public:
     {
 		delete g_pBoids;
 
-		delete g_pObstacles;
+		//delete g_pObstacles;
 
 		delete g_pWorld;
 
@@ -753,7 +757,7 @@ public:
     {
 		g_pBoids->reset();
 
-		g_pObstacles->reset();
+		//g_pObstacles->reset();
 
 		g_pWanderer->reset();
 

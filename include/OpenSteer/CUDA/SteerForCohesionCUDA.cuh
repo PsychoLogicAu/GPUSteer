@@ -13,11 +13,12 @@ protected:
 	KNNData *		m_pKNNData;
 	AgentGroup *	m_pOtherGroup;
 
+	float			m_fMinDistance;
 	float			m_fMaxDistance;
 	float			m_fCosMaxAngle;
 
 public:
-	SteerForCohesionCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith );
+	SteerForCohesionCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const minDistance, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith );
 	virtual ~SteerForCohesionCUDA( void ) {}
 
 	virtual void init( void );

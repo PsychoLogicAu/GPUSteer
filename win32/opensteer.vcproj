@@ -322,38 +322,6 @@
 						>
 					</File>
 					<Filter
-						Name="Separation"
-						>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cu"
-							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cuh"
-							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDAKernel.cu"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="Avoid Neighbors"
-						>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu"
-							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh"
-							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDAKernel.cu"
-							>
-						</File>
-					</Filter>
-					<Filter
 						Name="Pursue"
 						>
 						<File
@@ -361,7 +329,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForPursueCUDA.h"
+							RelativePath="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cuh"
 							>
 						</File>
 						<File
@@ -373,57 +341,15 @@
 						Name="Evade"
 						>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForEvadeCUDA.h"
+							RelativePath="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cu"
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForEvadeCUDAKernel.cu"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="Avoid Obstacles"
-						>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu"
+							RelativePath="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cuh"
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cuh"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCustomBuildTool"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCustomBuildTool"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="Avoid Walls"
-						>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cu"
-							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cuh"
-							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu"
+							RelativePath="..\include\OpenSteer\CUDA\SteerForEvasionCUDAKernel.cu"
 							>
 						</File>
 					</Filter>
@@ -435,7 +361,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDA.h"
+							RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cuh"
 							>
 						</File>
 						<File
@@ -451,7 +377,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForSeekCUDA.h"
+							RelativePath="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cuh"
 							>
 						</File>
 						<File
@@ -476,36 +402,118 @@
 						</File>
 					</Filter>
 					<Filter
-						Name="Cohesion"
+						Name="Neighborhood"
 						>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cu"
+						<Filter
+							Name="Separation"
 							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cuh"
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cu"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cuh"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDAKernel.cu"
+								>
+							</File>
+						</Filter>
+						<Filter
+							Name="Alignment"
 							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDAKernel.cu"
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cu"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cuh"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDAKernel.cu"
+								>
+							</File>
+						</Filter>
+						<Filter
+							Name="Avoid Neighbors"
 							>
-						</File>
-					</Filter>
-					<Filter
-						Name="Alignment"
-						>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cu"
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDAKernel.cu"
+								>
+							</File>
+						</Filter>
+						<Filter
+							Name="Avoid Obstacles"
 							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cuh"
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cuh"
+								>
+								<FileConfiguration
+									Name="Debug|Win32"
+									>
+									<Tool
+										Name="VCCustomBuildTool"
+									/>
+								</FileConfiguration>
+								<FileConfiguration
+									Name="Release|Win32"
+									>
+									<Tool
+										Name="VCCustomBuildTool"
+									/>
+								</FileConfiguration>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
+								>
+							</File>
+						</Filter>
+						<Filter
+							Name="Avoid Walls"
 							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDAKernel.cu"
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cu"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cuh"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu"
+								>
+							</File>
+						</Filter>
+						<Filter
+							Name="Cohesion"
 							>
-						</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cu"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cuh"
+								>
+							</File>
+							<File
+								RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDAKernel.cu"
+								>
+							</File>
+						</Filter>
 					</Filter>
 				</Filter>
 			</Filter>
