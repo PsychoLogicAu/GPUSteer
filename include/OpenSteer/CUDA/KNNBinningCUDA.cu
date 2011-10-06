@@ -6,7 +6,7 @@ using namespace OpenSteer;
 
 #include <thrust/sort.h>
 
-#include "DebugUtils.h"
+//#include "DebugUtils.h"
 
 #define TIMING
 

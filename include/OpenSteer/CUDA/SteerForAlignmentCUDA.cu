@@ -14,6 +14,7 @@ extern "C"
 													float3 const*	pdBDirection,
 													uint const		numB,
 
+													float const		minDistance,
 													float const		maxDistance,
 													float const		cosMaxAngle,
 
@@ -25,10 +26,11 @@ extern "C"
 
 using namespace OpenSteer;
 
-SteerForAlignmentCUDA::SteerForAlignmentCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
+SteerForAlignmentCUDA::SteerForAlignmentCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const minDistance, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
 :	AbstractCUDAKernel( pAgentGroup, fWeight, doNotApplyWith ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup ),
+	m_fMinDistance( minDistance ),
 	m_fMaxDistance( maxDistance ),
 	m_fCosMaxAngle( cosMaxAngle )
 {
@@ -73,6 +75,7 @@ void SteerForAlignmentCUDA::run( void )
 																pdBDirection,
 																numB,
 
+																m_fMinDistance,
 																m_fMaxDistance,
 																m_fCosMaxAngle,
 																

@@ -16,7 +16,9 @@ __constant__ float3		constWorldStepNormalized;
 __constant__ uint3		constWorldCells;
 
 // Fetch the cell index from texCellIndicesNormalized at a given world {x,y,z} position.
-#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
+//#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
+#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.z, pos.y ) )
+
 // Fetch the cell index from texCellIndices at a given texel (x,y,z) coordinate.
 //#define CELL_INDEX( x, y, z )			( tex3D( texCellIndices, x, y, z ) )
 
@@ -118,10 +120,10 @@ __global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// 
 	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
 	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
 
-	__syncthreads();
-
 	// Get the first cell index (radius 0).
 	shNeighboringCells[ threadIdx.x * neighborsPerCell ] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
+
+	__syncthreads();
 
 	int i = 1;
 	// Compute the start offset into shNeighboringCells for this radius.
@@ -137,7 +139,10 @@ __global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// 
 				for( int dx = -iCurrentRadius; dx <= iCurrentRadius; dx++ )	// World width.
 				{
 					// Only do for the outside cells.
-					if( dz == -iCurrentRadius || dz == iCurrentRadius || dx == -iCurrentRadius || dx == iCurrentRadius || dy == -iCurrentRadius || dy == iCurrentRadius )
+					if(	dz == -iCurrentRadius || dz == iCurrentRadius ||
+						dx == -iCurrentRadius || dx == iCurrentRadius ||
+						dy == -iCurrentRadius || dy == iCurrentRadius
+						)
 					{
 						float3 queryPosition = make_float3(	POSITION_SH( threadIdx.x ).x + dx * constWorldStepNormalized.x,
 															POSITION_SH( threadIdx.x ).y + dy * constWorldStepNormalized.y,
@@ -193,10 +198,10 @@ __global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// 
 	POSITION_SH( threadIdx.x ).y = (POSITION_SH( threadIdx.x ).y + 0.5f * constWorldSize.y) / constWorldSize.y;
 	POSITION_SH( threadIdx.x ).z = (POSITION_SH( threadIdx.x ).z + 0.5f * constWorldSize.z) / constWorldSize.z;
 
-	__syncthreads();
-
 	// Get the first cell index (radius 0).
 	shNeighboringCells[ threadIdx.x * neighborsPerCell ] = CELL_INDEX_NORMALIZED( POSITION_SH( threadIdx.x ) );
+
+	__syncthreads();
 
 	int i = 1;
 	// Compute the start offset into shNeighboringCells for this radius.
@@ -420,15 +425,15 @@ __global__ void KNNBinningKernel(	// Group A
 		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
 	}
 
-	// Coalesce read the positions.
-	FLOAT3_GLOBAL_READ( shAPosition, pdAPositionSorted );
-	
 	// Store this thread's index and cell index in registers.
 	uint const		AIndex					= pdAIndices[ AIndexSorted ];
 	uint			cellIndex				= pdACellIndices[ AIndexSorted ];
 
 	// Get the offset for the neighbors of this cell.
 	int const cellNeighborsOffset = cellIndex * neighborsPerCell;
+
+	// Coalesce read the positions.
+	FLOAT3_GLOBAL_READ( shAPosition, pdAPositionSorted );
 
 	// For each of the neighbors of the current cell...
 	for( int iCellNeighbor = 0; iCellNeighbor < neighborsPerCell; iCellNeighbor++ )

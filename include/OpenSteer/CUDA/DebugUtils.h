@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 
-void OutputDebugStringToFile( char const* szString, char const* szFilename = "debug.log" )
+static void OutputDebugStringToFile( char const* szString, char const* szFilename = "debug.log" )
 {
 	std::ofstream of;
 
@@ -19,7 +19,7 @@ void OutputDebugStringToFile( char const* szString, char const* szFilename = "de
 }
 
 template < typename T >
-void OutputDeviceData( T const* pdData, size_t const nEnt, size_t const nElemsPerEnt, std::ostream & os )
+static void OutputDeviceData( T const* pdData, size_t const nEnt, size_t const nElemsPerEnt, std::ostream & os )
 {
 	// Allocate host data.
 	T * phData = (T*)malloc( nEnt * nElemsPerEnt * sizeof(T) );
@@ -41,7 +41,7 @@ void OutputDeviceData( T const* pdData, size_t const nEnt, size_t const nElemsPe
 }
 
 template < typename T >
-void OutputDeviceDataToFile( char const* szFilename, T const* pdData, size_t const n, size_t const elemsPerLine, std::ios_base::openmode mode = std::ios_base::out )
+static void OutputDeviceDataToFile( char const* szFilename, T const* pdData, size_t const n, size_t const elemsPerLine, std::ios_base::openmode mode = std::ios_base::out )
 {
 	std::ofstream outFile;
 	outFile.open( szFilename, mode );

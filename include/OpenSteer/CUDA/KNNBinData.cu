@@ -2,6 +2,8 @@
 
 #include "CUDAGlobals.cuh"
 
+//#include "DebugUtils.h"
+
 using namespace OpenSteer;
 
 extern "C"

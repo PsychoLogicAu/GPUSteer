@@ -13,6 +13,7 @@ extern "C"
 												float3 const*	pdBPosition,
 												uint const		numB,
 
+												float const		minDistance,
 												float const		maxDistance,
 												float const		cosMaxAngle,
 
@@ -24,11 +25,12 @@ extern "C"
 
 using namespace OpenSteer;
 
-SteerForCohesionCUDA::SteerForCohesionCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
+SteerForCohesionCUDA::SteerForCohesionCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const minDistance, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
 :	AbstractCUDAKernel( pAgentGroup, fWeight, doNotApplyWith ),
 	m_pOtherGroup( pOtherGroup ),
 	m_pKNNData( pKNNData ),
 	m_fCosMaxAngle( cosMaxAngle ),
+	m_fMinDistance( minDistance ),
 	m_fMaxDistance( maxDistance )
 {
 	// Nothing to do.
@@ -72,7 +74,9 @@ void SteerForCohesionCUDA::run( void )
 																// Other group data.
 																pdBPosition,
 																numB,
+
 																// Flocking data.
+																m_fMinDistance,
 																m_fMaxDistance,
 																m_fCosMaxAngle,
 														

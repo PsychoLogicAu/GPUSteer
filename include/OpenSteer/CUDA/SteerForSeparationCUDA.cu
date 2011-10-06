@@ -15,6 +15,7 @@ extern "C"
 												float3 const*	pdBPosition,
 												uint const		numB,
 
+												float const		minDistance,
 												float const		maxDistance,
 												float const		cosMaxAngle,
 
@@ -24,10 +25,11 @@ extern "C"
 												);
 }
 
-SteerForSeparationCUDA::SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
+SteerForSeparationCUDA::SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const minDistance, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
 :	AbstractCUDAKernel( pAgentGroup, fWeight, doNotApplyWith ),
 	m_pKNNData( pKNNData ),
 	m_pOtherGroup( pOtherGroup ),
+	m_fMinDistance( minDistance ),
 	m_fMaxDistance( maxDistance ),
 	m_fCosMaxAngle( cosMaxAngle )
 {
@@ -62,7 +64,21 @@ void SteerForSeparationCUDA::run( void )
 	size_t shMemSize = k * THREADSPERBLOCK * sizeof(uint);
 
 	// Launch the kernel.
-	SteerForSeparationKernel<<< grid, block, shMemSize >>>( pdAPosition, pdADirection, pdASteering, numA, pdKNNIndices, k, pdBPosition, numB, m_fMaxDistance, m_fCosMaxAngle, m_fWeight, pdAppliedKernels, m_doNotApplyWith );
+	SteerForSeparationKernel<<< grid, block, shMemSize >>>(	pdAPosition, 
+															pdADirection, 
+															pdASteering, 
+															numA, 
+															pdKNNIndices, 
+															k, 
+															pdBPosition, 
+															numB, 
+															m_fMinDistance,
+															m_fMaxDistance, 
+															m_fCosMaxAngle, 
+															m_fWeight, 
+															pdAppliedKernels, 
+															m_doNotApplyWith 
+															);
 	cutilCheckMsg( "SteerForSeparationKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
