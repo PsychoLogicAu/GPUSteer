@@ -1,4 +1,4 @@
-#include "SteerForFleeCUDA.h"
+#include "SteerForFleeCUDA.cuh"
 
 #include "../AgentGroupData.cuh"
 

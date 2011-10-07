@@ -20,7 +20,7 @@ public:
 	{}
 
 	bool LoadFromFile( char const* szFilename );
-	void SplitWalls( std::vector< bin_cell > const& cells );
+	void SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds );
 
 	WallGroupData &		GetWallGroupData( void ){ return m_wallGroupData; }
 

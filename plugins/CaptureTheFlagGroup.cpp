@@ -84,7 +84,7 @@ using namespace OpenSteer;
 
 //#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
-#define ANNOTATION_CELLS	// TODO: Draw the cells when this is on.
+//#define ANNOTATION_CELLS
 //#define NO_DRAW
 
 // ----------------------------------------------------------------------------
@@ -243,7 +243,7 @@ public:
 		// Load the walls from a file.
 		m_pWallGroup->LoadFromFile( "10kAgentsChoke.map" );
 		// Clip the walls to the edges of the cells.
-		m_pWallGroup->SplitWalls( m_pKNNBinData->hvCells() );
+		m_pWallGroup->SplitWalls( m_pKNNBinData->hvCellMinBounds(), m_pKNNBinData->hvCellMaxBounds() );
 
 		// Send the data to the device.
 		m_pWallGroup->SyncDevice();
@@ -266,10 +266,14 @@ public:
 		//
 		//	Draw the cells.
 		//
-		std::vector< bin_cell > const& cells	= m_pKNNBinData->hvCells();
+		std::vector< float3 > const& cellMinBounds = m_pKNNBinData->hvCellMinBounds();
+		std::vector< float3 > const& cellMaxBounds = m_pKNNBinData->hvCellMaxBounds();
+
 		float3 const cellColor = { 0.1f, 0.1f, 0.1f };
 		// For each of the cells...
-		for( std::vector< bin_cell >::const_iterator it = cells.begin(); it != cells.end(); ++it )
+		std::vector< float3 >::const_iterator itCellMinBound;
+		std::vector< float3 >::const_iterator itCellMaxBound;
+		for( itCellMinBound = cellMinBounds.begin(), itCellMaxBound = cellMaxBounds.begin(); itCellMinBound != cellMinBounds.end(); ++itCellMinBound, ++itCellMaxBound )
 		{
 			/*
 			0    1
@@ -279,10 +283,10 @@ public:
 			+----+
 			2    3
 			*/
-			float3 const p0		= { it->minBound.x, 0.f, it->maxBound.z };
-			float3 const p1		= { it->maxBound.x, 0.f, it->maxBound.z };
-			float3 const p2		= { it->minBound.x, 0.f, it->minBound.z };
-			float3 const p3		= { it->maxBound.x, 0.f, it->minBound.z };
+			float3 const p0		= { itCellMinBound->x, 0.f, itCellMaxBound->z };
+			float3 const p1		= { itCellMaxBound->x, 0.f, itCellMaxBound->z };
+			float3 const p2		= { itCellMinBound->x, 0.f, itCellMinBound->z };
+			float3 const p3		= { itCellMaxBound->x, 0.f, itCellMinBound->z };
 
 			drawLine( p0, p1, cellColor );
 			drawLine( p0, p2, cellColor );
@@ -673,8 +677,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 
-	//steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
-	steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
+	steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
+	//steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
 	// Flocking.
 	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );

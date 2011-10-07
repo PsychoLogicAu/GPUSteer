@@ -1,4 +1,4 @@
-#include "SteerForPursueCUDA.h"
+#include "SteerForPursueCUDA.cuh"
 
 #include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"

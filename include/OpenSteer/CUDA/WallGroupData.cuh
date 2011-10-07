@@ -37,7 +37,7 @@ public:
 	~WallGroupData( void )
 	{}
 
-	void SplitWalls( std::vector< bin_cell > const& cells );
+	void SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds );
 	bool LoadFromFile( char const* szFilename );
 
 	float3 *	pdLineStart( void )		{ return m_dvLineStart.begin(); }

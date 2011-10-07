@@ -28,7 +28,7 @@ static uint const KERNEL_AVOID_NEIGHBORS_BIT	= 1 << 9;
 
 static uint const KERNEL_FOLLOW_PATH_BIT		= 1 << 10;
 
-//#define COALESCE
+#define COALESCE
 #if defined COALESCE
 	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
 																__syncthreads();																	\

@@ -89,14 +89,14 @@ __global__ void SteerForAlignmentCUDAKernel(	float3 const*	pdAPosition,
 		float3 const bPosition = pdBPosition[ BIndex ];
 		float3 const bDirection = pdBDirection[ BIndex ];
 
-		if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
-		{
+		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
+		//{
 			// accumulate sum of neighbor's positions
 			steering = float3_add( steering, bDirection );
 
 			// count neighbors
 			neighbors++;
-		}
+		//}
 	}
 
 	if( neighbors > 0 )

@@ -86,14 +86,14 @@ __global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
 		// TODO: texture memory.
 		float3 const bPosition = pdBPosition[ BIndex ];
 
-		if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
-		{
+		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
+		//{
 			// accumulate sum of neighbor's positions
 			steering = float3_add( steering, bPosition );
 
 			// count neighbors
 			neighbors++;
-		}
+		//}
 	}
 
 	if( neighbors > 0 )

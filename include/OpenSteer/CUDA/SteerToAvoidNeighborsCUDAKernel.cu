@@ -1,4 +1,4 @@
-#include "SteerForPursueCUDA.h"
+#include "SteerToAvoidNeighborsCUDA.cuh"
 
 #include "CUDAKernelGlobals.cuh"
 
