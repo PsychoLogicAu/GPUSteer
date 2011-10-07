@@ -103,7 +103,7 @@ bool WallGroupData::LoadFromFile( char const* szFilename )
 	return true;
 }
 
-void WallGroupData::SplitWalls( std::vector< bin_cell > const& cells )
+void WallGroupData::SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds )
 {
 	size_t count = m_hvLineStart.size();
 
@@ -132,13 +132,16 @@ void WallGroupData::SplitWalls( std::vector< bin_cell > const& cells )
 	{
 		bool intersected = false;
 
+		std::vector< float3 >::const_iterator itCellMinBound;
+		std::vector< float3 >::const_iterator itCellMaxBound;
+
 		// For each cell...
-		for( std::vector< bin_cell >::const_iterator itCell = cells.begin(); itCell != cells.end(); ++itCell )
+		for( itCellMinBound = cellMinBounds.begin(), itCellMaxBound = cellMaxBounds.begin(); itCellMinBound != cellMinBounds.end(); ++itCellMinBound, ++itCellMaxBound )
 		{
 			// Does the line segment intersect the cell?
 			float3 intersectPoint;
 
-			if( intersected = intersects( *itStart, *itEnd, itCell->minBound, itCell->maxBound, intersectPoint ) )
+			if( intersected = intersects( *itStart, *itEnd, *itCellMinBound, *itCellMaxBound, intersectPoint ) )
 			{
 				float3 midPoint;
 

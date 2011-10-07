@@ -82,7 +82,7 @@ using namespace OpenSteer;
 
 #define M_PI       3.14159265358979323846
 
-//#define ANNOTATION_LINES
+#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
 //#define ANNOTATION_CELLS
 //#define NO_DRAW
@@ -110,16 +110,16 @@ class BoidsWanderer;
 //const float gDim						= 200;
 //const int gCells						= 28;
 
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 91;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 91;
 
-
+/*
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
 //const int gCells						= 285;
-const int gCells						= 150;
-
+const int gCells						= 200;
+*/
 
 //const int gEnemyCount					= 1000000;
 //const float gDim						= 6350;
@@ -149,8 +149,8 @@ float const g_fMinTimeToWall			= 5.0f;		// Look-ahead time for wall avoidance.
 float const g_fPathPredictionTime		= 10.f;
 
 // Weights for behaviors.
-float const	g_fWeightAlignment			= 16.f;
-float const	g_fWeightCohesion			= 16.f;
+float const	g_fWeightAlignment			= 1.f;
+float const	g_fWeightCohesion			= 1.f;
 float const	g_fWeightSeparation			= 1.f;
 
 float const g_fWeightPursuit			= 1.f;
@@ -164,8 +164,8 @@ float const g_fWeightWallAvoidance		= 10.f;
 float const g_fWeightAvoidNeighbors		= 2.f;
 
 // Masks for behaviors.
-uint const	g_maskAlignment				= KERNEL_SEPARATION_BIT;
-uint const	g_maskCohesion				= KERNEL_SEPARATION_BIT;
+uint const	g_maskAlignment				= 0;
+uint const	g_maskCohesion				= 0;
 uint const	g_maskSeparation			= 0;
 
 uint const	g_maskSeek					= KERNEL_SEPARATION_BIT; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
@@ -247,10 +247,16 @@ public:
 		//
 		//	Draw the cells.
 		//
-		std::vector< bin_cell > const& cells	= m_pKNNBinData->hvCells();
+		std::vector< float3 > const& cellMinBounds	= m_pKNNBinData->hvCellMinBounds();
+		std::vector< float3 > const& cellMaxBounds	= m_pKNNBinData->hvCellMaxBounds();
+
 		float3 const cellColor = { 0.1f, 0.1f, 0.1f };
+
+		std::vector< float3 >::const_iterator itCellMinBound;
+		std::vector< float3 >::const_iterator itCellMaxBound;
+
 		// For each of the cells...
-		for( std::vector< bin_cell >::const_iterator it = cells.begin(); it != cells.end(); ++it )
+		for( itCellMinBound = cellMinBounds.begin(), itCellMaxBound = cellMaxBounds.begin(); itCellMinBound != cellMinBounds.end(); ++itCellMinBound, ++itCellMaxBound )
 		{
 			
 			//  4     5
@@ -262,14 +268,14 @@ public:
 			//+----+
 			//2    3
 			
-			float3 const p0		= { it->minBound.x, it->maxBound.y, it->minBound.z };
-			float3 const p1		= { it->maxBound.x, it->maxBound.y, it->minBound.z };
-			float3 const p2		= { it->minBound.x, it->minBound.y, it->minBound.z };
-			float3 const p3		= { it->maxBound.x, it->minBound.y, it->minBound.z };
-			float3 const p4		= { it->minBound.x, it->maxBound.y, it->maxBound.z };
-			float3 const p5		= { it->maxBound.x, it->maxBound.y, it->maxBound.z };
-			float3 const p6		= { it->minBound.x, it->minBound.y, it->maxBound.z };
-			float3 const p7		= { it->maxBound.x, it->minBound.y, it->maxBound.z };
+			float3 const p0		= { itCellMinBound->x, itCellMaxBound->y, itCellMinBound->z };
+			float3 const p1		= { itCellMaxBound->x, itCellMaxBound->y, itCellMinBound->z };
+			float3 const p2		= { itCellMinBound->x, itCellMinBound->y, itCellMinBound->z };
+			float3 const p3		= { itCellMaxBound->x, itCellMinBound->y, itCellMinBound->z };
+			float3 const p4		= { itCellMinBound->x, itCellMaxBound->y, itCellMaxBound->z };
+			float3 const p5		= { itCellMaxBound->x, itCellMaxBound->y, itCellMaxBound->z };
+			float3 const p6		= { itCellMinBound->x, itCellMinBound->y, itCellMaxBound->z };
+			float3 const p7		= { itCellMaxBound->x, itCellMinBound->y, itCellMaxBound->z };
 
 			drawLine( p0, p1, cellColor );
 			drawLine( p0, p2, cellColor );
@@ -610,7 +616,7 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 	//steerForPursuit( this, g_pWanderer->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
-	steerForSeek( this, g_pWanderer->position(), g_fWeightSeek, g_maskSeek );
+	//steerForSeek( this, g_pWanderer->position(), g_fWeightSeek, g_maskSeek );
 
 	//steerForEvade( this, g_pWanderer->position(), g_pWanderer->forward(), g_pWanderer->speed(), g_fMaxPursuitPredictionTime, g_fWeightEvade, g_maskEvade );
 

@@ -1,4 +1,4 @@
-#include "SteerForSeekCUDA.h"
+#include "SteerForSeekCUDA.cuh"
 
 #include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"

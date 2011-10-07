@@ -86,14 +86,18 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 
 		float3 const bPosition = pdBPosition[ BIndex ];
 
-		if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
-		{
+		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
+		//{
 			float3 const offset = float3_subtract( bPosition, POSITION_SH( threadIdx.x ) );
 			float const distanceSquared = float3_dot( offset, offset );
+
+			if( distanceSquared > maxDistance * maxDistance )
+				continue;
+
 			steering = float3_add( steering, float3_scalar_divide( offset, -distanceSquared ) );
 
 			neighbors++;
-		}
+		//}
 	}
 
     // divide by neighbors, then normalize to pure direction
