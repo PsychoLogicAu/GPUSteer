@@ -3,9 +3,9 @@
 extern "C"
 {
 	__global__ void SteerForEvasionKernel(	// Agent data.
-											float3 const*	pdPosition,
-											float3 const*	pdDirection,
-											float3 *		pdSteering,
+											float4 const*	pdPosition,
+											float4 const*	pdDirection,
+											float4 *		pdSteering,
 
 											float3 const	menacePosition,
 											float3 const	menaceDirection,
@@ -44,9 +44,9 @@ void SteerForEvadeCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather required device data.
-	float3 const*	pdPosition			= m_pAgentGroupData->pdPosition();
-	float3 const*	pdDirection			= m_pAgentGroupData->pdDirection();
-	float3 *		pdSteering			= m_pAgentGroupData->pdSteering();
+	float4 const*	pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 const*	pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 *		pdSteering			= m_pAgentGroupData->pdSteering();
 
 	uint const		numAgents			= getNumAgents();
 

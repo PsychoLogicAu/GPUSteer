@@ -14,7 +14,7 @@ class AgentGroup : public BaseGroup
 	typedef std::map< id_type, size_t > IDToIndexMap;
 
 protected:
-	int		GetVehicleIndex( id_type _id ) const;
+	int		GetAgentIndex( id_type _id ) const;
 
 	void	RebuildIDToIndexMap( void );
 	/// Copy the host structures to the device.
@@ -24,7 +24,6 @@ protected:
 
 	// Vehicle data.
 	AgentGroupData				m_agentGroupData;
-	AgentGroupConst				m_agentGroupConst;
 
 	IDToIndexMap				m_cIDToIndexMap;
 
@@ -33,8 +32,8 @@ public:
 	AgentGroup( uint3 const& worldCells, uint const knn );
 	virtual ~AgentGroup( void );
 
-	bool AddVehicle( VehicleData const& vd, VehicleConst const& vc );
-	void RemoveVehicle( id_type const id );
+	bool AddAgent( AgentData const& ad );
+	void RemoveAgent( id_type const id );
 	/// Clear all vehicles from the group.
 	void Clear( void );
 	virtual void SetSyncHost( void )
@@ -43,17 +42,16 @@ public:
 		m_neighborDB.m_bSyncHost = true;
 	}
 
-	AgentGroupConst &		GetAgentGroupConst( void )		{ return m_agentGroupConst; }
 	AgentGroupData &		GetAgentGroupData( void )		{ return m_agentGroupData; }
 
 	/// Use to extract data for an individual vehicle
-	bool GetDataForVehicle( id_type const id, VehicleData &_data, VehicleConst &_const);
+	bool GetDataForAgent( id_type const id, AgentData & ad );
 
 	// Overloaded pure virtuals.
-	virtual float3 *	pdPosition( void )					{ return m_agentGroupData.pdPosition(); }
-	virtual float3 *	pdDirection( void )					{ return m_agentGroupData.pdForward(); }
+	virtual float4 *	pdPosition( void )					{ return m_agentGroupData.pdPosition(); }
+	virtual float4 *	pdDirection( void )					{ return m_agentGroupData.pdDirection(); }
 	virtual float *		pdSpeed( void )						{ return m_agentGroupData.pdSpeed(); }
-	virtual float *		pdRadius( void )					{ return m_agentGroupConst.pdRadius(); }
+	virtual float *		pdRadius( void )					{ return m_agentGroupData.pdRadius(); }
 
 };	//class AgentGroup
 }	//namespace OpenSteer

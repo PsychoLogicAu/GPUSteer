@@ -253,20 +253,20 @@ namespace OpenSteer {
 
         bool isAhead (const AbstractVehicle& v, const float3& target, float cosThreshold) const
         {
-			const float3 targetDirection = float3_normalize(float3_subtract(target, v.position()));
-			return float3_dot(v.forward(), targetDirection) > cosThreshold;
+			const float3 targetDirection = float3_normalize(float3_subtract(target, make_float3(v.position())));
+			return float3_dot(make_float3(v.forward()), targetDirection) > cosThreshold;
         };
         bool isAside (const AbstractVehicle& v, const float3& target, float cosThreshold) const
         {
-			const float3 targetDirection = float3_normalize(float3_subtract(target, v.position()));
+			const float3 targetDirection = float3_normalize(float3_subtract(target, make_float3(v.position())));
 
-            const float dp = float3_dot(v.forward(), targetDirection);
+            const float dp = float3_dot(make_float3(v.forward()), targetDirection);
             return (dp < cosThreshold) && (dp > -cosThreshold);
         };
         bool isBehind (const AbstractVehicle& v, const float3& target, float cosThreshold) const
         {
-            const float3 targetDirection = float3_normalize(float3_subtract(target, v.position()));
-            return float3_dot(v.forward(), targetDirection) < cosThreshold;
+            const float3 targetDirection = float3_normalize(float3_subtract(target, make_float3(v.position())));
+            return float3_dot(make_float3(v.forward()), targetDirection) < cosThreshold;
         };
 
 

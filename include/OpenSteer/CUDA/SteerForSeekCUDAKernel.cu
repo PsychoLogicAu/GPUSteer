@@ -1,5 +1,3 @@
-#include "SteerForSeekCUDA.cuh"
-
 #include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
 
@@ -9,10 +7,12 @@ using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void SteerForSeekCUDAKernel(	float3 *		pdSteering,
-											float3 const*	pdPosition,
-											float3 const*	pdForward,
+	__global__ void SteerForSeekCUDAKernel(	float4 *		pdSteering,
+											float4 const*	pdPosition,
+											float4 const*	pdDirection,
+
 											float3 const	target,
+
 											size_t const	numAgents,
 											float const		fWeight,
 											uint *			pdAppliedKernels,
@@ -20,10 +20,12 @@ extern "C"
 											);
 }
 
-__global__ void SteerForSeekCUDAKernel(	float3 *		pdSteering,
-										float3 const*	pdPosition,
-										float3 const*	pdForward,
+__global__ void SteerForSeekCUDAKernel(	float4 *		pdSteering,
+										float4 const*	pdPosition,
+										float4 const*	pdDirection,
+
 										float3 const	target,
+
 										size_t const	numAgents,
 										float const		fWeight,
 										uint *			pdAppliedKernels,
@@ -39,13 +41,13 @@ __global__ void SteerForSeekCUDAKernel(	float3 *		pdSteering,
 	if( pdAppliedKernels[ index ] & doNotApplyWith )
 		return;
 
-	__shared__ float3 shSteering[THREADSPERBLOCK];
 	__shared__ float3 shPosition[THREADSPERBLOCK];
-	__shared__ float3 shForward[THREADSPERBLOCK];
+	__shared__ float3 shDirection[THREADSPERBLOCK];
+	__shared__ float3 shSteering[THREADSPERBLOCK];
 
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shForward, pdForward );
+	POSITION_SH( threadIdx.x ) = POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x ) = DIRECTION_F3( index );
+	STEERING_SH( threadIdx.x ) = STEERING_F3( index );
 
 	float3 steering = { 0.f, 0.f, 0.f };
 
@@ -53,7 +55,7 @@ __global__ void SteerForSeekCUDAKernel(	float3 *		pdSteering,
 	float3 const desiredVelocity = float3_subtract( target, POSITION_SH( threadIdx.x ) );
 
 	// Set the steering vector.
-	steering = float3_subtract( desiredVelocity, FORWARD_SH( threadIdx.x ) );
+	steering = float3_subtract( desiredVelocity, DIRECTION_SH( threadIdx.x ) );
 
 	// Normalize and apply the weight.
 	steering = float3_scalar_multiply( float3_normalize( steering ), fWeight );
@@ -66,5 +68,5 @@ __global__ void SteerForSeekCUDAKernel(	float3 *		pdSteering,
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Copy the steering vectors back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

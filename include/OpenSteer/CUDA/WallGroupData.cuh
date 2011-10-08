@@ -13,15 +13,15 @@ namespace OpenSteer
 class WallGroupData
 {
 private:
-	dev_vector< float3 >	m_dvLineStart;		// Start points of the line segments.
-	dev_vector< float3 >	m_dvLineMid;		// Mid points of the line segments.
-	dev_vector< float3 >	m_dvLineEnd;		// End points of the line segments.
-	dev_vector< float3 >	m_dvLineNormal;		// Normals of the line segments.
+	dev_vector< float4 >	m_dvLineStart;		// Start points of the line segments.
+	dev_vector< float4 >	m_dvLineMid;		// Mid points of the line segments.
+	dev_vector< float4 >	m_dvLineEnd;		// End points of the line segments.
+	dev_vector< float4 >	m_dvLineNormal;		// Normals of the line segments.
 
-	std::vector< float3 >	m_hvLineStart;
-	std::vector< float3 >	m_hvLineMid;
-	std::vector< float3 >	m_hvLineEnd;
-	std::vector< float3 >	m_hvLineNormal;
+	std::vector< float4 >	m_hvLineStart;
+	std::vector< float4 >	m_hvLineMid;
+	std::vector< float4 >	m_hvLineEnd;
+	std::vector< float4 >	m_hvLineNormal;
 
 	void syncDevice( void );
 
@@ -37,18 +37,18 @@ public:
 	~WallGroupData( void )
 	{}
 
-	void SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds );
+	void SplitWalls( std::vector< bin_cell > const& cells );
 	bool LoadFromFile( char const* szFilename );
 
-	float3 *	pdLineStart( void )		{ return m_dvLineStart.begin(); }
-	float3 *	pdLineMid( void )		{ return m_dvLineMid.begin(); }
-	float3 *	pdLineEnd( void )		{ return m_dvLineEnd.begin(); }
-	float3 *	pdLineNormal( void )	{ return m_dvLineNormal.begin(); }
+	float4 *	pdLineStart( void )		{ return m_dvLineStart.begin(); }
+	float4 *	pdLineMid( void )		{ return m_dvLineMid.begin(); }
+	float4 *	pdLineEnd( void )		{ return m_dvLineEnd.begin(); }
+	float4 *	pdLineNormal( void )	{ return m_dvLineNormal.begin(); }
 
-	std::vector< float3 > const&	hvLineStart( void ) const	{ return m_hvLineStart; }
-	std::vector< float3 > const&	hvLineMid( void ) const		{ return m_hvLineMid; }
-	std::vector< float3 > const&	hvLineEnd( void ) const		{ return m_hvLineEnd; }
-	std::vector< float3 > const&	hvLineNormal( void ) const	{ return m_hvLineNormal; }
+	std::vector< float4 > const&	hvLineStart( void ) const	{ return m_hvLineStart; }
+	std::vector< float4 > const&	hvLineMid( void ) const		{ return m_hvLineMid; }
+	std::vector< float4 > const&	hvLineEnd( void ) const		{ return m_hvLineEnd; }
+	std::vector< float4 > const&	hvLineNormal( void ) const	{ return m_hvLineNormal; }
 
 	uint const&						size( void ) const			{ return m_nCount; }
 };	// class WallGroupData

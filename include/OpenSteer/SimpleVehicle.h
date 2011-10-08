@@ -76,8 +76,7 @@ namespace OpenSteer {
     class SimpleVehicle : public AbstractVehicle, public SteerLibrary
     {
 	protected:
-		VehicleData _data;
-		VehicleConst _const;
+		AgentData _data;
 
         float		_curvature;
         float3		_lastForward;
@@ -95,8 +94,7 @@ namespace OpenSteer {
         // destructor
         ~SimpleVehicle ();
 
-		VehicleData& getVehicleData(void) { return _data; }
-		VehicleConst& getVehicleConst(void) { return _const; }
+		AgentData& getVehicleData(void) { return _data; }
 
         // reset vehicle state
         void reset (void)
@@ -104,7 +102,7 @@ namespace OpenSteer {
             // reset LocalSpace state
             resetLocalSpace ();
 
-			_data.steering = make_float3(0.0f, 0.0f, 0.0f);
+			_data.steering = make_float4(0.0f, 0.0f, 0.0f, 0.f);
 
             setMass (1);          // mass (defaults to 1 so acceleration=force)
             setSpeed (0);         // speed along Forward direction.
@@ -123,23 +121,23 @@ namespace OpenSteer {
 		// From LocalSpace.h
         float3 side     (void) const {return _data.side;};
         float3 up       (void) const {return _data.up;};
-        float3 forward  (void) const {return _data.forward;};
-        float3 position (void) const {return _data.position;};
+        float4 forward  (void) const {return _data.direction;};
+        float4 position (void) const {return _data.position;};
         float3 setSide     (float3 s) {return _data.side = s;};
         float3 setUp       (float3 u) {return _data.up = u;};
-        float3 setForward  (float3 f) {return _data.forward = f;};
-        float3 setPosition (float3 p) {return _data.position = p;};
+        float4 setForward  (float4 f) {return _data.direction = f;};
+        float4 setPosition (float4 p) {return _data.position = p;};
         float3 setSide     (float x, float y, float z){return _data.side = make_float3(x,y,z);};
         float3 setUp       (float x, float y, float z){return _data.up = make_float3(x,y,z);};
-        float3 setForward  (float x, float y, float z){return _data.forward = make_float3(x,y,z);};
-        float3 setPosition (float x, float y, float z){return _data.position = make_float3(x,y,z);};
+        float4 setForward  (float x, float y, float z){return _data.direction = make_float4(x,y,z,0);};
+        float4 setPosition (float x, float y, float z){return _data.position = make_float4(x,y,z,0);};
 		bool rightHanded (void) const {return true;}
 		void resetLocalSpace (void)
         {
-            _data.forward = make_float3 (0, 0, 1);
-            _data.side = localRotateForwardToSide (_data.forward);
+            _data.direction = make_float4 (0, 0, 1, 0);
+            _data.side = localRotateForwardToSide (make_float3(_data.direction));
             _data.up = make_float3 (0, 1, 0);
-            _data.position = make_float3 (0, 0, 0);
+            _data.position = make_float4 (0, 0, 0, 0);
         };
 #pragma region From LocalSpace
 		// ------------------------------------------------------------------------
@@ -149,7 +147,7 @@ namespace OpenSteer {
             // dot offset with local basis vectors to obtain local coordiantes
             return make_float3 (float3_dot(globalDirection, _data.side),
                          float3_dot(globalDirection, _data.up),
-                         float3_dot(globalDirection, _data.forward));
+                         float3_dot(globalDirection, make_float3(_data.direction)));
         };
 
 
@@ -158,7 +156,7 @@ namespace OpenSteer {
         float3 localizePosition (const float3& globalPosition) const
         {
             // global offset from local origin
-            float3 globalOffset = float3_subtract(globalPosition, _data.position);
+            float3 globalOffset = float3_subtract( globalPosition, make_float3( _data.position ) );
 
             // dot offset with local basis vectors to obtain local coordiantes
             return localizeDirection (globalOffset);
@@ -169,7 +167,7 @@ namespace OpenSteer {
         // transform a point in local space to its equivalent in global space
         float3 globalizePosition (const float3& localPosition) const
         {
-            return float3_add(_data.position, globalizeDirection(localPosition));
+            return float3_add( make_float3( _data.position ), globalizeDirection(localPosition));
         };
 
 
@@ -182,7 +180,7 @@ namespace OpenSteer {
 											float3_scalar_multiply(_data.side, localDirection.x),
 											float3_scalar_multiply(_data.up, localDirection.y)
 										  ),
-								float3_scalar_multiply(_data.forward, localDirection.z)
+								float3_scalar_multiply(make_float3(_data.direction), localDirection.z)
 							 );
         };
 
@@ -193,9 +191,9 @@ namespace OpenSteer {
         {
             // derive new unit side basis vector from forward and up
             if (rightHanded())
-				_data.side = float3_cross(_data.forward, _data.up);
+				_data.side = float3_cross(make_float3(_data.direction), _data.up);
             else
-				_data.side = float3_normalize(float3_cross(_data.up, _data.forward));
+				_data.side = float3_normalize(float3_cross(_data.up, make_float3(_data.direction)));
         }
 
 
@@ -204,7 +202,7 @@ namespace OpenSteer {
         // (which is expected to have unit length)
         void regenerateOrthonormalBasisUF (const float3& newUnitForward)
         {
-            _data.forward = newUnitForward;
+            _data.direction = make_float4( newUnitForward, 0.f );
 
             // derive new side basis vector from NEW forward and OLD up
             setUnitSideFromForwardAndUp ();
@@ -213,9 +211,9 @@ namespace OpenSteer {
             // (should have unit length since Side and Forward are
             // perpendicular and unit length)
             if (rightHanded())
-				_data.up = float3_cross(_data.side, _data.forward);
+				_data.up = float3_cross(_data.side, make_float3(_data.direction));
             else
-				_data.up = float3_cross(_data.forward, _data.side);
+				_data.up = float3_cross(make_float3(_data.direction), _data.side);
         }
 
 
@@ -255,8 +253,8 @@ namespace OpenSteer {
 
 
         // get/set mass
-        float mass (void) const {return _const.mass;}
-        float setMass (float m) {return _const.mass = m;}
+        float mass (void) const {return _data.mass;}
+        float setMass (float m) {return _data.mass = m;}
 
         // get velocity of vehicle
 		float3 velocity (void) const { return _data.velocity(); } //{return float3_scalar_multiply(forward(), _data.speed);}
@@ -266,16 +264,16 @@ namespace OpenSteer {
         float setSpeed (float s) {return _data.speed = s;}
 
         // size of bounding sphere, for obstacle avoidance, etc.
-        float radius (void) const {return _const.radius;}
-        float setRadius (float m) {return _const.radius = m;}
+        float radius (void) const {return _data.radius;}
+        float setRadius (float m) {return _data.radius = m;}
 
         // get/set maxForce
-        float maxForce (void) const {return _const.maxForce;}
-        float setMaxForce (float mf) {return _const.maxForce = mf;}
+        float maxForce (void) const {return _data.maxForce;}
+        float setMaxForce (float mf) {return _data.maxForce = mf;}
 
         // get/set maxSpeed
-        float maxSpeed (void) const {return _const.maxSpeed;}
-        float setMaxSpeed (float ms) {return _const.maxSpeed = ms;}
+        float maxSpeed (void) const {return _data.maxSpeed;}
+        float setMaxSpeed (float ms) {return _data.maxSpeed = ms;}
 
 
         // apply a given steering force to our momentum,
@@ -346,8 +344,8 @@ namespace OpenSteer {
         void randomizeHeadingOnXZPlane (void)
         {
 			setUp (float3_up());
-            setForward (float3_RandomUnitVectorOnXZPlane ());
-            setSide (localRotateForwardToSide (forward()));
+            setForward (make_float4( float3_RandomUnitVectorOnXZPlane (), 0.f));
+            setSide (localRotateForwardToSide (make_float3(forward())));
         }
     };
 

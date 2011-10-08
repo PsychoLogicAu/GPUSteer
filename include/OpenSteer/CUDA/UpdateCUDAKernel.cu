@@ -9,24 +9,42 @@ using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void UpdateCUDAKernel(	// vehicle_group_data members.
-										float3 * pdSide, float3 * pdUp, float3 * pdDirection,
-										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
-										// vehicle_group_const members.
-										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
-										float const elapsedTime, size_t const numAgents,
+	__global__ void UpdateCUDAKernel(	float3 * pdSide,
+										float3 * pdUp,
+										float4 * pdDirection,
+										float4 * pdPosition,
+
+										float4 * pdSteering,
+										float * pdSpeed,
+
+										float const* pdMaxForce,
+										float const* pdMaxSpeed,
+										float const* pdMass,
+
+										float const elapsedTime,
+										size_t const numAgents,
 										uint * pdAppliedKernels
 										);
 }
 
-__global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDirection,
-										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
-										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
-										float const elapsedTime, size_t const numAgents,
-										uint * pdAppliedKernels
-										)
+__global__ void UpdateCUDAKernel(	float3 * pdSide,
+									float3 * pdUp,
+									float4 * pdDirection,
+									float4 * pdPosition,
+
+									float4 * pdSteering,
+									float * pdSpeed,
+
+									float const* pdMaxForce,
+									float const* pdMaxSpeed,
+									float const* pdMass,
+
+									float const elapsedTime,
+									size_t const numAgents,
+									uint * pdAppliedKernels
+									)
 {
-	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
 	// Check bounds.
 	if( index >= numAgents )
@@ -45,20 +63,20 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDi
 	__shared__ float shMass[THREADSPERBLOCK];
 
 	// Copy the required global memory variables to shared mem.
-	FLOAT3_GLOBAL_READ( shSide, pdSide );
-	FLOAT3_GLOBAL_READ( shUp, pdUp );
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+	DIRECTION_SH( threadIdx.x ) = DIRECTION_F3( index );
+	POSITION_SH( threadIdx.x ) = POSITION_F3( index );
+	STEERING_SH( threadIdx.x ) = STEERING_F3( index );
 	
 	SPEED_SH( threadIdx.x ) = SPEED( index );
-	__syncthreads();
 	MAXFORCE_SH( threadIdx.x ) = MAXFORCE( index );
-	__syncthreads();
 	MAXSPEED_SH( threadIdx.x ) = MAXSPEED( index );
-	__syncthreads();
 	MASS_SH( threadIdx.x ) = MASS( index );
-	__syncthreads();
+
+	FLOAT3_GLOBAL_READ( shSide, pdSide );
+	FLOAT3_GLOBAL_READ( shUp, pdUp );
+
+	// Set the applied kernels back to zero.
+	pdAppliedKernels[ index ] = 0;
 
 	// If we don't have a steering vector set, do nothing.
 	if( float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
@@ -83,11 +101,9 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDi
 		DIRECTION_SH( threadIdx.x ) = float3_scalar_divide( newVelocity, SPEED_SH( threadIdx.x ) );
 
 		// derive new side basis vector from NEW forward and OLD up.
-		// TODO: handedness? assumed right
 		SIDE_SH( threadIdx.x ) = float3_normalize( float3_cross( DIRECTION_SH( threadIdx.x ), UP_SH( threadIdx.x ) ) );
 
 		// derive new up basis vector from new forward and side.
-		// TODO: handedness? assumed right
 		UP_SH( threadIdx.x ) = float3_cross( SIDE_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ) );
 	}
 
@@ -100,11 +116,9 @@ __global__ void UpdateCUDAKernel(		float3 * pdSide, float3 * pdUp, float3 * pdDi
 	// Copy the shared memory back to global.
 	FLOAT3_GLOBAL_WRITE( pdSide, shSide );
 	FLOAT3_GLOBAL_WRITE( pdUp, shUp );
-	FLOAT3_GLOBAL_WRITE( pdDirection, shDirection );
-	FLOAT3_GLOBAL_WRITE( pdPosition, shPosition );
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
 
-	// Set the applied kernels back to zero.
-	pdAppliedKernels[ index ] = 0;
+	DIRECTION( index ) = make_float4( DIRECTION_SH( threadIdx.x ), 0.f );
+	POSITION( index ) = make_float4( POSITION_SH( threadIdx.x ), 0.f );
+	STEERING( index ) = make_float4( STEERING_SH( threadIdx.x ), 0.f );
 	SPEED( index ) = SPEED_SH( threadIdx.x );
 }

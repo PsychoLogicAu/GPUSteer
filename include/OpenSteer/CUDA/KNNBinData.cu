@@ -8,12 +8,10 @@ using namespace OpenSteer;
 
 extern "C"
 {
-/*
 	// Bind the textures to the input cudaArray.
 	__host__ void KNNBinningCUDABindTexture( cudaArray * pCudaArray );
 	// Unbind the textures.
 	__host__ void KNNBinningCUDAUnbindTexture( void );
-
 
 	// Use to precompute the neighbors of each cell once per decomposition.
 	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
@@ -29,7 +27,6 @@ extern "C"
 														uint const		radius,				// In:	Search radius.
 														size_t const	numCells			// In:	Number of cells.
 														);
-	*/
 }
 
 KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
@@ -43,90 +40,9 @@ KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint c
 	CreateCells();
 	
 	// Compute the neighbors for the cells.
-	ComputeCellNeighbors();
+	ComputeCellNeighbors( m_worldCells.y > 1 );
 }
 
-void KNNBinData::ComputeCellNeighbors( void )
-{
-	bool const b3D = m_worldCells.y > 1;
-
-	m_nNeighborsPerCell		=  ipow( (m_nSearchRadius * 2 + 1), (b3D ? 3 : 2) );
-	
-	// Allocate temporary host-side storage.
-	float3 * pNeighborOffsets = (float3*)malloc( m_nNeighborsPerCell * sizeof(float3) );
-
-	if( b3D )
-	{
-		ComputeCellNeighbors3D( pNeighborOffsets );
-		cudaMemcpyToSymbol( "constCellNeighborOffset3D", pNeighborOffsets, m_nNeighborsPerCell * sizeof(float3) );
-	}
-	else
-	{
-		ComputeCellNeighbors2D( pNeighborOffsets );
-		cudaMemcpyToSymbol( "constCellNeighborOffset2D", pNeighborOffsets, m_nNeighborsPerCell * sizeof(float3) );
-	}
-
-	// Free the temporary memory.
-	free( pNeighborOffsets );
-}
-
-#pragma warning ( push )
-#pragma warning ( disable : 4018 )
-void KNNBinData::ComputeCellNeighbors2D( float3 * pNeighborOffsets )
-{
-	// First offset is zero.
-	pNeighborOffsets[0] = float3_zero();
-
-	uint index = 1;
-
-	// For increasing radius...
-	for( int iCurrentRadius = 1; iCurrentRadius <= m_nSearchRadius; iCurrentRadius++ )
-	{
-		for( int dz = -iCurrentRadius; dz <= iCurrentRadius; dz++ )
-		{
-			for( int dx = -iCurrentRadius; dx <= iCurrentRadius; dx++ )
-			{
-				// Only do for the outside cells.
-				if( dx == -iCurrentRadius || dx == iCurrentRadius || dz == -iCurrentRadius || dz == iCurrentRadius )
-					pNeighborOffsets[ index++ ] = make_float3(	dx * m_worldStepNormalized.x,
-																0.f,
-																dz * m_worldStepNormalized.z
-																);
-			}
-		}
-	}
-}
-
-void KNNBinData::ComputeCellNeighbors3D( float3 * pNeighborOffsets )
-{
-	// First offset is zero.
-	pNeighborOffsets[0] = float3_zero();
-
-	uint index = 1;
-
-	// For increasing radius...
-	for( int iCurrentRadius = 1; iCurrentRadius <= m_nSearchRadius; iCurrentRadius++ )
-	{
-		for( int dy = -iCurrentRadius; dy <= iCurrentRadius; dy++ )			// World height.
-		{
-			for( int dz = -iCurrentRadius; dz <= iCurrentRadius; dz++ )		// World depth.
-			{
-				for( int dx = -iCurrentRadius; dx <= iCurrentRadius; dx++ )	// World width.
-				{
-					// Only do for the outside cells.
-					if( dx == -iCurrentRadius || dx == iCurrentRadius || dz == -iCurrentRadius || dz == iCurrentRadius || dy == -iCurrentRadius || dy == iCurrentRadius )
-						pNeighborOffsets[ index++ ] = make_float3(	dx * m_worldStepNormalized.x,
-																	dy * m_worldStepNormalized.y,
-																	dz * m_worldStepNormalized.z
-																	);
-				}
-			}
-		}
-	}
-}
-#pragma warning ( pop )
-
-/*
 void KNNBinData::ComputeCellNeighbors( bool b3D )
 {
 	dim3 grid = gridDim();
@@ -155,18 +71,17 @@ void KNNBinData::ComputeCellNeighbors( bool b3D )
 	// Unbind the texture.
 	KNNBinningCUDAUnbindTexture();
 }
-*/
 
 void KNNBinData::CreateCells( void )
 {
-	m_worldStep				= make_float3(	m_worldSize.x / m_worldCells.x,		// width
-											m_worldSize.y / m_worldCells.y,		// depth
-											m_worldSize.z / m_worldCells.z );	// height
+	float3 const step =				make_float3(	m_worldSize.x / m_worldCells.x,		// width
+													m_worldSize.y / m_worldCells.y,		// height
+													m_worldSize.z / m_worldCells.z );	// depth
 
-	m_worldStepNormalized	= make_float3(	m_worldStep.x / m_worldSize.x,
-											m_worldStep.y / m_worldSize.y,
-											m_worldStep.z / m_worldSize.z
-											);
+	float3 const stepNormalized =	make_float3(	step.x / m_worldSize.x,
+													step.y / m_worldSize.y,
+													step.z / m_worldSize.z
+													);
 
 /*
 Texture addressing in CUDA operates as follows.
@@ -178,13 +93,12 @@ Texture addressing in CUDA operates as follows.
 	| /
 	|/_________x
 */
-	//m_hvCells.resize( numCells );
-	m_hvPositions.reserve( m_nCells );
-	m_hvMinBounds.reserve( m_nCells );
-	m_hvMaxBounds.reserve( m_nCells );
+	size_t const numCells = m_worldCells.x * m_worldCells.y * m_worldCells.z;
+
+	m_hvCells.resize( numCells );
 
 	// Allocate host memory to temporarily store the 3D texture data.
-	uint * phCellIndices = (uint*)malloc( m_nCells * sizeof(uint) );
+	uint * phCellIndices = (uint*)malloc( numCells * sizeof(uint) );
 
 	uint index = 0;
 
@@ -194,43 +108,45 @@ Texture addressing in CUDA operates as follows.
 		{
 			for( size_t iWidth = 0; iWidth < m_worldCells.x; iWidth++ )	// width - texture x axis, world x axis
 			{
-				// Set the offset value for the cell lookup texture.
-				phCellIndices[index++] = iWidth + (iDepth * m_worldCells.x) + (iHeight * m_worldCells.z * m_worldCells.x);
+				// Make a bin_cell structure.
+				bin_cell bc;
 
-				float3 position, minBound, maxBound;
+				//bc.iBinIndex = iBinIndex;
+				bc.index = iWidth + (iDepth * m_worldCells.x) + (iHeight * m_worldCells.z * m_worldCells.x);
+
+				// Set the offset value for the cell lookup texture.
+				phCellIndices[index] = bc.index;
 
 				// Set the minBounds of the cell.
-				minBound.x = iWidth * m_worldStep.x - 0.5f * m_worldSize.x;
-				minBound.y = iHeight * m_worldStep.y - 0.5f * m_worldSize.y;
-				minBound.z = iDepth * m_worldStep.z - 0.5f * m_worldSize.z;
+				bc.minBound.x = iWidth * step.x - 0.5f * m_worldSize.x;
+				bc.minBound.y = iHeight * step.y - 0.5f * m_worldSize.y;
+				bc.minBound.z = iDepth * step.z - 0.5f * m_worldSize.z;
 
 				// Set the position of the cell.
-				position.x = minBound.x + 0.5f * m_worldStep.x;
-				position.y = minBound.y + 0.5f * m_worldStep.y;
-				position.z = minBound.z + 0.5f * m_worldStep.z;
+				bc.position.x = bc.minBound.x + 0.5f * step.x;
+				bc.position.y = bc.minBound.y + 0.5f * step.y;
+				bc.position.z = bc.minBound.z + 0.5f * step.z;
 
 				// Set the maxBounds of the cell.
-				maxBound.x = minBound.x + m_worldStep.x;
-				maxBound.y = minBound.y + m_worldStep.y;
-				maxBound.z = minBound.z + m_worldStep.z;
+				bc.maxBound.x = bc.minBound.x + step.x;
+				bc.maxBound.y = bc.minBound.y + step.y;
+				bc.maxBound.z = bc.minBound.z + step.z;
 
-				m_hvPositions.push_back( position );
-				m_hvMinBounds.push_back( minBound );
-				m_hvMaxBounds.push_back( maxBound );
+				//m_hvCells.push_back( bc );
+				m_hvCells[index] = bc;
+				index++;
 			}
 		}
 	}
 
-	// Transfer the cell position and bounds data to device memory.
-	m_dvPositions = m_hvPositions;
-	m_dvMinBounds = m_hvMinBounds;
-	m_dvMaxBounds = m_hvMaxBounds;
+	// Transfer the bin_cell structures to the device memory.
+	m_dvCells = m_hvCells;
 
 	// Prepare the bin_cell index lookup texture.
 	cudaExtent const extent = make_cudaExtent( m_worldCells.x, m_worldCells.y, m_worldCells.z );
 	cudaChannelFormatDesc const desc = cudaCreateChannelDesc< uint >();
 
-	cudaPitchedPtr srcPtr = make_cudaPitchedPtr( (void*)phCellIndices, m_worldCells.x * sizeof(uint), m_worldCells.x, m_worldCells.y );
+	cudaPitchedPtr srcPtr = make_cudaPitchedPtr( (void*)phCellIndices, extent.width * sizeof(uint), extent.width, extent.height );
 
 	// Allocate m_pdCellIndexArray.
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &m_pdCellIndexArray, &desc, extent, cudaArrayDefault ) );
@@ -245,8 +161,8 @@ Texture addressing in CUDA operates as follows.
 
 	// Copy the m_worldSize and m_worldCells values to constant memory.
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSize", &m_worldSize, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &m_worldStep, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &m_worldStepNormalized, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &stepNormalized, sizeof(float3) ) );
 	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
 
 	// Free host memory.

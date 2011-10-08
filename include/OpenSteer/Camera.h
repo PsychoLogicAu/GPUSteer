@@ -112,7 +112,7 @@ namespace OpenSteer {
         // xxx differently (which is to say, correctly) during mouse adjustment.
         LocalSpace ls;
         const LocalSpace& xxxls (void)
-		{ls.regenerateOrthonormalBasis (float3_subtract(target, position()), up()); return ls;}
+		{ls.regenerateOrthonormalBasis (float3_subtract(target, make_float3(position())), up()); return ls;}
 
 
         // camera mode selection

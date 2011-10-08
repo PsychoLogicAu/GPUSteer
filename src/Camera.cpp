@@ -121,7 +121,7 @@ OpenSteer::Camera::update (const float /*currentTime*/,
     const bool noVehicle = vehicleToTrack == NULL;
     
     // new position/target/up, set in switch below, defaults to current
-    float3 newPosition = position();
+    float3 newPosition = make_float3(position());
     float3 newTarget = target;
     float3 newUp = up();
 
@@ -150,7 +150,7 @@ OpenSteer::Camera::update (const float /*currentTime*/,
 
     case cmStraightDown:
         if (noVehicle) break;
-        newUp = v.forward();
+        newUp = make_float3(v.forward());
         newTarget = v.predictFuturePosition (predictionTime);
         newPosition = newTarget;
         newPosition.y += lookdownDistance;
@@ -172,7 +172,7 @@ OpenSteer::Camera::update (const float /*currentTime*/,
             newPosition = float3_add(futurePosition, globalOffset);
             // XXX hack to improve smoothing between modes (no effect on aim)
             const float L = 10;
-            newTarget = float3_add(newPosition , float3_scalar_multiply(v.forward(), L));
+            newTarget = float3_add(newPosition , float3_scalar_multiply(make_float3(v.forward()), L));
             break;
         }
     default:
@@ -183,7 +183,7 @@ OpenSteer::Camera::update (const float /*currentTime*/,
     smoothCameraMove (newPosition, newTarget, newUp, elapsedTime);
 
     // set camera in draw module
-    drawCameraLookAt (position(), target, up());
+    drawCameraLookAt (make_float3(position()), target, up());
 }
 
 
@@ -205,12 +205,12 @@ OpenSteer::Camera::smoothCameraMove (const float3& newPosition,
     {
         const float smoothRate = elapsedTime * smoothMoveSpeed;
 
-        float3 tempPosition = position();
+        float3 tempPosition = make_float3(position());
         float3 tempUp = up();
         blendIntoAccumulator (smoothRate, newPosition, tempPosition);
         blendIntoAccumulator (smoothRate, newTarget,   target);
         blendIntoAccumulator (smoothRate, newUp,       tempUp);
-        setPosition (tempPosition);
+        setPosition (make_float4(tempPosition, 0.f));
         setUp (tempUp);
 
         // xxx not sure if these are needed, seems like a good idea
@@ -225,7 +225,7 @@ OpenSteer::Camera::smoothCameraMove (const float3& newPosition,
     {
         smoothNextMove = true;
 
-        setPosition (newPosition);
+        setPosition (make_float4(newPosition, 0.f));
         target   = newTarget;
         setUp (newUp);
     }
@@ -259,7 +259,7 @@ OpenSteer::Camera::constDistHelper (const float /*elapsedTime*/)
     // move camera only when geometry is well-defined (avoid degenerate case)
     if (distance == 0)
     {
-        return position();
+        return make_float3(position());
     }
     else
     {
@@ -344,7 +344,7 @@ OpenSteer::Camera::mouseAdjustOffset (const float3& adjustment)
             // XXX this is the oddball case, adjusting "position" instead
             // XXX of mode parameters, hence no smoothing during adjustment
             // XXX Plus the fixedDistVOffset feature complicates things
-            const float3 offset = float3_subtract(position(), target);
+            const float3 offset = float3_subtract(make_float3(position()), target);
             const float3 adjusted = mouseAdjustPolar (adjustment, offset);
             // XXX --------------------------------------------------
 //             position = target + adjusted;
@@ -358,7 +358,7 @@ OpenSteer::Camera::mouseAdjustOffset (const float3& adjustment)
 //             fixedDistVOffset = interpolate (s, fixedDistVOffset, position.y - target.y);
             // XXX --------------------------------------------------
 
-            setPosition (float3_add(target, adjusted));
+            setPosition (make_float4(float3_add(target, adjusted), 0.f));
             fixedDistDistance = float3_length(adjusted);
 
             fixedDistVOffset = position().y - target.y;
@@ -428,7 +428,7 @@ OpenSteer::Camera::mouseAdjust2 (const bool polar,
     if (polar)
 		result = float3_scalar_multiply(result, 1 + adjustment.z);
     else
-		result = float3_add(result, float3_scalar_multiply(xxxls().forward(), adjustment.z));
+		result = float3_add(result, float3_scalar_multiply(make_float3(xxxls().forward()), adjustment.z));
 
     return result;
 }

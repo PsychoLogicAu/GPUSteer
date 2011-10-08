@@ -44,9 +44,9 @@ static void steerForFlee( AgentGroup * pAgentGroup, const float3 &target, float 
 	kernel.close();
 }
 
-static void steerForPursuit( AgentGroup * pAgentGroup, const VehicleData &target, const float maxPredictionTime, float const fWeight, uint const doNotApplyWith )
+static void steerForPursuit( AgentGroup * pAgentGroup, float3 const& targetPosition, float3 const& targetDirection, float const& targetSpeed, const float maxPredictionTime, float const fWeight, uint const doNotApplyWith )
 {
-	SteerForPursueCUDA kernel( pAgentGroup, target.position, target.forward, target.velocity(), target.speed, maxPredictionTime, fWeight, doNotApplyWith );
+	SteerForPursueCUDA kernel( pAgentGroup, targetPosition, targetDirection, targetSpeed, maxPredictionTime, fWeight, doNotApplyWith );
 
 	kernel.init();
 	kernel.run();

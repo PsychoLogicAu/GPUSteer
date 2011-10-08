@@ -34,8 +34,8 @@ public:
 
 	// Overloaded pure virtuals.
 	virtual uint const&	Size( void ) const		{ return m_nCount; }
-	virtual float3 *	pdPosition( void )		{ return m_obstacleGroupData.pdPosition(); }
-	virtual float3 *	pdDirection( void )		{ return NULL; }
+	virtual float4 *	pdPosition( void )		{ return m_obstacleGroupData.pdPosition(); }
+	virtual float4 *	pdDirection( void )		{ return NULL; }
 	virtual float *		pdSpeed( void )			{ return NULL; }
 	virtual float *		pdRadius( void )		{ return m_obstacleGroupData.pdRadius(); }
 

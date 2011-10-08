@@ -84,7 +84,7 @@ using namespace OpenSteer;
 
 #define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
-//#define ANNOTATION_CELLS
+#define ANNOTATION_CELLS
 //#define NO_DRAW
 
 // ----------------------------------------------------------------------------
@@ -106,19 +106,19 @@ class BoidsWanderer;
 //const float	gDim						= 63;
 //const int	gCells						= 10;
 
-//const int gEnemyCount					= 1000;
-//const float gDim						= 200;
-//const int gCells						= 28;
+const int gEnemyCount					= 1000;
+const float gDim						= 200;
+const int gCells						= 28;
 
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 91;
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 91;
 
 /*
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
 //const int gCells						= 285;
-const int gCells						= 200;
+const int gCells						= 150;
 */
 
 //const int gEnemyCount					= 1000000;
@@ -149,9 +149,9 @@ float const g_fMinTimeToWall			= 5.0f;		// Look-ahead time for wall avoidance.
 float const g_fPathPredictionTime		= 10.f;
 
 // Weights for behaviors.
-float const	g_fWeightAlignment			= 1.f;
-float const	g_fWeightCohesion			= 1.f;
-float const	g_fWeightSeparation			= 1.f;
+float const	g_fWeightAlignment			= 16.f;
+float const	g_fWeightCohesion			= 16.f;
+float const	g_fWeightSeparation			= 16.f;
 
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightSeek				= 10.f;
@@ -164,11 +164,11 @@ float const g_fWeightWallAvoidance		= 10.f;
 float const g_fWeightAvoidNeighbors		= 2.f;
 
 // Masks for behaviors.
-uint const	g_maskAlignment				= 0;
-uint const	g_maskCohesion				= 0;
+uint const	g_maskAlignment				= 0;//KERNEL_SEPARATION_BIT;
+uint const	g_maskCohesion				= 0;//KERNEL_SEPARATION_BIT;
 uint const	g_maskSeparation			= 0;
 
-uint const	g_maskSeek					= KERNEL_SEPARATION_BIT; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
+uint const	g_maskSeek					= 0; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_SEPARATION_BIT;//KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
@@ -208,19 +208,21 @@ const float gAvoidancePredictTimeMax	= 2.0f;
 float const gAvoidancePredictTime		= gAvoidancePredictTimeMin;
 
 // Function prototypes.
-void randomizeStartingPositionAndHeadingBoids( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side );
+void randomizeStartingPositionAndHeadingBoids( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side );
 
 //void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst)
-void randomizeStartingPositionAndHeadingBoids( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side )
+void randomizeStartingPositionAndHeadingBoids( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side )
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
     const float rRadius = frandom2 ( g_fMinStartRadius, g_fMaxStartRadius );
 	float3 const randomOnSphere = float3_scalar_multiply( float3_RandomVectorInUnitRadiusSphere(), rRadius );
 
-    position =  float3_add( g_f3StartBaseCenter, randomOnSphere );
+    position = make_float4( float3_add( g_f3StartBaseCenter, randomOnSphere ), 0.f );
 
-    randomizeHeading( up, forward, side );
+	float3 newForward;
+    randomizeHeading( up, newForward, side );
+	forward = make_float4( newForward, 0.f );
 }
 
 class BoidsWorld
@@ -247,16 +249,10 @@ public:
 		//
 		//	Draw the cells.
 		//
-		std::vector< float3 > const& cellMinBounds	= m_pKNNBinData->hvCellMinBounds();
-		std::vector< float3 > const& cellMaxBounds	= m_pKNNBinData->hvCellMaxBounds();
-
+		std::vector< bin_cell > const& cells	= m_pKNNBinData->hvCells();
 		float3 const cellColor = { 0.1f, 0.1f, 0.1f };
-
-		std::vector< float3 >::const_iterator itCellMinBound;
-		std::vector< float3 >::const_iterator itCellMaxBound;
-
 		// For each of the cells...
-		for( itCellMinBound = cellMinBounds.begin(), itCellMaxBound = cellMaxBounds.begin(); itCellMinBound != cellMinBounds.end(); ++itCellMinBound, ++itCellMaxBound )
+		for( std::vector< bin_cell >::const_iterator it = cells.begin(); it != cells.end(); ++it )
 		{
 			
 			//  4     5
@@ -268,14 +264,14 @@ public:
 			//+----+
 			//2    3
 			
-			float3 const p0		= { itCellMinBound->x, itCellMaxBound->y, itCellMinBound->z };
-			float3 const p1		= { itCellMaxBound->x, itCellMaxBound->y, itCellMinBound->z };
-			float3 const p2		= { itCellMinBound->x, itCellMinBound->y, itCellMinBound->z };
-			float3 const p3		= { itCellMaxBound->x, itCellMinBound->y, itCellMinBound->z };
-			float3 const p4		= { itCellMinBound->x, itCellMaxBound->y, itCellMaxBound->z };
-			float3 const p5		= { itCellMaxBound->x, itCellMaxBound->y, itCellMaxBound->z };
-			float3 const p6		= { itCellMinBound->x, itCellMinBound->y, itCellMaxBound->z };
-			float3 const p7		= { itCellMaxBound->x, itCellMinBound->y, itCellMaxBound->z };
+			float3 const p0		= { it->minBound.x, it->maxBound.y, it->minBound.z };
+			float3 const p1		= { it->maxBound.x, it->maxBound.y, it->minBound.z };
+			float3 const p2		= { it->minBound.x, it->minBound.y, it->minBound.z };
+			float3 const p3		= { it->maxBound.x, it->minBound.y, it->minBound.z };
+			float3 const p4		= { it->minBound.x, it->maxBound.y, it->maxBound.z };
+			float3 const p5		= { it->maxBound.x, it->maxBound.y, it->maxBound.z };
+			float3 const p6		= { it->minBound.x, it->minBound.y, it->maxBound.z };
+			float3 const p7		= { it->maxBound.x, it->minBound.y, it->maxBound.z };
 
 			drawLine( p0, p1, cellColor );
 			drawLine( p0, p2, cellColor );
@@ -336,7 +332,7 @@ public:
     void reset (void)
 	{
 		randomizeStartingPositionAndHeadingBoids( position(), radius(), up(), forward(), side() );
-		setPosition( make_float3( 0.f, 0.f, 0.f ) );
+		setPosition( make_float4( 0.f, 0.f, 0.f, 0.f ) );
 	}
 
     // per frame simulation update
@@ -345,7 +341,7 @@ public:
 		float3 steer;
 		
 		float const halfDim = 0.4f * gDim;
-		float3 const& position = _data.position;
+		float4 const& position = _data.position;
 
 		if( position.x < -halfDim || position.x > halfDim ||
 			position.y < -halfDim || position.y > halfDim ||
@@ -366,7 +362,7 @@ public:
     void draw (void)
 	{
 		float3 const bodyColor = { 0.1f, 0.1f, 0.9f };	// very bluish
-		drawBasic3dSphericalVehicle( radius(), position(), forward(), side(), up(), bodyColor );
+		drawBasic3dSphericalVehicle( radius(), make_float3(position()), make_float3(forward()), side(), up(), bodyColor );
 	}
 };
 
@@ -411,7 +407,7 @@ class BoidsObstacleGroup : public ObstacleGroup
 private:
 	void addOneObstacle (void)
 	{
-		std::vector< float3 > & positions = m_obstacleGroupData.hvPosition();
+		std::vector< float4 > & positions = m_obstacleGroupData.hvPosition();
 		std::vector< float > & radii = m_obstacleGroupData.hvRadius();
 
 		float minClearance;
@@ -424,7 +420,8 @@ private:
 			minClearance = FLT_MAX;
 
 			od.radius = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
-			od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), g_fMaxStartRadius * 1.1f);
+			//od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), g_fMaxStartRadius * 1.1f);
+			od.position = make_float4( float3_scalar_multiply(float3_RandomVectorInUnitRadiusSphere(), g_fMaxStartRadius * 0.9f), 0.f );
 
 /*
 			// Make sure it doesn't overlap with the home base.
@@ -437,7 +434,7 @@ private:
 			// Make sure it doesn't overlap with any of the other obstacles.
 			for( size_t i = 0; i < Size(); i++ )
 			{
-				float d = float3_distance( od.position, positions[i] );
+				float d = float3_distance( make_float3(od.position), make_float3(positions[i]) );
 				float clearance = d - (od.radius + radii[i]);
 				if ( clearance < minClearance )
 					minClearance = clearance;
@@ -477,7 +474,7 @@ public:
 			GetDataForObstacle( i, od );
 
 			//drawXZCircle( od.radius, od.position, color, 20 );
-			draw3dCircle( od.radius, od.position, OpenSteerDemo::camera.forward(), color, 20 );
+			draw3dCircle( od.radius, make_float3(od.position), make_float3(OpenSteerDemo::camera.forward()), color, 20 );
 		}
 	}
 };
@@ -497,15 +494,14 @@ void BoidsGroup::reset(void)
 	while(Size() < gEnemyCount)
 	{
 		BoidsBase enemy;
-		VehicleData &edata = enemy.getVehicleData();
-		VehicleConst &econst = enemy.getVehicleConst();
+		AgentData &aData = enemy.getVehicleData();
 
-		edata.speed = 3.0f;
-		econst.maxForce = 3.0f;
-		econst.maxSpeed = 3.0f;
-		randomizeStartingPositionAndHeadingBoids( edata.position, econst.radius, edata.up, edata.forward, edata.side );
+		aData.speed = 3.0f;
+		aData.maxForce = 3.0f;
+		aData.maxSpeed = 3.0f;
+		randomizeStartingPositionAndHeadingBoids( aData.position, aData.radius, aData.up, aData.direction, aData.side );
 		
-		bool success = AddVehicle(edata, econst);
+		bool success = AddAgent( aData );
 	}
 
 	// Transfer the data to the device.
@@ -526,10 +522,8 @@ void BoidsGroup::draw(void)
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
-	VehicleConst vc;
-	VehicleData vd;
+	AgentData ad;
 
-	AgentGroupConst & m_agentGroupConst = g_pBoids->GetAgentGroupConst();
 	AgentGroupData & m_agentGroupData = g_pBoids->GetAgentGroupData();
 
 #if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
@@ -540,14 +534,12 @@ void BoidsGroup::draw(void)
 
 	// For each enemy...
 	for( size_t i = 0; i < g_pBoids->Size(); i++ )
-	//for( size_t i = 0; i < g_pBoids->Size(); i += 100 )
 	{
 		// Get its varialbe and constant data.
-		m_agentGroupConst.getVehicleData( i, vc );
-		m_agentGroupData.getVehicleData( i, vd );
+		m_agentGroupData.getAgentData( i, ad );
 
 		// Draw the agent.
-		drawBasic3dSphericalVehicle( vc.radius, vd.position, vd.forward, vd.side, vd.up, bodyColor );
+		drawBasic3dSphericalVehicle( ad.radius, make_float3(ad.position), make_float3(ad.direction), ad.side, ad.up, bodyColor );
 
 #if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 		//
@@ -561,7 +553,7 @@ void BoidsGroup::draw(void)
 
 #if defined ANNOTATION_TEXT
 		// annotate the agent with useful data.
-		const float3 textOrigin = float3_add( vd.position, make_float3( 0, 0.25, 0 ) );
+		const float3 textOrigin = float3_add( make_float3(ad.position), make_float3( 0, 0.25, 0 ) );
 		std::ostringstream annote;
 
 		// Write this agent's index.
@@ -578,15 +570,16 @@ void BoidsGroup::draw(void)
 #endif
 
 #if defined ANNOTATION_LINES
-		VehicleData vdOther;
+		AgentData adOther;
+		float3 const lineColor = make_float3( 1.f, 1.f, 1.f );
 
 		// Draw the KNN links.
 		for( uint j = 0; j < g_knn; j++ )
 		{
 			if( KNNIndices[j] < g_pBoids->Size() )
 			{
-				m_agentGroupData.getVehicleData( KNNIndices[j], vdOther );
-				drawLine( vd.position, vdOther.position, make_float3( 1.f, 1.f, 1.f ) );
+				m_agentGroupData.getAgentData( KNNIndices[j], adOther );
+				drawLine( make_float3(ad.position), make_float3(adOther.position), lineColor );
 			}
 		}
 #endif
@@ -616,7 +609,7 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 	//steerForPursuit( this, g_pWanderer->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
-	//steerForSeek( this, g_pWanderer->position(), g_fWeightSeek, g_maskSeek );
+	steerForSeek( this, make_float3( g_pWanderer->position() ), g_fWeightSeek, g_maskSeek );
 
 	//steerForEvade( this, g_pWanderer->position(), g_pWanderer->forward(), g_pWanderer->speed(), g_fMaxPursuitPredictionTime, g_fWeightEvade, g_maskEvade );
 
@@ -629,7 +622,7 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 void BoidsBase::reset (void)
 {
 	//_data.id = serialNumber;
-	_const.id = serialNumber;
+	_data.id = serialNumber;
 
     SimpleVehicle::reset ();  // reset the vehicle 
 

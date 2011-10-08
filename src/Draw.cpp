@@ -1012,8 +1012,8 @@ OpenSteer::drawCircleOrDisk (const float radius,
         const float3 unitAxis = float3_normalize(axis);
         const float3 unitPerp = float3_findPerpendicularIn3d(float3_normalize(axis));
         ls.setUp (unitAxis);
-        ls.setForward (unitPerp);
-        ls.setPosition (center);
+        ls.setForward (make_float4(unitPerp, 0.f));
+        ls.setPosition (make_float4(center, 0.f));
         ls.setUnitSideFromForwardAndUp ();
     }
         
@@ -1031,7 +1031,7 @@ OpenSteer::drawCircleOrDisk (const float radius,
     glBegin (filled ? GL_TRIANGLE_FAN : GL_LINE_LOOP);
 
     // for the filled case, first emit the center point
-    if (filled) iglVertexFloat3 (in3d ? ls.position() : center);
+    if (filled) iglVertexFloat3 (in3d ? make_float3(ls.position()) : center);
 
     // rotate p around the circle in "segments" steps
     float sin=0, cos=0;
@@ -1154,13 +1154,13 @@ OpenSteer::drawBasic2dCircularVehicle (const AbstractVehicle& vehicle,
 
     // radius and position of vehicle
     const float r = vehicle.radius();
-    const float3& p = vehicle.position();
+    const float3& p = make_float3(vehicle.position());
 
     // shape of triangular body
 	const float3 u = float3_scalar_multiply(make_float3(0,1,0), r * 0.05f); // slightly up
-	const float3 f = float3_scalar_multiply(vehicle.forward(), r);
+	const float3 f = float3_scalar_multiply(make_float3(vehicle.forward()), r);
 	const float3 s = float3_scalar_multiply(vehicle.side(), r * x);
-	const float3 b = float3_scalar_multiply(vehicle.forward(), r * -y);
+	const float3 b = float3_scalar_multiply(make_float3(vehicle.forward()), r * -y);
 
     // draw double-sided triangle (that is: no (back) face culling)
     beginDoubleSidedDrawing ();

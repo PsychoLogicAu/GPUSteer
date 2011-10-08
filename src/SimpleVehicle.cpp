@@ -127,7 +127,7 @@ OpenSteer::SimpleVehicle::adjustRawSteeringForce (const float3& force,
         // const float cosine = interpolate (pow (range, 100), 1.0f, -1.0f);
         // const float cosine = interpolate (pow (range, 50), 1.0f, -1.0f);
         const float cosine = interpolate (pow (range, 20), 1.0f, -1.0f);
-        return limitMaxDeviationAngle (force, cosine, forward());
+        return limitMaxDeviationAngle (force, cosine, make_float3(forward()));
     }
 }
 
@@ -198,7 +198,7 @@ OpenSteer::SimpleVehicle::applySteeringForce (const float3& force,
     setSpeed (float3_length(newVelocity));
 
     // Euler integrate (per frame) velocity into position
-    setPosition (float3_add(position(), float3_scalar_multiply(newVelocity, elapsedTime)));
+    setPosition (make_float4(float3_add(make_float3(position()), float3_scalar_multiply(newVelocity, elapsedTime)), 0.f));
 
     // regenerate local space (by default: align vehicle's forward axis with
     // new velocity, but this behavior may be overridden by derived classes.)
@@ -209,7 +209,7 @@ OpenSteer::SimpleVehicle::applySteeringForce (const float3& force,
 
     // running average of recent positions
     blendIntoAccumulator (elapsedTime * 0.06f, // QQQ
-                          position (),
+                          make_float3(position ()),
                           _smoothedPosition);
 }
 
@@ -279,16 +279,16 @@ OpenSteer::SimpleVehicle::measurePathCurvature (const float elapsedTime)
 {
     if (elapsedTime > 0)
     {
-        const float3 dP = float3_subtract(_lastPosition, position ());
-		const float3 dF = float3_scalar_divide(float3_subtract(_lastForward, forward ()), float3_length(dP));
-        const float3 lateral = float3_perpendicularComponent(dF, forward());
+        const float3 dP = float3_subtract(_lastPosition, make_float3(position ()));
+		const float3 dF = float3_scalar_divide(float3_subtract(_lastForward, make_float3(forward ())), float3_length(dP));
+        const float3 lateral = float3_perpendicularComponent(dF, make_float3(forward()));
         const float sign = (float3_dot(lateral, side ()) < 0) ? 1.0f : -1.0f;
         _curvature = float3_length(lateral) * sign;
         blendIntoAccumulator (elapsedTime * 4.0f,
                               _curvature,
                               _smoothedCurvature);
-        _lastForward = forward ();
-        _lastPosition = position ();
+        _lastForward = make_float3(forward ());
+        _lastPosition = make_float3(position ());
     }
 }
 
@@ -304,7 +304,7 @@ OpenSteer::SimpleVehicle::annotationVelocityAcceleration (float maxLengthA,
     const float desat = 0.4f;
     const float aScale = maxLengthA / maxForce ();
     const float vScale = maxLengthV / maxSpeed ();
-    const float3& p = position();
+    const float3& p = make_float3(position());
     const float3 aColor = make_float3(desat, desat, 1); // bluish
     const float3 vColor = make_float3(    1, desat, 1); // pinkish
 

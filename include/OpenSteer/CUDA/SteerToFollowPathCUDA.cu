@@ -3,11 +3,11 @@
 extern "C"
 {
 	__global__ void FollowPathCUDAKernel(	// Agent data.
-											float3 const*	pdPosition,
-											float3 const*	pdDirection,
+											float4 const*	pdPosition,
+											float4 const*	pdDirection,
 											float const*	pdSpeed,
 
-											float3 *		pdSteering,
+											float4 *		pdSteering,
 
 											// Path data.
 											float3 const*	pdPathPoints,
@@ -24,7 +24,7 @@ extern "C"
 											float const		fWeight,
 											uint *			pdAppliedKernels,
 											uint const		doNotApplyWith
-										 );
+											);
 }
 
 using namespace OpenSteer;
@@ -47,11 +47,11 @@ void SteerToFollowPathCUDA::run( void )
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
 
-	float3 const*	pdPosition			= m_pAgentGroupData->pdPosition();
-	float3 const*	pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 const*	pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 const*	pdDirection			= m_pAgentGroupData->pdDirection();
 	float const*	pdSpeed				= m_pAgentGroupData->pdSpeed();
 
-	float3 *		pdSteering			= m_pAgentGroupData->pdSteering();
+	float4 *		pdSteering			= m_pAgentGroupData->pdSteering();
 
 	float3 const*	pdPathPoints		= m_pPath->pdPoints();
 	float const*	pdPathLengths		= m_pPath->pdLengths();
@@ -86,5 +86,6 @@ void SteerToFollowPathCUDA::run( void )
 
 void SteerToFollowPathCUDA::close(void )
 {
-	// Nothing to do.
+	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
+	m_pAgentGroup->SetSyncHost();
 }

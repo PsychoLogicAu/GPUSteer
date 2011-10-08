@@ -2,25 +2,29 @@
 
 extern "C"
 {
-	__global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
-												float3 const*	pdADirection,
-												float3 *		pdASteering,
-												size_t const	numA,
+	__host__ void SteerForCohesionKernelBindTextures(	float4 const*	pdBPosition,
+														uint const		numB
+														);
+	__host__ void SteerForCohesionKernelUnindTextures( void );
 
-												uint const*		pdKNNIndices,
-												size_t const	k,
+	__global__ void SteerForCohesionCUDAKernel(			float4 const*	pdPosition,
+														float4 const*	pdDirection,
+														float4 *		pdSteering,
+														size_t const	numA,
 
-												float3 const*	pdBPosition,
-												uint const		numB,
+														uint const*		pdKNNIndices,
+														size_t const	k,
 
-												float const		minDistance,
-												float const		maxDistance,
-												float const		cosMaxAngle,
+														uint const		numB,
 
-												float const		fWeight,
-												uint *			pdAppliedKernels,
-												uint const		doNotApplyWith
-												);
+														float const		minDistance,
+														float const		maxDistance,
+														float const		cosMaxAngle,
+
+														float const		fWeight,
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
+														);
 }
 
 using namespace OpenSteer;
@@ -47,21 +51,24 @@ void SteerForCohesionCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 const*	pdAPosition			= m_pAgentGroupData->pdPosition();
-	float3 const*	pdADirection		= m_pAgentGroupData->pdDirection();
-	float3 *	pdASteering				= m_pAgentGroupData->pdSteering();
+	float4 const*	pdAPosition			= m_pAgentGroupData->pdPosition();
+	float4 const*	pdADirection		= m_pAgentGroupData->pdDirection();
+	float4 *		pdASteering				= m_pAgentGroupData->pdSteering();
 	
 	uint const&		numA				= getNumAgents();
 
 	uint const*		pdKNNIndices		= m_pKNNData->pdKNNIndices();
 	uint const&		k					= m_pKNNData->k();
 
-	float3 const*	pdBPosition			= m_pOtherGroup->pdPosition();
+	float4 const*	pdBPosition			= m_pOtherGroup->pdPosition();
 	uint const&		numB				= m_pOtherGroup->Size();
 
 	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
 
 	size_t const	shMemSize			= THREADSPERBLOCK * k * sizeof(uint);
+
+	// Bind the textures.
+	SteerForCohesionKernelBindTextures( pdBPosition, numB );
 
 	SteerForCohesionCUDAKernel<<< grid, block, shMemSize >>>(	// Agent data.
 																pdAPosition,
@@ -72,7 +79,6 @@ void SteerForCohesionCUDA::run( void )
 																pdKNNIndices,
 																k,
 																// Other group data.
-																pdBPosition,
 																numB,
 
 																// Flocking data.
@@ -86,9 +92,13 @@ void SteerForCohesionCUDA::run( void )
 																);
 	cutilCheckMsg( "SteerForCohesionCUDAKernel failed" );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+	// Unbind the textures.
+	SteerForCohesionKernelUnindTextures();
 }
 
 void SteerForCohesionCUDA::close( void )
 {
+	// Agent group data may have changed.
 	m_pAgentGroup->SetSyncHost();
 }
