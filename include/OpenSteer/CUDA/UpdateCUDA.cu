@@ -5,12 +5,20 @@ using namespace OpenSteer;
 // Kernel function prototype.
 extern "C"
 {
-	__global__ void UpdateCUDAKernel(	// vehicle_group_data members.
-										float3 * pdSide, float3 * pdUp, float3 * pdDirection,
-										float3 * pdPosition, float3 * pdSteering, float * pdSpeed,
-										// vehicle_group_const members.
-										float const* pdMaxForce, float const* pdMaxSpeed, float const* pdMass,
-										float const elapsedTime, size_t const numAgents,
+	__global__ void UpdateCUDAKernel(	float3 * pdSide,
+										float3 * pdUp,
+										float4 * pdDirection,
+										float4 * pdPosition,
+
+										float4 * pdSteering,
+										float * pdSpeed,
+
+										float const* pdMaxForce,
+										float const* pdMaxSpeed,
+										float const* pdMass,
+
+										float const elapsedTime,
+										size_t const numAgents,
 										uint * pdAppliedKernels
 										);
 }
@@ -34,20 +42,22 @@ void UpdateCUDA::run(void)
 	// Gather pointers to the required data...
 	float3 *		pdSide				= m_pAgentGroupData->pdSide();
 	float3 *		pdUp				= m_pAgentGroupData->pdUp();
-	float3 *		pdForward			= m_pAgentGroupData->pdForward();
-	float3 *		pdPosition			= m_pAgentGroupData->pdPosition();
-	float3 *		pdSteering			= m_pAgentGroupData->pdSteering();
+	float4 *		pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 *		pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 *		pdSteering			= m_pAgentGroupData->pdSteering();
 	float *			pdSpeed				= m_pAgentGroupData->pdSpeed();
 
-	float const*	pdMaxForce			= m_pAgentGroupConst->pdMaxForce();
-	float const*	pdMaxSpeed			= m_pAgentGroupConst->pdMaxSpeed();
-	float const*	pdMass				= m_pAgentGroupConst->pdMass();
+	float const*	pdMaxForce			= m_pAgentGroupData->pdMaxForce();
+	float const*	pdMaxSpeed			= m_pAgentGroupData->pdMaxSpeed();
+	float const*	pdMass				= m_pAgentGroupData->pdMass();
 
 	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
 
-	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdForward, pdPosition, pdSteering, pdSpeed,
+	uint const&		numAgents			= getNumAgents();
+
+	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdDirection, pdPosition, pdSteering, pdSpeed,
 											pdMaxForce, pdMaxSpeed, pdMass,
-											m_fElapsedTime, getNumAgents(),
+											m_fElapsedTime, numAgents,
 											pdAppliedKernels
 											);
 	cutilCheckMsg( "UpdateCUDAKernel failed." );

@@ -7,11 +7,11 @@
 extern "C"
 {
 	__global__ void FollowPathCUDAKernel(	// Agent data.
-											float3 const*	pdPosition,
-											float3 const*	pdDirection,
+											float4 const*	pdPosition,
+											float4 const*	pdDirection,
 											float const*	pdSpeed,
 
-											float3 *		pdSteering,
+											float4 *		pdSteering,
 
 											// Path data.
 											float3 const*	pdPathPoints,
@@ -187,11 +187,11 @@ __inline__ __device__ float3 mapPathDistanceToPoint(	float const&	pathDistance,
 }
 
 __global__ void FollowPathCUDAKernel(	// Agent data.
-										float3 const*	pdPosition,
-										float3 const*	pdDirection,
+										float4 const*	pdPosition,
+										float4 const*	pdDirection,
 										float const*	pdSpeed,
 
-										float3 *		pdSteering,
+										float4 *		pdSteering,
 
 										// Path data.
 										float3 const*	pdPathPoints,
@@ -208,7 +208,7 @@ __global__ void FollowPathCUDAKernel(	// Agent data.
 										float const		fWeight,
 										uint *			pdAppliedKernels,
 										uint const		doNotApplyWith
-									 )
+										)
 {
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -226,10 +226,10 @@ __global__ void FollowPathCUDAKernel(	// Agent data.
 	__shared__ float3	shDirection[THREADSPERBLOCK];
 	__shared__ float3	shSteering[THREADSPERBLOCK];
 
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
-	SPEED_SH( threadIdx.x ) = SPEED( index );
+	DIRECTION_SH( threadIdx.x ) = DIRECTION_F3( index );
+	POSITION_SH( threadIdx.x )	= POSITION_F3( index );
+	STEERING_SH( threadIdx.x )	= STEERING_F3( index );
+	SPEED_SH( threadIdx.x )		= SPEED( index );
 	__syncthreads();
 
 	// our goal will be offset from our path distance by this amount
@@ -283,5 +283,5 @@ __global__ void FollowPathCUDAKernel(	// Agent data.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Copy the steering vectors back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

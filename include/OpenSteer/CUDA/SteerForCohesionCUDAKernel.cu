@@ -6,36 +6,55 @@
 
 extern "C"
 {
-	__global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
-												float3 const*	pdADirection,
-												float3 *		pdASteering,
-												size_t const	numA,
+	__host__ void SteerForCohesionKernelBindTextures(	float4 const*	pdBPosition,
+														uint const		numB
+														);
+	__host__ void SteerForCohesionKernelUnindTextures( void );
 
-												uint const*		pdKNNIndices,
-												size_t const	k,
+	__global__ void SteerForCohesionCUDAKernel(			float4 const*	pdPosition,
+														float4 const*	pdDirection,
+														float4 *		pdSteering,
+														size_t const	numA,
 
-												float3 const*	pdBPosition,
-												uint const		numB,
+														uint const*		pdKNNIndices,
+														size_t const	k,
 
-												float const		minDistance,
-												float const		maxDistance,
-												float const		cosMaxAngle,
+														uint const		numB,
 
-												float const		fWeight,
-												uint *			pdAppliedKernels,
-												uint const		doNotApplyWith
-												);
+														float const		minDistance,
+														float const		maxDistance,
+														float const		cosMaxAngle,
+
+														float const		fWeight,
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
+														);
 }
 
-__global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
-											float3 const*	pdADirection,
-											float3 *		pdASteering,
+texture< float4, cudaTextureType1D, cudaReadModeElementType>	texBPosition;
+
+__host__ void SteerForCohesionKernelBindTextures(	float4 const*	pdBPosition,
+													uint const		numB
+													)
+{
+	static cudaChannelFormatDesc const float4ChannelDesc = cudaCreateChannelDesc< float4 >();
+
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texBPosition, pdBPosition, float4ChannelDesc, numB * sizeof(float4) ) );
+}
+
+__host__ void SteerForCohesionKernelUnindTextures( void )
+{
+	CUDA_SAFE_CALL( cudaUnbindTexture( texBPosition ) );
+}
+
+__global__ void SteerForCohesionCUDAKernel(	float4 const*	pdPosition,
+											float4 const*	pdDirection,
+											float4 *		pdSteering,
 											size_t const	numA,
 
 											uint const*		pdKNNIndices,
 											size_t const	k,
 
-											float3 const*	pdBPosition,
 											uint const		numB,
 
 											float const		minDistance,
@@ -61,10 +80,10 @@ __global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	__shared__ float3 shDirection[THREADSPERBLOCK];
 
-	// Copy required from global memory.
-	FLOAT3_GLOBAL_READ( shSteering, pdASteering );
-	FLOAT3_GLOBAL_READ( shPosition, pdAPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdADirection );
+	// Copy required data from global memory.
+	STEERING_SH( threadIdx.x )	= STEERING_F3( index );
+	POSITION_SH( threadIdx.x )	= POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x )	= DIRECTION_F3( index );
 
 	for( int i = 0; i < k; i++ )
 		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
@@ -83,8 +102,7 @@ __global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
 		if( BIndex >= numB )
 			break;
 
-		// TODO: texture memory.
-		float3 const bPosition = pdBPosition[ BIndex ];
+		float3 const bPosition = make_float3( tex1Dfetch( texBPosition, BIndex ) );
 
 		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
 		//{
@@ -110,5 +128,5 @@ __global__ void SteerForCohesionCUDAKernel(	float3 const*	pdAPosition,
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdASteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

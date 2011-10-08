@@ -6,15 +6,19 @@
 
 extern "C"
 {
-	__global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
-												float3 const*	pdADirection,
-												float3 *		pdASteering,
+	__host__ void SteerForSeparationKernelBindTextures(	float4 const*	pdBPosition,
+														uint const		numB
+														);
+	__host__ void SteerForSeparationKernelUnindTextures( void );
+
+	__global__ void SteerForSeparationKernel(	float4 const*	pdPosition,
+												float4 const*	pdDirection,
+												float4 *		pdSteering,
 												size_t const	numA,
 
 												uint const*		pdKNNIndices,
 												size_t const	k,
 
-												float3 const*	pdBPosition,
 												uint const		numB,
 
 												float const		minDistance,
@@ -27,16 +31,30 @@ extern "C"
 												);
 }
 
+texture< float4, cudaTextureType1D, cudaReadModeElementType>	texBPosition;
 
-__global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
-											float3 const*	pdADirection,
-											float3 *		pdASteering,
+__host__ void SteerForSeparationKernelBindTextures(	float4 const*	pdBPosition,
+													uint const		numB
+													)
+{
+	static cudaChannelFormatDesc const float4ChannelDesc = cudaCreateChannelDesc< float4 >();
+
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texBPosition, pdBPosition, float4ChannelDesc, numB * sizeof(float4) ) );
+}
+
+__host__ void SteerForSeparationKernelUnindTextures( void )
+{
+	CUDA_SAFE_CALL( cudaUnbindTexture( texBPosition ) );
+}
+
+__global__ void SteerForSeparationKernel(	float4 const*	pdPosition,
+											float4 const*	pdDirection,
+											float4 *		pdSteering,
 											size_t const	numA,
 
 											uint const*		pdKNNIndices,
 											size_t const	k,
 
-											float3 const*	pdBPosition,
 											uint const		numB,
 
 											float const		minDistance,
@@ -63,9 +81,9 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 	__shared__ float3	shDirection[THREADSPERBLOCK];
 
 	// Copy required from global memory.
-	FLOAT3_GLOBAL_READ( shSteering, pdASteering );
-	FLOAT3_GLOBAL_READ( shPosition, pdAPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdADirection );
+	STEERING_SH( threadIdx.x )	= STEERING_F3( index );
+	POSITION_SH( threadIdx.x )	= POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x )	= DIRECTION_F3( index );
 
 	for( int i = 0; i < k; i++ )
 		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
@@ -84,16 +102,12 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 		if( BIndex >= numB )
 			break;
 
-		float3 const bPosition = pdBPosition[ BIndex ];
+		float3 const bPosition = make_float3( tex1Dfetch( texBPosition, BIndex ) );
 
 		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
 		//{
 			float3 const offset = float3_subtract( bPosition, POSITION_SH( threadIdx.x ) );
 			float const distanceSquared = float3_dot( offset, offset );
-
-			if( distanceSquared > maxDistance * maxDistance )
-				continue;
-
 			steering = float3_add( steering, float3_scalar_divide( offset, -distanceSquared ) );
 
 			neighbors++;
@@ -115,5 +129,5 @@ __global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdASteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

@@ -11,13 +11,13 @@ protected:
 	float					m_fMaxPredictionTime;
 
 	float3					m_targetPosition;
-	float3					m_targetForward;
+	float3					m_targetDirection;
 	float3					m_targetVelocity;
 	float					m_targetSpeed;
 
 public:
 	SteerForPursueCUDA(		AgentGroup * pAgentGroup, 
-							float3 const& targetPosition, float3 const& targetForward, float3 const& targetVelocity, float const& targetSpeed,
+							float3 const& targetPosition, float3 const& targetDirection, float const& targetSpeed,
 							const float fMaxPredictionTime,
 							float const fWeight, uint const doNotApplyWith
 							);

@@ -1,39 +1,41 @@
-
-
-#include "AvoidObstaclesCUDA.cuh"
-
 #include "CUDAKernelGlobals.cuh"
 
 using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:	Indices of the K Nearest Obstacles.
-													float const*	pdKNNDistances,			// In:	Distances to the K Nearest Obstacles.
-													size_t const	k,
-												
-													float3 const*	pdPosition,				// In:	Agent positions.
-													float3 const*	pdDirection,			// In:	Agent directions.
-													float3 const*	pdSide,
-													float3 const*	pdUp,
-													float const*	pdRadius,				// In:	Agent radii.
-													float const*	pdSpeed,				// In:	Agent speeds.
+	__host__ void SteerToAvoidObstaclesKernelBindTextures(	float4 const*	pdObstaclePosition,
+															float const*	pdObstacleRadius,
+															uint const		numObstacles
+															);
+	__host__ void SteerToAvoidObstaclesKernelUnbindTextures( void );
 
-													float3 const*	pdObstaclePosition,		// In:	Obstacle positions.
-													float const*	pdObstacleRadius,		// In:	Obstacle radii.
+	__global__ void SteerToAvoidObstaclesKernel(			uint const*		pdKNNIndices,			// In:	Indices of the K Nearest Obstacles.
+															float const*	pdKNNDistances,			// In:	Distances to the K Nearest Obstacles.
+															size_t const	k,
+														
+															float4 const*	pdPosition,				// In:	Agent positions.
+															float4 const*	pdDirection,			// In:	Agent directions.
+															float3 const*	pdSide,
+															float3 const*	pdUp,
+															float const*	pdRadius,				// In:	Agent radii.
+															float const*	pdSpeed,				// In:	Agent speeds.
 
-													float const		minTimeToCollision,
-		
-													float3 *		pdSteering,				// Out:	Agent steering vectors.
-													
-													uint const		numAgents,				// In:	Number of agents.
-													uint const		numObstacles,			// In:	Number of obstacles.
-													float const		fWeight,				// In:	Weight for this kernel
+															float const		minTimeToCollision,
+				
+															float4 *		pdSteering,				// Out:	Agent steering vectors.
+															
+															uint const		numAgents,				// In:	Number of agents.
+															uint const		numObstacles,			// In:	Number of obstacles.
+															float const		fWeight,				// In:	Weight for this kernel
 
-													uint *			pdAppliedKernels,
-													uint const		doNotApplyWith
-													);
+															uint *			pdAppliedKernels,
+															uint const		doNotApplyWith
+															);
 }
+
+texture< float4, cudaTextureType1D, cudaReadModeElementType >	texOPosition;
+texture< float, cudaTextureType1D, cudaReadModeElementType >	texORadius;
 
 typedef struct intersection
 {
@@ -113,23 +115,38 @@ __inline__ __device__ void LocalizePosition( float3 const* globalPosition, float
 	LocalizeDirection( &globalOffset, localPosition, side, up, direction );
 }
 
+__host__ void SteerToAvoidObstaclesKernelBindTextures(	float4 const*	pdObstaclePosition,
+														float const*	pdObstacleRadius,
+														uint const		numObstacles
+														)
+{
+	static cudaChannelFormatDesc const floatChannelDesc = cudaCreateChannelDesc< float >();
+	static cudaChannelFormatDesc const float4ChannelDesc = cudaCreateChannelDesc< float4 >();
+
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texOPosition, pdObstaclePosition, float4ChannelDesc, numObstacles * sizeof(float4) ) );
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texORadius, pdObstacleRadius, floatChannelDesc, numObstacles * sizeof(float) ) );
+}
+
+__host__ void SteerToAvoidObstaclesKernelUnbindTextures( void )
+{
+	CUDA_SAFE_CALL( cudaUnbindTexture( texOPosition ) );
+	CUDA_SAFE_CALL( cudaUnbindTexture( texORadius ) );
+}
+
 __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:	Indices of the K Nearest Obstacles.
 												float const*	pdKNNDistances,			// In:	Distances to the K Nearest Obstacles.
 												size_t const	k,
 											
-												float3 const*	pdPosition,				// In:	Agent positions.
-												float3 const*	pdDirection,			// In:	Agent directions.
+												float4 const*	pdPosition,				// In:	Agent positions.
+												float4 const*	pdDirection,			// In:	Agent directions.
 												float3 const*	pdSide,
 												float3 const*	pdUp,
 												float const*	pdRadius,				// In:	Agent radii.
 												float const*	pdSpeed,				// In:	Agent speeds.
 
-												float3 const*	pdObstaclePosition,		// In:	Obstacle positions.
-												float const*	pdObstacleRadius,		// In:	Obstacle radii.
-
 												float const		minTimeToCollision,
 	
-												float3 *		pdSteering,				// Out:	Agent steering vectors.
+												float4 *		pdSteering,				// Out:	Agent steering vectors.
 												
 												uint const		numAgents,				// In:	Number of agents.
 												uint const		numObstacles,			// In:	Number of obstacles.
@@ -151,8 +168,6 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 	extern __shared__ uint shKNNIndices[];
 	float * shKNNDistances = (float*)shKNNIndices + (THREADSPERBLOCK*k);
 
-	float3 steering = { 0.f, 0.f, 0.f };
-
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	__shared__ float3 shDirection[THREADSPERBLOCK];
 	__shared__ float3 shSide[THREADSPERBLOCK];
@@ -162,13 +177,14 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 	__shared__ float3 shSteering[THREADSPERBLOCK];
 
 	// Copy required from global memory.
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shSide, pdSide );
-	FLOAT3_GLOBAL_READ( shUp, pdUp );
+	POSITION_SH( threadIdx.x )	= POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x ) = DIRECTION_F3( index );
+	STEERING_SH( threadIdx.x )	= STEERING_F3( index );
 	RADIUS_SH( threadIdx.x ) = RADIUS( index );
 	SPEED_SH( threadIdx.x ) = SPEED( index );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+
+	FLOAT3_GLOBAL_READ( shSide, pdSide );
+	FLOAT3_GLOBAL_READ( shUp, pdUp );
 
 	for( int i = 0; i < k; i++ )
 	{
@@ -177,6 +193,8 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 	}
 	__syncthreads();
 
+	float3 steering = { 0.f, 0.f, 0.f };
+	
 	float const			minDistanceToCollision = minTimeToCollision * SPEED_SH( threadIdx.x );
 	Intersection		next, nearest;
 	next.intersects		= false;
@@ -191,8 +209,11 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 		if( obstacleIndex >= numObstacles )
 			break;
 
+		float3 const	obstaclePosition	= make_float3( tex1Dfetch( texOPosition, obstacleIndex ) );
+		float const		obstacleRadius		= tex1Dfetch( texORadius, obstacleIndex );
+
 		findNextIntersectionWithSphere(	&POSITION_SH( threadIdx.x ), &SIDE_SH( threadIdx.x ), &UP_SH( threadIdx.x ), &DIRECTION_SH( threadIdx.x ), &RADIUS_SH( threadIdx.x ), 
-										&pdObstaclePosition[ obstacleIndex ], &pdObstacleRadius[ obstacleIndex ],
+										&obstaclePosition, &obstacleRadius,
 										&next
 										);
 
@@ -225,5 +246,5 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

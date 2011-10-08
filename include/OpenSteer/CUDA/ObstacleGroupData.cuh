@@ -9,8 +9,8 @@ namespace OpenSteer
 {
 typedef struct obstacle_data
 {
-	float3 position;
-	float radius;
+	float4	position;
+	float	radius;
 } ObstacleData;
 
 class obstacle_group_data
@@ -23,15 +23,14 @@ private:
 	//
 	// Device vectors
 	//
-	dev_vector< float3 >	m_dvPosition;
+	dev_vector< float4 >	m_dvPosition;
 	dev_vector< float >		m_dvRadius;
 
 	//
 	// Host vectors
 	//
-	std::vector< float3 >	m_hvPosition;
+	std::vector< float4 >	m_hvPosition;
 	std::vector< float >	m_hvRadius;
-
 
 public:
 	obstacle_group_data( void )
@@ -42,14 +41,15 @@ public:
 	~obstacle_group_data( void ) { }
 
 	// Accessors for the device data.
-	float3 *	pdPosition( void )							{ return m_dvPosition.begin(); }
+	float4 *	pdPosition( void )							{ return m_dvPosition.begin(); }
 	float *		pdRadius( void )							{ return m_dvRadius.begin(); }
 
 	// Accessors for the host data.
-	std::vector<float3> const& hvPosition( void ) const		{ return m_hvPosition; }
-	std::vector<float3> & hvPosition( void )				{ m_bSyncDevice = true; return m_hvPosition; }
-	std::vector<float> const& hvRadius( void ) const		{ return m_hvRadius; }
-	std::vector<float> & hvRadius( void )					{ m_bSyncDevice = true; return m_hvRadius; }
+	std::vector< float4 > const& hvPosition( void ) const	{ return m_hvPosition; }
+	std::vector< float4 > & hvPosition( void )				{ m_bSyncDevice = true; return m_hvPosition; }
+
+	std::vector< float > const& hvRadius( void ) const		{ return m_hvRadius; }
+	std::vector< float > & hvRadius( void )					{ m_bSyncDevice = true; return m_hvRadius; }
 
 	uint size( void ) const									{ return m_nSize; }
 
@@ -111,13 +111,8 @@ public:
 		m_hvPosition.clear();
 		m_hvRadius.clear();
 	}
-
-
-
 };	// class ObstacleGroupData
 typedef obstacle_group_data ObstacleGroupData;
 }	// namespace OpenSteer
-
-
 
 #endif

@@ -7,11 +7,12 @@ using namespace OpenSteer;
 // Kernel function prototype.
 extern "C"
 {
-	__global__ void SteerForFleeCUDAKernel(	float3 const*	pdPosition,
-											float3 const*	pdForward,
-											float3 *		pdSteering,
+	__global__ void SteerForFleeCUDAKernel(	float4 const*	pdPosition,
+											float4 const*	pdDirection,
+											float4 *		pdSteering,
 
 											float3 const	target,
+
 											size_t const	numAgents,
 											float const		fWeight,
 											uint *			pdAppliedKernels,
@@ -33,13 +34,13 @@ void SteerForFleeCUDA::run(void)
 	dim3 block = blockDim();
 
 	// Gather required device pointers.
-	float3 const*	pdPosition			= m_pAgentGroupData->pdPosition();
-	float3 const*	pdForward			= m_pAgentGroupData->pdForward();
-	float3 *		pdSteering			= m_pAgentGroupData->pdSteering();
+	float4 const*	pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 const*	pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 *		pdSteering			= m_pAgentGroupData->pdSteering();
 
 	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
 
-	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdForward, pdSteering, m_target, getNumAgents(), m_fWeight, pdAppliedKernels, m_doNotApplyWith );
+	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdDirection, pdSteering, m_target, getNumAgents(), m_fWeight, pdAppliedKernels, m_doNotApplyWith );
 	cutilCheckMsg( "SteerForFleeCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }

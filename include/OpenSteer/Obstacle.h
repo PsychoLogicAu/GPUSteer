@@ -133,11 +133,11 @@ namespace OpenSteer {
             const float totalRadius = _data.radius + v.radius ();
 
             // obstacle center relative to vehicle position
-            const float3 localOffset = float3_subtract(_data.center, v.position());
+            const float3 localOffset = float3_subtract(_data.center, make_float3(v.position()));
 
             // distance along vehicle's forward axis to obstacle's center
-            const float forwardComponent = float3_dot(localOffset, v.forward());
-            const float3 forwardOffset = float3_scalar_multiply(v.forward(), forwardComponent);
+            const float forwardComponent = float3_dot(localOffset, make_float3(v.forward()));
+            const float3 forwardOffset = float3_scalar_multiply(make_float3(v.forward()), forwardComponent);
 
             // offset from forward axis to obstacle's center
             const float3 offForwardOffset = float3_subtract(localOffset, forwardOffset);

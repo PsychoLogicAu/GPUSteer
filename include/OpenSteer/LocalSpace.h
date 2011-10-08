@@ -84,24 +84,24 @@ namespace OpenSteer {
     private:
         float3 _side;     //    side-pointing unit basis vector
         float3 _up;       //  upward-pointing unit basis vector
-        float3 _forward;  // forward-pointing unit basis vector
-        float3 _position; // origin of local space
+        float4 _forward;  // forward-pointing unit basis vector
+        float4 _position; // origin of local space
 
     public:
 
         // accessors (get and set) for side, up, forward and position
         float3 side     (void) const {return _side;};
         float3 up       (void) const {return _up;};
-        float3 forward  (void) const {return _forward;};
-        float3 position (void) const {return _position;};
+        float4 forward  (void) const {return _forward;};
+        float4 position (void) const {return _position;};
         float3 setSide     (float3 s) {return _side = s;};
         float3 setUp       (float3 u) {return _up = u;};
-        float3 setForward  (float3 f) {return _forward = f;};
-        float3 setPosition (float3 p) {return _position = p;};
+        float4 setForward  (float4 f) {return _forward = f;};
+        float4 setPosition (float4 p) {return _position = p;};
         float3 setSide     (float x, float y, float z){return _side = make_float3(x,y,z);};
         float3 setUp       (float x, float y, float z){return _up = make_float3(x,y,z);};
-        float3 setForward  (float x, float y, float z){return _forward = make_float3(x,y,z);};
-        float3 setPosition (float x, float y, float z){return _position = make_float3(x,y,z);};
+        float4 setForward  (float x, float y, float z){return _forward = make_float4(x,y,z,0);};
+        float4 setPosition (float x, float y, float z){return _position = make_float4(x,y,z,0);};
 
 
         // ------------------------------------------------------------------------
@@ -123,8 +123,8 @@ namespace OpenSteer {
 
         LocalSpace		 (const float3& Side,
                          const float3& Up,
-                         const float3& Forward,
-                         const float3& Position)
+                         const float4& Forward,
+                         const float4& Position)
         {
             _side = Side;
             _up = Up;
@@ -134,8 +134,8 @@ namespace OpenSteer {
 
 
         LocalSpace (const float3& Up,
-                         const float3& Forward,
-                         const float3& Position)
+                         const float4& Forward,
+                         const float4& Position)
         {
             _up = Up;
             _forward = Forward;
@@ -157,10 +157,10 @@ namespace OpenSteer {
 
         void resetLocalSpace (void)
         {
-            _forward = make_float3 (0, 0, 1);
-            _side = localRotateForwardToSide (_forward);
+            _forward = make_float4 (0, 0, 1, 0);
+            _side = localRotateForwardToSide (make_float3(_forward));
             _up = make_float3 (0, 1, 0);
-            _position = make_float3 (0, 0, 0);
+            _position = make_float4 (0, 0, 0, 0);
         };
 
 
@@ -173,7 +173,7 @@ namespace OpenSteer {
             // dot offset with local basis vectors to obtain local coordiantes
             return make_float3 (float3_dot(globalDirection, _side),// globalDirection.dot (_side),
                          float3_dot(globalDirection, _up),// globalDirection.dot (_up),
-                         float3_dot(globalDirection, _forward));// globalDirection.dot (_forward));
+                         float3_dot(globalDirection, make_float3(_forward)));// globalDirection.dot (_forward));
         };
 
 
@@ -184,7 +184,7 @@ namespace OpenSteer {
         float3 localizePosition (const float3& globalPosition) const
         {
             // global offset from local origin
-            float3 globalOffset = float3_subtract(globalPosition, _position);// globalPosition - _position;
+            float3 globalOffset = float3_subtract(globalPosition, make_float3(_position));// globalPosition - _position;
 
             // dot offset with local basis vectors to obtain local coordiantes
             return localizeDirection (globalOffset);
@@ -197,7 +197,7 @@ namespace OpenSteer {
 
         float3 globalizePosition (const float3& localPosition) const
         {
-            return float3_add(_position, globalizeDirection(localPosition));// _position + globalizeDirection (localPosition);
+            return float3_add(make_float3(_position), globalizeDirection(localPosition));// _position + globalizeDirection (localPosition);
         };
 
 
@@ -212,7 +212,7 @@ namespace OpenSteer {
 											float3_scalar_multiply(_side, localDirection.x),
 											float3_scalar_multiply(_up, localDirection.y)
 										  ),
-								float3_scalar_multiply(_forward, localDirection.z)
+								float3_scalar_multiply(make_float3(_forward), localDirection.z)
 							 );
         };
 
@@ -225,9 +225,9 @@ namespace OpenSteer {
         {
             // derive new unit side basis vector from forward and up
             if (rightHanded())
-				_side = float3_cross(_forward, _up);
+				_side = float3_cross(make_float3(_forward), _up);
             else
-				_side = float3_normalize(float3_cross(_up, _forward));
+				_side = float3_normalize(float3_cross(_up, make_float3(_forward)));
         }
 
 
@@ -238,7 +238,7 @@ namespace OpenSteer {
 
         void regenerateOrthonormalBasisUF (const float3& newUnitForward)
         {
-            _forward = newUnitForward;
+            _forward = make_float4( newUnitForward, 0.f );
 
             // derive new side basis vector from NEW forward and OLD up
             setUnitSideFromForwardAndUp ();
@@ -247,9 +247,9 @@ namespace OpenSteer {
             // (should have unit length since Side and Forward are
             // perpendicular and unit length)
             if (rightHanded())
-				_up = float3_cross(_side, _forward);
+				_up = float3_cross(_side, make_float3(_forward));
             else
-				_up = float3_cross(_forward, _side);
+				_up = float3_cross(make_float3(_forward), _side);
         }
 
 

@@ -448,8 +448,8 @@ OpenSteer::OpenSteerDemo::findVehicleNearestScreenPosition (int x, int y)
     for (AVIterator i = vehicles.begin(); i != vehicles.end(); i++)
     {
         // distance from this vehicle's center to the selection line:
-        const float d = float3_distanceFromLine ((**i).position(),
-                                          camera.position(),
+        const float d = float3_distanceFromLine (make_float3((**i).position()),
+                                          make_float3(camera.position()),
                                           direction);
 
         // if this vehicle-to-line distance is the smallest so far,
@@ -528,9 +528,9 @@ OpenSteer::OpenSteerDemo::position3dCamera (AbstractVehicle& selected,
     selectedVehicle = &selected;
     if (&selected)
     {
-        const float3 behind = float3_scalar_multiply(selected.forward(), -distance);
-        camera.setPosition (float3_add(selected.position(), behind));
-        camera.target = selected.position();
+        const float3 behind = float3_scalar_multiply(make_float3(selected.forward()), -distance);
+        camera.setPosition ( make_float4(float3_add(make_float3(selected.position()), behind), 0.f) );
+        camera.target = make_float3(selected.position());
     }
 }
 
@@ -550,9 +550,9 @@ OpenSteer::OpenSteerDemo::position2dCamera (AbstractVehicle& selected,
     position3dCamera (selected, distance, elevation);
 
     // then adjust for 3d:
-    float3 position3d = camera.position();
+    float3 position3d = make_float3(camera.position());
     position3d.y += elevation;
-    camera.setPosition (position3d);
+    camera.setPosition (make_float4(position3d, 0.f));
 }
 
 
@@ -613,7 +613,7 @@ void
 OpenSteer::OpenSteerDemo::highlightVehicleUtility (const AbstractVehicle& vehicle)
 {
     if (&vehicle != NULL)
-        drawXZDisk (vehicle.radius(), vehicle.position(), gGray60, 20);
+        drawXZDisk (vehicle.radius(), make_float3(vehicle.position()), gGray60, 20);
 }
 
 
@@ -625,7 +625,7 @@ void
 OpenSteer::OpenSteerDemo::circleHighlightVehicleUtility (const AbstractVehicle& vehicle)
 {
     if (&vehicle != NULL) drawXZCircle (vehicle.radius () * 1.1f,
-                                        vehicle.position(),
+                                        make_float3(vehicle.position()),
                                         gGray60,
                                         20);
 }
@@ -662,10 +662,10 @@ OpenSteer::OpenSteerDemo::drawCircleHighlightOnVehicle (const AbstractVehicle& v
 {
     if (&v)
     {
-        const float3& cPosition = camera.position();
+        const float3& cPosition = make_float3(camera.position());
         draw3dCircle  (v.radius() * radiusMultiplier,  // adjusted radius
-                       v.position(),                   // center
-                       float3_subtract(v.position(), cPosition),       // view axis
+                       make_float3(v.position()),                   // center
+                       float3_subtract(make_float3(v.position()), cPosition),       // view axis
                        color,                          // drawing color
                        20);                            // circle segments
     }

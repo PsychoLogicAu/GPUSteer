@@ -13,10 +13,10 @@ class AbstractLocalSpace
         virtual float3 setSide (float3 s) = 0;
         virtual float3 up (void) const = 0;
         virtual float3 setUp (float3 u) = 0;
-        virtual float3 forward (void) const = 0;
-        virtual float3 setForward (float3 f) = 0;
-        virtual float3 position (void) const = 0;
-        virtual float3 setPosition (float3 p) = 0;
+        virtual float4 forward (void) const = 0;
+        virtual float4 setForward (float4 f) = 0;
+        virtual float4 position (void) const = 0;
+        virtual float4 setPosition (float4 p) = 0;
 
         // reset transform to identity
         virtual void resetLocalSpace (void) = 0;

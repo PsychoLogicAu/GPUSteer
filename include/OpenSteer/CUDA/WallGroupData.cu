@@ -25,7 +25,7 @@ void WallGroupData::syncDevice( void )
 }
 
 // Following is based on: http://www.garagegames.com/community/blogs/view/309
-bool WallGroupData::intersects(	float3 const& start, float3 const& end,		// Start and end of line segment.
+bool WallGroupData::intersects(	float3 const& start, float3 const& end,				// Start and end of line segment.
 								float3 const& cellMin, float3 const& cellMax,		// Min and max of cell.
 								float3 & intersectPoint								// The point of intersection with the cell.
 								)
@@ -79,7 +79,7 @@ bool WallGroupData::LoadFromFile( char const* szFilename )
 
 	while( ! inFile.eof() )
 	{
-		float3 start, mid, end, normal;
+		float4 start, mid, end, normal;
 
 		inFile >> start.x >> start.y >> start.z;
 		inFile >> end.x >> end.y >> end.z;
@@ -87,6 +87,8 @@ bool WallGroupData::LoadFromFile( char const* szFilename )
 		mid.x = 0.5f * (start.x + end.x);
 		mid.y = 0.5f * (start.y + end.y);
 		mid.z = 0.5f * (start.z + end.z);
+
+		start.w = mid.w = end.w = normal.w = 0.f;
 
 		if( ! inFile.good() )
 			break;
@@ -103,15 +105,15 @@ bool WallGroupData::LoadFromFile( char const* szFilename )
 	return true;
 }
 
-void WallGroupData::SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds )
+void WallGroupData::SplitWalls( std::vector< bin_cell > const& cells )
 {
 	size_t count = m_hvLineStart.size();
 
 	// Copy the vectors to lists as the vectors don't like what I have planned for them.
-	std::list< float3 > startList;
-	std::list< float3 > midList;
-	std::list< float3 > endList;
-	std::list< float3 > normalList;
+	std::list< float4 > startList;
+	std::list< float4 > midList;
+	std::list< float4 > endList;
+	std::list< float4 > normalList;
 	startList.resize( count );
 	midList.resize( count );
 	endList.resize( count );
@@ -121,45 +123,41 @@ void WallGroupData::SplitWalls( std::vector< float3 > const& cellMinBounds, std:
 	std::copy( m_hvLineEnd.begin(), m_hvLineEnd.end(), endList.begin() );
 	std::copy( m_hvLineNormal.begin(), m_hvLineNormal.end(), normalList.begin() );
 
-	std::list< float3 >::iterator itStart	= startList.begin();
-	std::list< float3 >::iterator itMid		= midList.begin();
-	std::list< float3 >::iterator itEnd		= endList.begin();
-	std::list< float3 >::iterator itNormal	= normalList.begin();
-
+	std::list< float4 >::iterator itStart	= startList.begin();
+	std::list< float4 >::iterator itMid		= midList.begin();
+	std::list< float4 >::iterator itEnd		= endList.begin();
+	std::list< float4 >::iterator itNormal	= normalList.begin();
 
 	// For each line...
 	while( itStart != startList.end() )
 	{
 		bool intersected = false;
 
-		std::vector< float3 >::const_iterator itCellMinBound;
-		std::vector< float3 >::const_iterator itCellMaxBound;
-
 		// For each cell...
-		for( itCellMinBound = cellMinBounds.begin(), itCellMaxBound = cellMaxBounds.begin(); itCellMinBound != cellMinBounds.end(); ++itCellMinBound, ++itCellMaxBound )
+		for( std::vector< bin_cell >::const_iterator itCell = cells.begin(); itCell != cells.end(); ++itCell )
 		{
 			// Does the line segment intersect the cell?
 			float3 intersectPoint;
 
-			if( intersected = intersects( *itStart, *itEnd, *itCellMinBound, *itCellMaxBound, intersectPoint ) )
+			if( intersected = intersects( make_float3( *itStart ), make_float3( *itEnd ), itCell->minBound, itCell->maxBound, intersectPoint ) )
 			{
 				float3 midPoint;
 
 				// Add the two new line segments (but only if they are of >EPSILON length).
 				// start - intersectPoint
-				if( float3_distance( *itStart, intersectPoint ) > EPSILON && float3_distance( intersectPoint, *itEnd ) > EPSILON )
+				if( float3_distance( make_float3( *itStart ), intersectPoint ) > EPSILON && float3_distance( intersectPoint, make_float3( *itEnd ) ) > EPSILON )
 				{
-					midPoint = float3_add( *itStart, float3_scalar_multiply( float3_subtract( intersectPoint, *itStart ), 0.5f ) );
+					midPoint = float3_add( make_float3( *itStart ), float3_scalar_multiply( float3_subtract( intersectPoint, make_float3( *itStart ) ), 0.5f ) );
 					
 					startList.push_back( *itStart );
-					midList.push_back( midPoint );
-					endList.push_back( intersectPoint );
+					midList.push_back( make_float4( midPoint, 0.f ) );
+					endList.push_back( make_float4( intersectPoint, 0.f ) );
 					normalList.push_back( *itNormal );
 
-					midPoint = float3_add( intersectPoint, float3_scalar_multiply( float3_subtract( *itEnd, intersectPoint ), 0.5f ) );
+					midPoint = float3_add( intersectPoint, float3_scalar_multiply( float3_subtract( make_float3( *itEnd ), intersectPoint ), 0.5f ) );
 
-					startList.push_back( intersectPoint );
-					midList.push_back( midPoint );
+					startList.push_back( make_float4( intersectPoint, 0.f ) );
+					midList.push_back( make_float4( midPoint, 0.f ) );
 					endList.push_back( *itEnd );
 					normalList.push_back( *itNormal );
 
@@ -174,8 +172,6 @@ void WallGroupData::SplitWalls( std::vector< float3 > const& cellMinBounds, std:
 				}
 				else
 					intersected = false;
-
-
 			}
 		}
 

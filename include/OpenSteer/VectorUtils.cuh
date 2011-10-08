@@ -7,6 +7,16 @@
 
 #include "Utilities.h"
 
+static __inline__ __host__ __device__ float3 make_float3( float4 const& f4 )
+{
+	return make_float3( f4.x, f4.y, f4.z );
+}
+
+static __inline__ __host__ __device__ float4 make_float4( float3 const& f3, float const& w )
+{
+	return make_float4( f3.x, f3.y, f3.z, w );
+}
+
 static inline __host__ std::ostream& operator<<(std::ostream &os, const float3 &v)
 {
 	os << "[" << v.x << ", " << v.y << ", " << v.z << "]";
@@ -14,63 +24,101 @@ static inline __host__ std::ostream& operator<<(std::ostream &os, const float3 &
 }
 
 // vector addition
-static __inline__ __host__ __device__ float3 float3_add(const float3& lhs, const float3& rhs)
+static __inline__ __host__ __device__ float3 float3_add( float3 const& lhs, float3 const& rhs )
 {
 	return make_float3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
 }
+static __inline__ __host__ __device__ float4 float4_add( float4 const& lhs, float4 const& rhs )
+{
+	return make_float4( lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w );
+}
 
 // vector subtraction
-static __inline__ __host__ __device__ float3 float3_subtract(const float3& lhs, const float3& rhs)
+static __inline__ __host__ __device__ float3 float3_subtract(float3 const& lhs, float3 const& rhs)
 {
 	return make_float3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
 }
+static __inline__ __host__ __device__ float4 float4_subtract( float4 const& lhs, float4 const& rhs )
+{
+	return make_float4( lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w );
+}
 
 // unary minus
-static __inline__ __host__ __device__  float3 float3_minus(const float3& v)
+static __inline__ __host__ __device__  float3 float3_minus(float3 const& v)
 {
 	return make_float3(-v.x, -v.y, -v.z);
 }
+static __inline__ __host__ __device__  float4 float4_minus( float4 const& v )
+{
+	return make_float4( -v.x, -v.y, -v.z, -v.w );
+}
 
 // vector times scalar product (scale length of vector times argument)
-static __inline__ __host__ __device__  float3 float3_scalar_multiply(const float3& v, const float s)
+static __inline__ __host__ __device__  float3 float3_scalar_multiply(float3 const& v, const float s)
 {
 	return make_float3(v.x * s, v.y * s, v.z * s);
 }
+static __inline__ __host__ __device__  float4 float4_scalar_multiply( float4 const& v, const float s )
+{
+	return make_float4( v.x * s, v.y * s, v.z * s, v.w * s );
+}
 
 // vector divided by a scalar (divide length of vector by argument)
-static __inline__ __host__ __device__  float3 float3_scalar_divide(const float3& v, const float s)
+static __inline__ __host__ __device__  float3 float3_scalar_divide(float3 const& v, const float s)
 {
 	return make_float3(v.x / s, v.y / s, v.z / s);
 }
+static __inline__ __host__ __device__  float4 float4_scalar_divide( float4 const& v, const float s)
+{
+	return make_float4( v.x / s, v.y / s, v.z / s, v.w / s );
+}
 
 // dot product
-static __inline__ __host__ __device__  float float3_dot(const float3& lhs, const float3& rhs)
+static __inline__ __host__ __device__  float float3_dot(float3 const& lhs, float3 const& rhs)
 {
 	return (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z);
 }
+static __inline__ __host__ __device__  float float4_dot( float4 const& lhs, float4 const& rhs )
+{
+	return (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z) + (lhs.w * rhs.w);
+}
 
 // length squared
-static __inline__ __host__ __device__  float float3_lengthSquared(const float3& v)
+static __inline__ __host__ __device__  float float3_lengthSquared(float3 const& v)
 {
 	return float3_dot(v, v);
 }
+static __inline__ __host__ __device__  float float4_lengthSquared( float4 const& v )
+{
+	return float4_dot( v, v );
+}
 
 // length
-static __inline__ __host__ __device__  float float3_length(const float3& v)
+static __inline__ __host__ __device__  float float3_length(float3 const& v)
 {
 	return sqrt(float3_lengthSquared(v));
 }
+static __inline__ __host__ __device__  float float4_length( float4 const& v )
+{
+	return sqrt( float4_lengthSquared( v ) );
+}
 
 // normalize
-static __inline__ __host__ __device__  float3 float3_normalize (const float3& v)
+static __inline__ __host__ __device__  float3 float3_normalize (float3 const& v)
 {
     // skip divide if length is zero
     const float len = float3_length(v);
     return (len > 0) ? float3_scalar_divide(v, len) : v;
 }
+static __inline__ __host__ __device__  float4 float4_normalize( float4 const& v )
+{
+    // skip divide if length is zero
+    const float len = float4_length( v );
+    return (len > 0) ? float4_scalar_divide( v, len ) : v;
+}
 
 // cross product
-static __inline__ __host__ __device__  float3 float3_cross(const float3& lhs, const float3& rhs)
+static __inline__ __host__ __device__  float3 float3_cross(float3 const& lhs, float3 const& rhs)
 {
     return make_float3((lhs.y * rhs.z) - (lhs.z * rhs.y),
                   (lhs.z * rhs.x) - (lhs.x * rhs.z),
@@ -78,20 +126,28 @@ static __inline__ __host__ __device__  float3 float3_cross(const float3& lhs, co
 }
 
 // equality/inequality
-static __inline__ __host__ __device__  bool float3_equals(const float3& lhs, const float3& rhs)
+static __inline__ __host__ __device__  bool float3_equals(float3 const& lhs, float3 const& rhs)
 {
 	return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
 }
+static __inline__ __host__ __device__  bool float4_equals( float4 const& lhs, float4 const& rhs)
+{
+	return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
+}
 
 // Compute the euclidean distance between two points.
-static __inline__ __host__ __device__  float float3_distance(const float3& lhs, const float3& rhs)
+static __inline__ __host__ __device__  float float3_distance(float3 const& lhs, float3 const& rhs)
 {
 	return float3_length(float3_subtract(lhs, rhs));
+}
+static __inline__ __host__ __device__  float float4_distance( float4 const& lhs, float4 const& rhs)
+{
+	return float4_length( float4_subtract( lhs, rhs ) );
 }
 
 // return component of vector parallel to a unit basis vector
 // (IMPORTANT NOTE: assumes "unitBasis" has unit magnitude (length==1))
-static __inline__ __host__ __device__  float3 float3_parallelComponent(const float3& v, const float3& unitBasis)
+static __inline__ __host__ __device__  float3 float3_parallelComponent(float3 const& v, float3 const& unitBasis)
 {
 	const float projection = float3_dot(v, unitBasis);
 
@@ -100,7 +156,7 @@ static __inline__ __host__ __device__  float3 float3_parallelComponent(const flo
 
 // return component of vector perpendicular to a unit basis vector
 // (IMPORTANT NOTE: assumes "basis" has unit magnitude (length==1))
-static __inline__ __host__ __device__  float3 float3_perpendicularComponent(const float3& v, const float3& unitBasis)
+static __inline__ __host__ __device__  float3 float3_perpendicularComponent(float3 const& v, float3 const& unitBasis)
 {
 	return float3_subtract(v, float3_parallelComponent(v, unitBasis));
 }
@@ -109,7 +165,7 @@ static __inline__ __host__ __device__  float3 float3_perpendicularComponent(cons
 // shorter its value is returned unaltered, if the vector is longer
 // the value returned has length of maxLength and is paralle to the
 // original input.
-static __inline__ __host__ __device__  float3 float3_truncateLength(const float3& v, const float maxLength)
+static __inline__ __host__ __device__  float3 float3_truncateLength(float3 const& v, const float maxLength)
 {
     const float maxLengthSquared = maxLength * maxLength;
     const float vecLengthSquared = float3_lengthSquared(v);
@@ -119,7 +175,7 @@ static __inline__ __host__ __device__  float3 float3_truncateLength(const float3
 		return float3_scalar_multiply(v, maxLength / sqrt(vecLengthSquared));
 }
 
-static __inline__ __host__ __device__  float3 float3_setYtoZero(const float3& v)
+static __inline__ __host__ __device__  float3 float3_setYtoZero(float3 const& v)
 {
 	return make_float3(v.x, 0, v.z);
 }
@@ -139,7 +195,7 @@ static __inline__ __host__ __device__  float3 float3_forward()
 	return make_float3(0, 0, 1);
 }
 
-static __inline__ __host__ __device__ float3 float3_findPerpendicularIn3d(const float3& direction)
+static __inline__ __host__ __device__ float3 float3_findPerpendicularIn3d(float3 const& direction)
 {
     // to be filled in:
     float3 quasiPerp;  // a direction which is "almost perpendicular"
@@ -178,7 +234,7 @@ static __inline__ __host__ __device__ float3 float3_findPerpendicularIn3d(const 
 }
 
 // rotate this vector about the global Y (up) axis by the given angle
-static __inline__ __host__ __device__ float3 float3_rotateAboutGlobalY (const float3& v, float angle, float& _sin, float& _cos) 
+static __inline__ __host__ __device__ float3 float3_rotateAboutGlobalY (float3 const& v, float angle, float& _sin, float& _cos) 
 {
     // is both are zero, they have not be initialized yet
     if (_sin == 0 && _cos == 0)
@@ -191,9 +247,9 @@ static __inline__ __host__ __device__ float3 float3_rotateAboutGlobalY (const fl
 					   (v.z * _cos) - (v.x * _sin));
 }
 
-static __inline__ __host__ __device__ float float3_distanceFromLine (const float3& point,
-                                   const float3& lineOrigin,
-                                   const float3& lineUnitTangent)
+static __inline__ __host__ __device__ float float3_distanceFromLine (float3 const& point,
+                                   float3 const& lineOrigin,
+                                   float3 const& lineUnitTangent)
 {
     const float3 offset = float3_subtract(point, lineOrigin);
 	const float3 perp = float3_perpendicularComponent(offset, lineUnitTangent);
@@ -220,7 +276,7 @@ static __inline__ __host__ float3 float3_RandomUnitVectorOnXZPlane (void)
 	return float3_normalize(float3_setYtoZero(float3_RandomVectorInUnitRadiusSphere()));
 }
 
-static __inline__ __host__ __device__ float3 interpolate (float alpha, const float3& x0, const float3& x1)
+static __inline__ __host__ __device__ float3 interpolate (float alpha, float3 const& x0, float3 const& x1)
 {
 	return float3_add(x0, float3_scalar_multiply(float3_subtract(x1, x0), alpha));
 }
@@ -234,9 +290,9 @@ static __inline__ __host__ __device__ float3 interpolate (float alpha, const flo
 
 
 static __inline__ __host__ __device__ float3 vecLimitDeviationAngleUtility (const bool insideOrOutside,
-                                          const float3& source,
+                                          float3 const& source,
                                           const float cosineOfConeAngle,
-                                          const float3& basis)
+                                          float3 const& basis)
 {
     // immediately return zero length input vectors
     float sourceLength = float3_length(source);
@@ -284,9 +340,9 @@ static __inline__ __host__ __device__ float3 vecLimitDeviationAngleUtility (cons
 // diviates from a given reference direction (specified by a unit basis
 // vector).  The effect is to clip the "source" vector to be inside a cone
 // defined by the basis and an angle.
-static __inline__ __host__ __device__ float3 limitMaxDeviationAngle (const float3& source,
+static __inline__ __host__ __device__ float3 limitMaxDeviationAngle (float3 const& source,
                                     const float cosineOfConeAngle,
-                                    const float3& basis)
+                                    float3 const& basis)
 {
     return vecLimitDeviationAngleUtility (true, // force source INSIDE cone
                                           source,
@@ -313,7 +369,7 @@ static __inline__ __host__ float3 float3_randomVectorOnUnitRadiusXZDisk (void)
     return v;
 }
 
-static __inline__ __host__ __device__ float3 float3_LocalRotateForwardToSide(const float3& v)
+static __inline__ __host__ __device__ float3 float3_LocalRotateForwardToSide(float3 const& v)
 {
 	return make_float3(-v.z, v.y, v.x);
 }

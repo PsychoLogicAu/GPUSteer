@@ -37,7 +37,7 @@ float3
 OpenSteer::SteerLibrary::
 steerForSeek (const AbstractVehicle& v, const float3& target)
 {
-    const float3 desiredVelocity = float3_subtract(target, v.position());
+    const float3 desiredVelocity = float3_subtract(target, make_float3(v.position()));
     return float3_subtract(desiredVelocity, v.velocity());
 }
 
@@ -51,7 +51,7 @@ float3
 OpenSteer::SteerLibrary::
 steerForFlee (const AbstractVehicle& v, const float3& target)
 {
-    const float3 desiredVelocity = float3_subtract(v.position(), target);
+    const float3 desiredVelocity = float3_subtract(make_float3(v.position()), target);
     return float3_subtract(desiredVelocity, v.velocity());
 }
 
@@ -65,7 +65,7 @@ float3
 OpenSteer::SteerLibrary::
 xxxsteerForFlee (const AbstractVehicle& v, const float3& target)
 {
-    const float3 offset = float3_subtract(v.position(), target);
+    const float3 offset = float3_subtract(make_float3(v.position()), target);
     const float3 desiredVelocity = float3_truncateLength(offset, v.maxSpeed());
     return float3_subtract(desiredVelocity, v.velocity());
 }
@@ -76,7 +76,7 @@ float3
 OpenSteer::SteerLibrary::
 xxxsteerForSeek (const AbstractVehicle& v, const float3& target)
 {
-    const float3 offset = float3_subtract(target, v.position());
+    const float3 offset = float3_subtract(target, make_float3(v.position()));
 	const float3 desiredVelocity = float3_truncateLength(offset, v.maxSpeed());
     return float3_subtract(desiredVelocity, v.velocity());
 }
@@ -136,7 +136,7 @@ steerToFollowPath (const AbstractVehicle& v,
 
     // measure distance along path of our current and predicted positions
     const float nowPathDistance =
-        path.mapPointToPathDistance (v.position ());
+        path.mapPointToPathDistance (make_float3(v.position ()));
     const float futurePathDistance =
         path.mapPointToPathDistance (futurePosition);
 
@@ -349,14 +349,14 @@ steerToAvoidNeighbors (const AbstractVehicle& v,
     if (threat != NULL)
     {
         // parallel: +1, perpendicular: 0, anti-parallel: -1
-        float parallelness = float3_dot(v.forward(), threat->forward());
+        float parallelness = float3_dot(make_float3(v.forward()), make_float3(threat->forward()));
         float angle = 0.707f;
 
         if (parallelness < -angle)
         {
             // anti-parallel "head on" paths:
             // steer away from future threat position
-            float3 offset = float3_subtract(xxxThreatPositionAtNearestApproach, v.position());
+            float3 offset = float3_subtract(xxxThreatPositionAtNearestApproach, make_float3(v.position()));
             float sideDot = float3_dot(offset, v.side());
             steer = (sideDot > 0) ? -1.0f : 1.0f;
         }
@@ -365,7 +365,7 @@ steerToAvoidNeighbors (const AbstractVehicle& v,
             if (parallelness > angle)
             {
                 // parallel paths: steer away from threat
-                float3 offset = float3_subtract(threat->position(), v.position());
+                float3 offset = float3_subtract(make_float3(threat->position()), make_float3(v.position()));
                 float sideDot = float3_dot(offset, v.side());
                 steer = (sideDot > 0) ? -1.0f : 1.0f;
             }
@@ -425,7 +425,7 @@ predictNearestApproachTime (const AbstractVehicle& v,
 
     // find distance from its path to origin (compute offset from
     // other to us, find length of projection onto path)
-    const float3 relPosition = float3_subtract(v.position(), other.position());
+    const float3 relPosition = float3_subtract(make_float3(v.position()), make_float3(other.position()));
 	const float projection = float3_dot(relTangent, relPosition);
 
     return projection / relSpeed;
@@ -444,11 +444,11 @@ computeNearestApproachPositions (const AbstractVehicle& v,
 								 AbstractVehicle& other, 
 								 float time)
 {
-	const float3 myTravel = float3_scalar_multiply(v.forward(), v.speed () * time);
-	const float3 otherTravel = float3_scalar_multiply(other.forward(), other.speed () * time);
+	const float3 myTravel = float3_scalar_multiply(make_float3(v.forward()), v.speed () * time);
+	const float3 otherTravel = float3_scalar_multiply(make_float3(other.forward()), other.speed () * time);
 
-    const float3 myFinal = float3_add(v.position(), myTravel);
-    const float3 otherFinal = float3_add(other.position(), otherTravel);
+    const float3 myFinal = float3_add(make_float3(v.position()), myTravel);
+    const float3 otherFinal = float3_add(make_float3(other.position()), otherTravel);
 
     // xxx for annotation
     ourPositionAtNearestApproach = myFinal;
@@ -482,13 +482,13 @@ steerToAvoidCloseNeighbors (const AbstractVehicle& v,
         {
             const float sumOfRadii = v.radius() + other.radius();
             const float minCenterToCenter = minSeparationDistance + sumOfRadii;
-            const float3 offset = float3_subtract(other.position(), v.position());
+            const float3 offset = float3_subtract(make_float3(other.position()), make_float3(v.position()));
             const float currentDistance = float3_length(offset);
 
             if (currentDistance < minCenterToCenter)
             {
                 annotateAvoidCloseNeighbor (other, minSeparationDistance);
-				return float3_perpendicularComponent(float3_minus(offset), v.forward());
+				return float3_perpendicularComponent(float3_minus(offset), make_float3(v.forward()));
             }
         }
     }
@@ -517,7 +517,7 @@ inBoidNeighborhood (const AbstractVehicle& v,
     }
     else
     {
-        const float3 offset = float3_subtract(other.position(), v.position());
+        const float3 offset = float3_subtract(make_float3(other.position()), make_float3(v.position()));
 		const float distanceSquared = float3_lengthSquared(offset);
 
         // definitely in neighborhood if inside minDistance sphere
@@ -536,7 +536,7 @@ inBoidNeighborhood (const AbstractVehicle& v,
             {
                 // otherwise, test angular offset from forward axis
 				const float3 unitOffset = float3_scalar_divide(offset, sqrt(distanceSquared));
-                const float forwardness = float3_dot(v.forward(), unitOffset);
+                const float forwardness = float3_dot(make_float3(v.forward()), unitOffset);
                 return forwardness > cosMaxAngle;
             }
         }
@@ -568,7 +568,7 @@ steerForSeparation (const AbstractVehicle& v,
             // add in steering contribution
             // (opposite of the offset direction, divided once by distance
             // to normalize, divided another time to get 1/d falloff)
-            const float3 offset = float3_subtract((**other).position(), v.position());
+            const float3 offset = float3_subtract(make_float3((**other).position()), make_float3(v.position()));
             const float distanceSquared = float3_dot(offset, offset);
 			steering = float3_add(steering, float3_scalar_divide(offset, -distanceSquared));
 
@@ -607,7 +607,7 @@ steerForAlignment (const AbstractVehicle& v,
         if (inBoidNeighborhood (v, **other, v.radius() * 3, maxDistance, cosMaxAngle))
         {
             // accumulate sum of neighbor's heading
-			steering = float3_add(steering, (**other).forward());
+			steering = float3_add(steering, make_float3((**other).forward()));
 
             // count neighbors
             neighbors++;
@@ -617,7 +617,7 @@ steerForAlignment (const AbstractVehicle& v,
     // divide by neighbors, subtract off current heading to get error-
     // correcting direction, then normalize to pure direction
     if (neighbors > 0)
-		steering = float3_normalize(float3_subtract(float3_scalar_divide(steering, (float)neighbors), v.forward()));
+		steering = float3_normalize(float3_subtract(float3_scalar_divide(steering, (float)neighbors), make_float3(v.forward())));
 
     return steering;
 }
@@ -646,7 +646,7 @@ steerForCohesion (const AbstractVehicle& v,
         if (inBoidNeighborhood (v, **other, v.radius() * 3, maxDistance, cosMaxAngle))
         {
             // accumulate sum of neighbor's positions
-			steering = float3_add(steering, (**other).position());
+			steering = float3_add(steering, make_float3((**other).position()));
 
             // count neighbors
             neighbors++;
@@ -656,7 +656,7 @@ steerForCohesion (const AbstractVehicle& v,
     // divide by neighbors, subtract off current position to get error-
     // correcting direction, then normalize to pure direction
     if (neighbors > 0)
-		steering = float3_normalize(float3_subtract(float3_scalar_divide(steering, (float)neighbors), v.position()));
+		steering = float3_normalize(float3_subtract(float3_scalar_divide(steering, (float)neighbors), make_float3(v.position())));
 
     return steering;
 }
@@ -684,17 +684,17 @@ steerForPursuit (const AbstractVehicle& v,
                  const float maxPredictionTime)
 {
     // offset from this to quarry, that distance, unit vector toward quarry
-    const float3 offset = float3_subtract(quarry.position(), v.position());
+    const float3 offset = float3_subtract(make_float3(quarry.position()), make_float3(v.position()));
 	const float distance = float3_length(offset);
     const float3 unitOffset = float3_scalar_divide(offset, distance);
 
     // how parallel are the paths of "this" and the quarry
     // (1 means parallel, 0 is pependicular, -1 is anti-parallel)
-    const float parallelness = float3_dot(v.forward(), quarry.forward());
+    const float parallelness = float3_dot(make_float3(v.forward()), make_float3(quarry.forward()));
 
     // how "forward" is the direction to the quarry
     // (1 means dead ahead, 0 is directly to the side, -1 is straight back)
-    const float forwardness = float3_dot(v.forward(), unitOffset);
+    const float forwardness = float3_dot(make_float3(v.forward()), unitOffset);
 
     const float directTravelTime = distance / v.speed ();
     const int f = intervalComparison (forwardness,  -0.707f, 0.707f);
@@ -771,7 +771,7 @@ steerForPursuit (const AbstractVehicle& v,
     const float3 target = quarry.predictFuturePosition (etl);
 
     // annotation
-    annotationLine (v.position(),
+    annotationLine (make_float3(v.position()),
                     target,
                     gaudyPursuitAnnotation ? color : gGray40);
 
@@ -790,7 +790,7 @@ steerForEvasion (const AbstractVehicle& v,
                  const float maxPredictionTime)
 {
     // offset from this to menace, that distance, unit vector toward menace
-    const float3 offset = float3_subtract(menace.position(), v.position());
+    const float3 offset = float3_subtract(make_float3(menace.position()), make_float3(v.position()));
     const float distance = float3_length(offset);
 
     const float roughTime = distance / menace.speed();
@@ -817,7 +817,7 @@ steerForTargetSpeed (const AbstractVehicle& v,
 {
     const float mf = v.maxForce ();
     const float speedError = targetSpeed - v.speed ();
-    return float3_scalar_multiply(v.forward (), clip (speedError, -mf, +mf));
+    return float3_scalar_multiply(make_float3(v.forward ()), clip (speedError, -mf, +mf));
 }
 
 

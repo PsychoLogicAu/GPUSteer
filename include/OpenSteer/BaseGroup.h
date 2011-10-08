@@ -24,8 +24,8 @@ public:
 	virtual uint const&	Size( void ) const				{ return m_nCount; }
 
 	// Pure virtual methods.
-	virtual float3 *		pdPosition( void ) = 0;
-	virtual float3 *		pdDirection( void ) = 0;
+	virtual float4 *		pdPosition( void ) = 0;
+	virtual float4 *		pdDirection( void ) = 0;
 	virtual float *			pdSpeed( void ) = 0;
 	virtual float *			pdRadius( void ) = 0;
 

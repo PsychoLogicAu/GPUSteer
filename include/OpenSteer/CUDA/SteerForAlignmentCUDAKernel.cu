@@ -6,38 +6,60 @@
 
 extern "C"
 {
-	__global__ void SteerForAlignmentCUDAKernel(	float3 const*	pdAPosition,
-													float3 const*	pdADirection,
-													float3 *		pdASteering,
-													size_t const	numA,
+	__host__ void SteerForAlignmentKernelBindTextures(	float4 const*	pdBPosition,
+														float4 const*	pdBDirection,
+														uint const		numB
+														);
+	__host__ void SteerForAlignmentKernelUnindTextures( void );
 
-													uint const*		pdKNNIndices,
-													size_t const	k,
+	__global__ void SteerForAlignmentCUDAKernel(		float4 const*	pdPosition,
+														float4 const*	pdDirection,
+														float4 *		pdSteering,
+														size_t const	numA,
 
-													float3 const*	pdBPosition,
-													float3 const*	pdBDirection,
-													uint const		numB,
+														uint const*		pdKNNIndices,
+														size_t const	k,
 
-													float const		minDistance,
-													float const		maxDistance,
-													float const		cosMaxAngle,
+														uint const		numB,
 
-													float const		fWeight,
-													uint *			pdAppliedKernels,
-													uint const		doNotApplyWith
-													);
+														float const		minDistance,
+														float const		maxDistance,
+														float const		cosMaxAngle,
+
+														float const		fWeight,
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
+														);
 }
 
-__global__ void SteerForAlignmentCUDAKernel(	float3 const*	pdAPosition,
-												float3 const*	pdADirection,
-												float3 *		pdASteering,
+texture< float4, cudaTextureType1D, cudaReadModeElementType>	texBPosition;
+texture< float4, cudaTextureType1D, cudaReadModeElementType>	texBDirection;
+
+__host__ void SteerForAlignmentKernelBindTextures(	float4 const*	pdBPosition,
+													float4 const*	pdBDirection,
+													uint const		numB
+													)
+{
+	static cudaChannelFormatDesc const float4ChannelDesc = cudaCreateChannelDesc< float4 >();
+
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texBPosition, pdBPosition, float4ChannelDesc, numB * sizeof(float4) ) );
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texBDirection, pdBDirection, float4ChannelDesc, numB * sizeof(float4) ) );
+}
+
+__host__ void SteerForAlignmentKernelUnindTextures( void )
+{
+	CUDA_SAFE_CALL( cudaUnbindTexture( texBPosition ) );
+	CUDA_SAFE_CALL( cudaUnbindTexture( texBDirection ) );
+}
+
+__global__ void SteerForAlignmentCUDAKernel(	float4 const*	pdPosition,
+												float4 const*	pdDirection,
+												float4 *		pdSteering,
 												size_t const	numA,
 
 												uint const*		pdKNNIndices,
 												size_t const	k,
 
-												float3 const*	pdBPosition,
-												float3 const*	pdBDirection,
 												uint const		numB,
 
 												float const		minDistance,
@@ -64,15 +86,15 @@ __global__ void SteerForAlignmentCUDAKernel(	float3 const*	pdAPosition,
 	__shared__ float3 shDirection[THREADSPERBLOCK];
 
 	// Copy required from global memory.
-	FLOAT3_GLOBAL_READ( shSteering, pdASteering );
-	FLOAT3_GLOBAL_READ( shPosition, pdAPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdADirection );
+	STEERING_SH( threadIdx.x )	= STEERING_F3( index );
+	POSITION_SH( threadIdx.x )	= POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x )	= DIRECTION_F3( index );
 
 	for( int i = 0; i < k; i++ )
 		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
 	__syncthreads();
 
-	    // steering accumulator and count of neighbors, both initially zero
+	// steering accumulator and count of neighbors, both initially zero
 	float3 steering = { 0.f, 0.f, 0.f };
     uint neighbors = 0;
 
@@ -85,9 +107,8 @@ __global__ void SteerForAlignmentCUDAKernel(	float3 const*	pdAPosition,
 		if( BIndex >= numB )
 			break;
 
-		// TODO: texture memory.
-		float3 const bPosition = pdBPosition[ BIndex ];
-		float3 const bDirection = pdBDirection[ BIndex ];
+		float3 const bPosition	= make_float3( tex1Dfetch( texBPosition, BIndex ) );
+		float3 const bDirection	= make_float3( tex1Dfetch( texBDirection, BIndex ) );
 
 		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
 		//{
@@ -113,5 +134,5 @@ __global__ void SteerForAlignmentCUDAKernel(	float3 const*	pdAPosition,
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdASteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

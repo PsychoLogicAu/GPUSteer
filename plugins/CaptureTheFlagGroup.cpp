@@ -82,9 +82,10 @@ using namespace OpenSteer;
 
 #define M_PI       3.14159265358979323846
 
-//#define ANNOTATION_LINES
+#define ANNOTATION_LINES
+#define ANNOTATION_WALL_LINES
 //#define ANNOTATION_TEXT
-//#define ANNOTATION_CELLS
+#define ANNOTATION_CELLS
 //#define NO_DRAW
 
 // ----------------------------------------------------------------------------
@@ -106,13 +107,13 @@ class CtfObstacleGroup;
 //const float	gDim						= 63;
 //const int	gCells						= 9;
 
-//const int gEnemyCount					= 1000;
-//const float gDim						= 200;
-//const int gCells						= 28;
+const int gEnemyCount					= 1000;
+const float gDim						= 200;
+const int gCells						= 28;
 
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 91;
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+//const int gCells						= 91;
 
 //const int gEnemyCount					= 100000;
 //const float gDim						= 2000;
@@ -136,9 +137,10 @@ float const	g_fPathRadius				= 23.5f;
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
 uint const	g_knw						= 3;		// Number of near walls to keep track of.
-uint const	g_maxSearchRadius			= 2;		// Distance in cells for the maximum search radius.
+uint const	g_maxSearchRadius			= 1;		// Distance in cells for the maximum search radius.
 uint const	g_searchRadiusNeighbors		= 1;		// Distance in cells to search for neighbors.
-uint const	g_searchRadiusObstacles		= 2;		// Distance in cells to search for obstacles.
+uint const	g_searchRadiusObstacles		= 1;		// Distance in cells to search for obstacles.
+uint const	g_searchRadiusWalls			= 1;		// Distance in cells to search for obstacles.
 
 float const g_fMaxPursuitPredictionTime	= 10.0f;		// Look-ahead time for pursuit.
 float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
@@ -150,31 +152,31 @@ float const g_fPathPredictionTime		= 10.f;
 // Weights for behaviors.
 float const	g_fWeightAlignment			= 1.f;
 float const	g_fWeightCohesion			= 1.f;
-float const	g_fWeightSeparation			= 5.f;
+float const	g_fWeightSeparation			= 1.f;
 
 float const g_fWeightPursuit			= 1.f;
-float const g_fWeightSeek				= 6.f;
+float const g_fWeightSeek				= 1.f;
 
-float const g_fWeightFollowPath			= 6.f;
+float const g_fWeightFollowPath			= 3.f;
 
-float const g_fWeightObstacleAvoidance	= 10.f;
-float const g_fWeightWallAvoidance		= 10.f;
-float const g_fWeightAvoidNeighbors		= 2.f;
+float const g_fWeightObstacleAvoidance	= 1.f;
+float const g_fWeightWallAvoidance		= 1.f;
+float const g_fWeightAvoidNeighbors		= 1.f;
 
 // Masks for behaviors.
-uint const	g_maskAlignment				= 0;
-uint const	g_maskCohesion				= 0;
-uint const	g_maskSeparation			= 0;
+uint const	g_maskAlignment				= KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskCohesion				= KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskSeparation			= KERNEL_AVOID_WALLS_BIT;
 
 uint const	g_maskSeek					= KERNEL_AVOID_OBSTACLES_BIT /*| KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT*/;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 
-uint const	g_maskFollowPath			= /*KERNEL_AVOID_WALLS_BIT |*/ KERNEL_AVOID_OBSTACLES_BIT;
+uint const	g_maskFollowPath			= 0;///*KERNEL_AVOID_WALLS_BIT |*/ KERNEL_AVOID_OBSTACLES_BIT;
 
 uint const	g_maskObstacleAvoidance		= 0;
-uint const	g_maskNeighborAvoidance		= KERNEL_AVOID_OBSTACLES_BIT /*| KERNEL_AVOID_WALLS_BIT*/;
+uint const	g_maskNeighborAvoidance		= 0;//KERNEL_AVOID_OBSTACLES_BIT /*| KERNEL_AVOID_WALLS_BIT*/;
 uint const	g_maskWallAvoidance			= 0;
 
 
@@ -220,7 +222,7 @@ bool enableAttackEvade					= true; // for testing (perhaps retain for UI control
 int resetCount = 0;
 
 // Function prototypes.
-void randomizeStartingPositionAndHeading( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side );
+void randomizeStartingPositionAndHeading( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side );
 
 class CtfWorld
 {
@@ -243,7 +245,7 @@ public:
 		// Load the walls from a file.
 		m_pWallGroup->LoadFromFile( "10kAgentsChoke.map" );
 		// Clip the walls to the edges of the cells.
-		m_pWallGroup->SplitWalls( m_pKNNBinData->hvCellMinBounds(), m_pKNNBinData->hvCellMaxBounds() );
+		m_pWallGroup->SplitWalls( m_pKNNBinData->hvCells() );
 
 		// Send the data to the device.
 		m_pWallGroup->SyncDevice();
@@ -255,7 +257,6 @@ public:
 	~CtfWorld( void )
 	{
 		SAFE_DELETE( m_pKNNBinData ); 
-		//SAFE_DELETE( m_pWallData );
 		SAFE_DELETE( m_pWallGroup );
 	}
 
@@ -263,17 +264,14 @@ public:
 
 	void draw( void )
 	{
+#if defined ANNOTATION_CELLS
 		//
 		//	Draw the cells.
 		//
-		std::vector< float3 > const& cellMinBounds = m_pKNNBinData->hvCellMinBounds();
-		std::vector< float3 > const& cellMaxBounds = m_pKNNBinData->hvCellMaxBounds();
-
+		std::vector< bin_cell > const& cells	= m_pKNNBinData->hvCells();
 		float3 const cellColor = { 0.1f, 0.1f, 0.1f };
 		// For each of the cells...
-		std::vector< float3 >::const_iterator itCellMinBound;
-		std::vector< float3 >::const_iterator itCellMaxBound;
-		for( itCellMinBound = cellMinBounds.begin(), itCellMaxBound = cellMaxBounds.begin(); itCellMinBound != cellMinBounds.end(); ++itCellMinBound, ++itCellMaxBound )
+		for( std::vector< bin_cell >::const_iterator it = cells.begin(); it != cells.end(); ++it )
 		{
 			/*
 			0    1
@@ -283,26 +281,27 @@ public:
 			+----+
 			2    3
 			*/
-			float3 const p0		= { itCellMinBound->x, 0.f, itCellMaxBound->z };
-			float3 const p1		= { itCellMaxBound->x, 0.f, itCellMaxBound->z };
-			float3 const p2		= { itCellMinBound->x, 0.f, itCellMinBound->z };
-			float3 const p3		= { itCellMaxBound->x, 0.f, itCellMinBound->z };
+			float3 const p0		= { it->minBound.x, 0.f, it->maxBound.z };
+			float3 const p1		= { it->maxBound.x, 0.f, it->maxBound.z };
+			float3 const p2		= { it->minBound.x, 0.f, it->minBound.z };
+			float3 const p3		= { it->maxBound.x, 0.f, it->minBound.z };
 
 			drawLine( p0, p1, cellColor );
 			drawLine( p0, p2, cellColor );
 			drawLine( p1, p3, cellColor );
 			drawLine( p2, p3, cellColor );
 		}
+#endif
 
 		//
 		//	Draw the walls.
 		//
 
 		// Get references to the vectors.
-		std::vector< float3 > const& start		= m_pWallGroup->GetWallGroupData().hvLineStart();
-		std::vector< float3 > const& mid		= m_pWallGroup->GetWallGroupData().hvLineMid();
-		std::vector< float3 > const& end		= m_pWallGroup->GetWallGroupData().hvLineEnd();
-		std::vector< float3 > const& normal		= m_pWallGroup->GetWallGroupData().hvLineNormal();
+		std::vector< float4 > const& start		= m_pWallGroup->GetWallGroupData().hvLineStart();
+		std::vector< float4 > const& mid		= m_pWallGroup->GetWallGroupData().hvLineMid();
+		std::vector< float4 > const& end		= m_pWallGroup->GetWallGroupData().hvLineEnd();
+		std::vector< float4 > const& normal		= m_pWallGroup->GetWallGroupData().hvLineNormal();
 
 		float3 const lineColor = { 1.f, 0.f, 0.f };
 
@@ -310,9 +309,9 @@ public:
 		for( uint i = 0; i < start.size(); i++ )
 		{
 			// Draw the line.
-			drawLine( start[i], end[i], lineColor );
+			drawLine( make_float3(start[i]), make_float3(end[i]), lineColor );
 			// Draw the normal.
-			drawLine( mid[i], float3_add( mid[i], normal[i] ), lineColor );
+			drawLine( make_float3(mid[i]), float3_add( make_float3(mid[i]), make_float3(normal[i]) ), lineColor );
 		}
 	}
 
@@ -433,8 +432,8 @@ public:
 
 	void update(const float currentTime, const float elapsedTime);
 
-	void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst);
-	void randomizeHeadingOnXZPlane(VehicleData &vehicleData);
+	void randomizeStartingPositionAndHeading( AgentData & agentData );
+	void randomizeHeadingOnXZPlane( AgentData & agentData );
 };
 
 #define testOneObstacleOverlap(radius, center)					\
@@ -449,7 +448,7 @@ class CtfObstacleGroup : public ObstacleGroup
 private:
 	void addOneObstacle (void)
 	{
-		std::vector< float3 > & positions = m_obstacleGroupData.hvPosition();
+		std::vector< float4 > & positions = m_obstacleGroupData.hvPosition();
 		std::vector< float > & radii = m_obstacleGroupData.hvRadius();
 
 		float minClearance;
@@ -462,20 +461,12 @@ private:
 			minClearance = FLT_MAX;
 
 			od.radius = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
-			od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), g_fMaxStartRadius * 1.1f);
-
-/*
-			// Make sure it doesn't overlap with the home base.
-			float d = float3_distance (od.position, make_float3( 0.f, 0.f, 0.f ) );
-			float clearance = d - (od.radius + (g_fHomeBaseRadius - requiredClearance));
-			if ( clearance < minClearance )
-				minClearance = clearance;
-*/
+			od.position = make_float4( float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), g_fMaxStartRadius * 1.1f), 0.f );
 
 			// Make sure it doesn't overlap with any of the other obstacles.
 			for( size_t i = 0; i < Size(); i++ )
 			{
-				float d = float3_distance( od.position, positions[i] );
+				float d = float3_distance( make_float3( od.position ), make_float3( positions[i] ) );
 				float clearance = d - (od.radius + radii[i]);
 				if ( clearance < minClearance )
 					minClearance = clearance;
@@ -514,16 +505,16 @@ public:
 			ObstacleData od;
 			GetDataForObstacle( i, od );
 
-			drawXZCircle( od.radius, od.position, color, 20 );
+			drawXZCircle( od.radius, make_float3( od.position ), color, 20 );
 		}
 	}
 };
 
-void CtfEnemyGroup::randomizeHeadingOnXZPlane(VehicleData &vehicleData)
+void CtfEnemyGroup::randomizeHeadingOnXZPlane( AgentData &agentData )
 {	
-	vehicleData.up = float3_up();
-	vehicleData.forward = float3_RandomUnitVectorOnXZPlane();
-	vehicleData.side = float3_LocalRotateForwardToSide(vehicleData.forward);
+	agentData.up = float3_up();
+	agentData.direction = make_float4( float3_RandomUnitVectorOnXZPlane(), 0.f );
+	agentData.side = float3_LocalRotateForwardToSide(make_float3(agentData.direction));
 }
 
 void CtfEnemyGroup::reset(void)
@@ -534,15 +525,14 @@ void CtfEnemyGroup::reset(void)
 	while(Size() < gEnemyCount)
 	{
 		CtfBase enemy;
-		VehicleData &edata = enemy.getVehicleData();
-		VehicleConst &econst = enemy.getVehicleConst();
+		AgentData &edata = enemy.getVehicleData();
 
 		edata.speed = 3.0f;
-		econst.maxForce = 3.0f;
-		econst.maxSpeed = 3.0f;
-		randomizeStartingPositionAndHeading(edata, econst);
+		edata.maxForce = 3.0f;
+		edata.maxSpeed = 3.0f;
+		randomizeStartingPositionAndHeading( edata );
 		
-		bool success = AddVehicle(edata, econst);
+		bool success = AddAgent( edata );
 	}
 
 	// Transfer the data to the device.
@@ -555,13 +545,13 @@ void CtfEnemyGroup::reset(void)
 }
 
 // ----------------------------------------------------------------------------
-void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst)
+void CtfEnemyGroup::randomizeStartingPositionAndHeading( AgentData & aData )
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
     const float rRadius = frandom2 (g_fMinStartRadius, g_fMaxStartRadius);
     const float3 randomOnRing = float3_scalar_multiply(float3_RandomUnitVectorOnXZPlane (), rRadius);
-	vehicleData.position = float3_add(g_f3StartBaseCenter, randomOnRing);
+	aData.position = make_float4( float3_add(g_f3StartBaseCenter, randomOnRing), 0.f );
 
     // are we are too close to an obstacle?
 	//float distance;
@@ -575,7 +565,7 @@ void CtfEnemyGroup::randomizeStartingPositionAndHeading(VehicleData &vehicleData
  //   else
  //   {
         // otherwise, if the position is OK, randomize 2D heading
-		randomizeHeadingOnXZPlane(vehicleData);
+		randomizeHeadingOnXZPlane(aData);
     //}
 }
 
@@ -588,67 +578,75 @@ void CtfEnemyGroup::draw(void)
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
-	VehicleConst vc;
-	VehicleData vd;
+	AgentData ad;
 
-	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
-	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
-
-#if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
-	// Temporary storage used for annotation.
-	uint KNNIndices[g_knn];
-	float KNNDistances[g_knn];
-#endif
+	AgentGroupData & agd = gEnemies->GetAgentGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
-	//for( size_t i = 0; i < gEnemies->Size(); i += 100 )
 	{
 		// Get its varialbe and constant data.
-		vgc.getVehicleData( i, vc );
-		vgd.getVehicleData( i, vd );
+		agd.getAgentData( i, ad );
 
 		// Draw the agent.
-		drawBasic2dCircularVehicle( vc.radius, vd.position, vd.forward, vd.side, bodyColor );
+		drawBasic2dCircularVehicle( ad.radius, make_float3(ad.position), make_float3(ad.direction), ad.side, bodyColor );
 
-#if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
+#if defined ANNOTATION_LINES
 		//
 		// Annotation
 		//
 
+		// Temporary storage used for annotation.
+		uint KNNIndices[g_knn];
+		float KNNDistances[g_knn];
+
 		// Pull the KNN data for this agent from the nearest neighbor database.
 		m_pKNNSelf->getAgentData( i, KNNIndices, KNNDistances );
-		
+#endif
+#if defined ANNOTATION_WALL_LINES
+		// Temporary storage for the KNN data.
+		uint KNWIndices[g_knw];
+		float KNWDistances[g_knw];
+
+		m_pKNNWalls->getAgentData( i, KNWIndices, KNWDistances );
+
+		WallGroupData const& wgd = g_pWorld->GetWalls()->GetWallGroupData();
+
+		std::vector< float4 > const& hvLineMid = wgd.hvLineMid();
+
+		// Draw the KNW links.
+		for( uint j = 0; j < g_knw; j++ )
+		{
+			if( KNWIndices[j] < wgd.size() )
+			{
+				float3 const& lineMid = make_float3(hvLineMid[KNWIndices[j]]);
+				drawLine( make_float3(ad.position), lineMid, make_float3( 1.f, 1.f, 1.f ) );
+			}
+		}
 #endif
 
 #if defined ANNOTATION_TEXT
 		// annotate the agent with useful data.
-		const float3 textOrigin = float3_add( vd.position, make_float3( 0, 0.25, 0 ) );
+		const float3 textOrigin = float3_add( make_float3(ad.position), make_float3( 0, 0.25, 0 ) );
 		std::ostringstream annote;
 
 		// Write this agent's index.
 		annote << i << std::endl;
-		// Write each ID of the KNN for this agent.
-		//if( i % 5 == 0 )
-		//{
-		//	for( uint j = 0; j < g_knn; j++ )
-		//		annote << KNNIndices[j] << " ";
-		//}
 		annote << std::ends;
 
 		draw2dTextAt3dLocation (annote, textOrigin, gWhite);
 #endif
 
 #if defined ANNOTATION_LINES
-		VehicleData vdOther;
+		AgentData adOther;
 
 		// Draw the KNN links.
 		for( uint j = 0; j < g_knn; j++ )
 		{
 			if( KNNIndices[j] < gEnemies->Size() )
 			{
-				vgd.getVehicleData( KNNIndices[j], vdOther );
-				drawLine( vd.position, vdOther.position, make_float3( 1.f, 1.f, 1.f ) );
+				agd.getAgentData( KNNIndices[j], adOther );
+				drawLine( make_float3(ad.position), make_float3(adOther.position), make_float3( 1.f, 1.f, 1.f ) );
 			}
 		}
 #endif
@@ -663,16 +661,16 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Update the KNNDatabases
 	//findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
-	findKNearestNeighbors( this, m_pKNNWalls, g_pWorld->GetBinData(), g_pWorld->GetWalls(), g_searchRadiusObstacles );
+	findKNearestNeighbors( this, m_pKNNWalls, g_pWorld->GetBinData(), g_pWorld->GetWalls(), g_searchRadiusWalls );
 
 	// Avoid collisions with walls.
-	steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToWall, g_fWeightWallAvoidance, g_maskWallAvoidance );
+	//steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToWall, g_fWeightWallAvoidance, g_maskWallAvoidance );
 
 	// Avoid collision with obstacles.
 	//steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, g_maskObstacleAvoidance );
 
 	// Avoid collision with self.
-	steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
+	//steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
 
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
@@ -681,9 +679,9 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	//steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
-	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
-	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
+	//steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
+	//steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	//steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
@@ -753,7 +751,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 void CtfBase::reset (void)
 {
 	//_data.id = serialNumber;
-	_const.id = serialNumber;
+	_data.id = serialNumber;
 
     SimpleVehicle::reset ();  // reset the vehicle 
 
@@ -763,7 +761,7 @@ void CtfBase::reset (void)
 
     avoiding = false;         // not actively avoiding
 
-	randomizeStartingPositionAndHeading( _data.position, _const.radius, _data.up, _data.forward, _data.side );  // new starting position
+	randomizeStartingPositionAndHeading( _data.position, _data.radius, _data.up, _data.direction, _data.side );  // new starting position
 
     clearTrailHistory ();     // prevent long streaks due to teleportation
 }
@@ -799,14 +797,14 @@ void CtfBase::draw (void)
 
 
 //void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst)
-void randomizeStartingPositionAndHeading( float3 & position, float const radius, float3 & up, float3 & forward, float3 & side )
+void randomizeStartingPositionAndHeading( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side )
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
     const float rRadius = frandom2 ( g_fMinStartRadius, g_fMaxStartRadius );
 	float3 const randomOnRing = float3_scalar_multiply( float3_RandomUnitVectorOnXZPlane(), rRadius );
 
-    position =  float3_add( g_f3StartBaseCenter, randomOnRing );
+    position = make_float4( float3_add( g_f3StartBaseCenter, randomOnRing ), 0.f );
 
     // are we are too close to an obstacle?
 	//float distance;
@@ -820,7 +818,9 @@ void randomizeStartingPositionAndHeading( float3 & position, float const radius,
  //   else
  //   {
         // otherwise, if the position is OK, randomize 2D heading
-        randomizeHeadingOnXZPlane( up, forward, side );
+	float3 newForward;
+    randomizeHeadingOnXZPlane( up, newForward, side );
+	forward = make_float4( newForward, 0.f );
     //}
 }
 
@@ -893,7 +893,7 @@ bool CtfSeeker::clearPathToGoal (void)
     const float sideThreshold = radius() * 8.0f;
     const float behindThreshold = radius() * 2.0f;
 
-    const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, position());
+    const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, make_float3(position()));
     const float goalDistance = float3_length(goalOffset);
     const float3 goalDirection = float3_scalar_divide(goalOffset, goalDistance);
 
@@ -902,20 +902,17 @@ bool CtfSeeker::clearPathToGoal (void)
     // for annotation: loop over all and save result, instead of early return 
     bool xxxReturn = true;
 
-	VehicleConst econst;
-	VehicleData edata;
+	AgentData aData;
 
-	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
-	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
+	AgentGroupData & agd = gEnemies->GetAgentGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
 		// Get its data and const.
-		vgc.getVehicleData( i, econst );
-		vgd.getVehicleData( i, edata );
+		agd.getAgentData( i, aData );
 
-		const float eDistance = float3_distance ( position(), edata.position );
+		const float eDistance = float3_distance ( make_float3(position()), make_float3(aData.position) );
 
 		/*
 		// Check if we were tagged.
@@ -926,15 +923,15 @@ bool CtfSeeker::clearPathToGoal (void)
 		}
 		*/
 
-		const float timeEstimate = 0.3f * eDistance / edata.speed;
-		const float3 eFuture = edata.predictFuturePosition(timeEstimate);
-		const float3 eOffset = float3_subtract(eFuture, position());
+		const float timeEstimate = 0.3f * eDistance / aData.speed;
+		const float3 eFuture = aData.predictFuturePosition(timeEstimate);
+		const float3 eOffset = float3_subtract(eFuture, make_float3(position()));
 		const float alongCorridor = float3_dot(goalDirection, eOffset);
         const bool inCorridor = ((alongCorridor > -behindThreshold) && (alongCorridor < goalDistance));
-        const float eForwardDistance = float3_dot(edata.forward, eOffset);
+        const float eForwardDistance = float3_dot(make_float3(aData.direction), eOffset);
 
         // xxx temp move this up before the conditionals
-		annotationXZCircle (econst.radius, eFuture, clearPathColor, 20); //xxx
+		annotationXZCircle (aData.radius, eFuture, clearPathColor, 20); //xxx
 
         // consider as potential blocker if within the corridor
         if (inCorridor)
@@ -944,7 +941,7 @@ bool CtfSeeker::clearPathToGoal (void)
             if (acrossCorridor < sideThreshold)
             {
                 // not a blocker if behind us and we are perp to corridor
-				const float eFront = eForwardDistance + econst.radius;
+				const float eFront = eForwardDistance + aData.radius;
 
                 //annotationLine (position, forward*eFront, gGreen); // xxx
                 //annotationLine (e.position, forward*eFront, gGreen); // xxx
@@ -963,7 +960,7 @@ bool CtfSeeker::clearPathToGoal (void)
                 if (! safeToTurnTowardsGoal)
                 {
                     // this enemy blocks the path to the goal, so return false
-					annotationLine (position(), edata.position, clearPathColor);
+					annotationLine (make_float3(position()), make_float3(aData.position), clearPathColor);
                     // return false;
                     xxxReturn = false;
                 }
@@ -986,8 +983,8 @@ void CtfSeeker::clearPathAnnotation (const float sideThreshold,
                                      const float3& goalDirection)
 {
     const float3 behindSide = float3_scalar_multiply(side(), sideThreshold);
-	const float3 behindBack = float3_scalar_multiply(forward(), -behindThreshold);
-    const float3 pbb = float3_add(position(), behindBack);
+	const float3 behindBack = float3_scalar_multiply(make_float3(forward()), -behindThreshold);
+    const float3 pbb = float3_add(make_float3(position()), behindBack);
     const float3 gun = localRotateForwardToSide (goalDirection);
 	const float3 gn = float3_scalar_multiply(gun, sideThreshold);
     const float3 hbc = g_f3HomeBaseCenter;
@@ -1007,11 +1004,11 @@ void CtfSeeker::clearPathAnnotation (const float sideThreshold,
 void CtfBase::annotateAvoidObstacle (const float minDistanceToCollision)
 {
 	const float3 boxSide = float3_scalar_multiply(side(), radius());
-	const float3 boxFront = float3_scalar_multiply(forward(), minDistanceToCollision);
-	const float3 FR = float3_subtract(float3_add(position(), boxFront), boxSide);
-    const float3 FL = float3_add(float3_add(position(), boxFront), boxSide);
-    const float3 BR = float3_subtract(position(), boxSide);
-    const float3 BL = float3_add(position(), boxSide);
+	const float3 boxFront = float3_scalar_multiply(make_float3(forward()), minDistanceToCollision);
+	const float3 FR = float3_subtract(float3_add(make_float3(position()), boxFront), boxSide);
+    const float3 FL = float3_add(float3_add(make_float3(position()), boxFront), boxSide);
+    const float3 BR = float3_subtract(make_float3(position()), boxSide);
+    const float3 BL = float3_add(make_float3(position()), boxSide);
     const float3 white = make_float3(1,1,1);
     annotationLine (FR, FL, white);
     annotationLine (FL, BL, white);
@@ -1027,25 +1024,22 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
 {
     float3 evade = float3_zero();
 
-    const float goalDistance = float3_distance(g_f3HomeBaseCenter, position());
+    const float goalDistance = float3_distance(g_f3HomeBaseCenter, make_float3(position()));
 
-	VehicleConst econst;
-	VehicleData edata;
+	AgentData aData;
 
-	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
-	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
+	AgentGroupData & agd = gEnemies->GetAgentGroupData();
 
 	// For each enemy...
 	for( size_t i = 0; i < gEnemies->Size(); i++ )
 	{
 		// Get its data and const.
-		vgc.getVehicleData( i, econst );
-		vgd.getVehicleData( i, edata );
+		agd.getAgentData( i, aData );
 
-        const float3 eOffset = float3_subtract(edata.position, position());
+        const float3 eOffset = float3_subtract(make_float3(aData.position), make_float3(position()));
         const float eDistance = float3_length(eOffset);
 
-        const float eForwardDistance = float3_dot(forward(), eOffset);
+        const float eForwardDistance = float3_dot(make_float3(forward()), eOffset);
         const float behindThreshold = radius() * 2;
         const bool behind = eForwardDistance < behindThreshold;
         if ((!behind) && (eDistance < 20))
@@ -1054,14 +1048,14 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
             {
 				//float lookAheadTime = float3_length(toTarget) / (SPEED(offset) + target->speed);
                 //const float timeEstimate = 0.5f * eDistance / edata.speed;//xxx
-				const float timeEstimate = eDistance / (edata.speed + maxSpeed());//xxx
+				const float timeEstimate = eDistance / (aData.speed + maxSpeed());//xxx
                 //const float timeEstimate = 0.15f * eDistance / e.speed();//xxx
-                const float3 future = edata.predictFuturePosition (timeEstimate);
+                const float3 future = aData.predictFuturePosition (timeEstimate);
 
-                annotationXZCircle (econst.radius, future, evadeColor, 20); // xxx
+                annotationXZCircle (aData.radius, future, evadeColor, 20); // xxx
 
-                const float3 offset = float3_subtract(future, position());
-                const float3 lateral = float3_perpendicularComponent(offset, forward());
+                const float3 offset = float3_subtract(future, make_float3(position()));
+                const float3 lateral = float3_perpendicularComponent(offset, make_float3(forward()));
                 const float d = float3_length(lateral);
                 const float weight = -1000 / (d * d);
 				evade = float3_add(evade, float3_scalar_multiply(float3_scalar_divide(lateral, d), weight));
@@ -1070,14 +1064,13 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
     }
     return evade;
 }
-
+/*
 float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
 {
     // sum up weighted evasion
     float3 evade = float3_zero();
 
-	VehicleConst econst;
-	VehicleData edata;
+	AgentData edata;
 
 	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
 	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
@@ -1114,7 +1107,7 @@ float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
     }
     return evade;
 }
-
+*/
 
 // ----------------------------------------------------------------------------
 
@@ -1125,7 +1118,7 @@ float3 CtfSeeker::steeringForSeeker (float const elapsedTime)
     adjustObstacleAvoidanceLookAhead(clearPath);
 	const float3 obstacleAvoidance = steerToAvoidObstacles(*this, gAvoidancePredictTime, *gObstacles);
 	
-	float3 const& seekerPosition = position();
+	float3 const& seekerPosition = make_float3( position() );
 	float const halfDim = 0.75f * gDim;
 
     // saved for annotation
@@ -1215,7 +1208,7 @@ void CtfSeeker::adjustObstacleAvoidanceLookAhead (const bool clearPath)
     if (clearPath)
     {
         evading = false;
-        const float goalDistance = float3_distance(g_f3HomeBaseCenter,position());
+        const float goalDistance = float3_distance(g_f3HomeBaseCenter,make_float3(position()));
         const bool headingTowardGoal = isAhead (*this, g_f3HomeBaseCenter, 0.98f);
         const bool isNear = (goalDistance/speed()) < gAvoidancePredictTimeMax;
         const bool useMax = headingTowardGoal && !isNear;
@@ -1235,7 +1228,7 @@ void CtfSeeker::updateState (const float currentTime)
     // if we reach the goal before being tagged, switch to atGoal state
     if (state == running)
     {
-        const float baseDistance = float3_distance(position(),g_f3HomeBaseCenter);
+        const float baseDistance = float3_distance(make_float3(position()),g_f3HomeBaseCenter);
         if (baseDistance < (radius() + g_fHomeBaseRadius))
 			state = atGoal;
     }
@@ -1283,7 +1276,7 @@ void CtfSeeker::draw (void)
     }
 
     // annote seeker with its state as text
-    const float3 textOrigin = float3_add(position(), make_float3(0, 0.25, 0));
+    const float3 textOrigin = float3_add(make_float3(position()), make_float3(0, 0.25, 0));
     std::ostringstream annote;
     annote << seekerStateString << std::endl;
     annote << std::setprecision(2) << std::setiosflags(std::ios::fixed)
@@ -1329,7 +1322,7 @@ void CtfSeeker::update (const float currentTime, const float elapsedTime)
 
     // annotation
     annotationVelocityAcceleration ();
-    recordTrailVertex (currentTime, position());
+    recordTrailVertex (currentTime, make_float3(position()));
 }
 
 // ----------------------------------------------------------------------------
@@ -1420,13 +1413,13 @@ public:
         OpenSteerDemo::updateCamera (currentTime, elapsedTime, selected);
 
         // draw "ground plane" centered between base and selected vehicle
-		const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, OpenSteerDemo::camera.position());
+		const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, make_float3(OpenSteerDemo::camera.position()));
         const float3 goalDirection = float3_normalize(goalOffset);
-        const float3 cameraForward = OpenSteerDemo::camera.xxxls().forward();
+        const float3 cameraForward = make_float3(OpenSteerDemo::camera.xxxls().forward());
         const float goalDot = float3_dot(cameraForward, goalDirection);
         const float blend = remapIntervalClip (goalDot, 1, 0, 0.5, 0);
         const float3 gridCenter = interpolate (blend,
-                                             selected.position(),
+                                             make_float3(selected.position()),
                                              g_f3HomeBaseCenter);
         OpenSteerDemo::gridUtility (gridCenter);
 
@@ -1455,7 +1448,6 @@ public:
 		delete gEnemies;
 
 		delete gObstacles;
-		delete gEnemies;
 
 		//delete g_pKNNBinData;
 		delete g_pWorld;

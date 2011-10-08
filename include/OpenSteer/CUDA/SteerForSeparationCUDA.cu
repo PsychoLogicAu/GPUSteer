@@ -4,25 +4,29 @@ using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void SteerForSeparationKernel(	float3 const*	pdAPosition,
-												float3 const*	pdADirection,
-												float3 *		pdASteering,
-												size_t const	numA,
+	__host__ void SteerForSeparationKernelBindTextures(	float4 const*	pdBPosition,
+														uint const		numB
+														);
+	__host__ void SteerForSeparationKernelUnindTextures( void );
 
-												uint const*		pdKNNIndices,
-												size_t const	k,
+	__global__ void SteerForSeparationKernel(			float4 const*	pdPosition,
+														float4 const*	pdDirection,
+														float4 *		pdSteering,
+														size_t const	numA,
 
-												float3 const*	pdBPosition,
-												uint const		numB,
+														uint const*		pdKNNIndices,
+														size_t const	k,
 
-												float const		minDistance,
-												float const		maxDistance,
-												float const		cosMaxAngle,
+														uint const		numB,
 
-												float const		fWeight,
-												uint *			pdAppliedKernels,
-												uint const		doNotApplyWith
-												);
+														float const		minDistance,
+														float const		maxDistance,
+														float const		cosMaxAngle,
+
+														float const		fWeight,
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
+														);
 }
 
 SteerForSeparationCUDA::SteerForSeparationCUDA(	AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const minDistance, float const maxDistance, float const cosMaxAngle, float const fWeight, uint const doNotApplyWith )
@@ -47,9 +51,9 @@ void SteerForSeparationCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather required device pointers.
-	float3 const*	pdAPosition			= m_pAgentGroupData->pdPosition();
-	float3 const*	pdADirection		= m_pAgentGroupData->pdDirection();
-	float3 *		pdASteering			= m_pAgentGroupData->pdSteering();
+	float4 const*	pdAPosition			= m_pAgentGroupData->pdPosition();
+	float4 const*	pdADirection		= m_pAgentGroupData->pdDirection();
+	float4 *		pdASteering			= m_pAgentGroupData->pdSteering();
 	size_t const	numA				= getNumAgents();
 
 	uint const*		pdKNNIndices		= m_pKNNData->pdKNNIndices();
@@ -57,30 +61,39 @@ void SteerForSeparationCUDA::run( void )
 
 	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
 
-	float3 const*	pdBPosition			= m_pOtherGroup->pdPosition();
+	float4 const*	pdBPosition			= m_pOtherGroup->pdPosition();
 	uint const&		numB				= m_pOtherGroup->Size();
 
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * sizeof(uint);
 
+	// Bind the textures.
+	SteerForSeparationKernelBindTextures( pdBPosition, numB );
+
 	// Launch the kernel.
 	SteerForSeparationKernel<<< grid, block, shMemSize >>>(	pdAPosition, 
 															pdADirection, 
 															pdASteering, 
-															numA, 
+															numA,
+
 															pdKNNIndices, 
 															k, 
-															pdBPosition, 
+
 															numB, 
+
 															m_fMinDistance,
 															m_fMaxDistance, 
 															m_fCosMaxAngle, 
+
 															m_fWeight, 
 															pdAppliedKernels, 
 															m_doNotApplyWith 
 															);
 	cutilCheckMsg( "SteerForSeparationKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+	// Unbind the textures.
+	SteerForSeparationKernelUnindTextures();
 }
 
 void SteerForSeparationCUDA::close( void )

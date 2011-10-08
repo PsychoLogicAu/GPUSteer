@@ -4,31 +4,35 @@ using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void AvoidWallsCUDAKernel(	// Agent data.
-											float3 const*	pdPosition,
-											float3 const*	pdDirection,
-											float3 const*	pdSide,
-											float const*	pdSpeed,
-											float const*	pdRadius,
+	
+	__host__ void SteerToAvoidWallsKernelBindTextures(	float4 const*	pdLineStart,
+														float4 const*	pdLineEnd,
+														float4 const*	pdLineNormal,
+														uint const		numLines
+														);
+	__host__ void SteerToAvoidWallsKernelUnbindTextures( void );
 
-											// Wall data.
-											float3 const*	pdLineStart,
-											float3 const*	pdLineEnd,
-											float3 const*	pdLineNormal,
+	__global__ void SteerToAvoidWallsCUDAKernel(		// Agent data.
+														float4 const*	pdPosition,
+														float4 const*	pdDirection,
+														float3 const*	pdSide,
+														float const*	pdSpeed,
+														float const*	pdRadius,
 
-											uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
-											uint const		k,				// Number of lines in KNL.
+														uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
+														uint const		k,				// Number of lines in KNL.
 
-											float const		minTimeToCollision,
+														float const		minTimeToCollision,
 
-											float3 *		pdSteering,
+														float4 *		pdSteering,
 
-											size_t const	numAgents,
-											float const		fWeight,
+														uint const		numAgents,
+														uint const		numLines,
 
-											uint *			pdAppliedKernels,
-											uint const		doNotApplyWith
-											);
+														float const		fWeight,
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
+														);
 }
 
 AvoidWallsCUDA::AvoidWallsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, float const fMinTimeToCollision, float const fWeight, uint const doNotApplyWith )
@@ -51,17 +55,18 @@ void AvoidWallsCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 const*		pdPosition			= m_pAgentGroupData->pdPosition();
-	float3 const*		pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 const*		pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 const*		pdDirection			= m_pAgentGroupData->pdDirection();
 	float3 const*		pdSide				= m_pAgentGroupData->pdSide();
 	float const*		pdSpeed				= m_pAgentGroupData->pdSpeed();
-	float const*		pdRadius			= m_pAgentGroupConst->pdRadius();
+	float const*		pdRadius			= m_pAgentGroupData->pdRadius();
 
-	float3 *			pdSteering			= m_pAgentGroupData->pdSteering();
+	float4 *			pdSteering			= m_pAgentGroupData->pdSteering();
 
-	float3 const*		pdLineStart			= m_pWallGroup->GetWallGroupData().pdLineStart();
-	float3 const*		pdLineEnd			= m_pWallGroup->GetWallGroupData().pdLineEnd();
-	float3 const*		pdLineNormal		= m_pWallGroup->GetWallGroupData().pdLineNormal();
+	float4 const*		pdLineStart			= m_pWallGroup->GetWallGroupData().pdLineStart();
+	float4 const*		pdLineEnd			= m_pWallGroup->GetWallGroupData().pdLineEnd();
+	float4 const*		pdLineNormal		= m_pWallGroup->GetWallGroupData().pdLineNormal();
+	uint const&			numLines			= m_pWallGroup->Size();
 
 	uint const*			pdKNLIndices		= m_pKNNData->pdKNNIndices();
 
@@ -72,19 +77,35 @@ void AvoidWallsCUDA::run( void )
 
 	size_t shMemSize = k * THREADSPERBLOCK * sizeof( uint );
 
-	AvoidWallsCUDAKernel<<<grid, block, shMemSize>>>(	pdPosition, pdDirection, pdSide, pdSpeed, pdRadius,
-														pdLineStart, pdLineEnd, pdLineNormal,
-														pdKNLIndices,
-														k, m_fMinTimeToCollision,
-														pdSteering,
-														numAgents, m_fWeight,
-														pdAppliedKernels,
-														m_doNotApplyWith );
+	// Bind the textures.
+	SteerToAvoidWallsKernelBindTextures( pdLineStart, pdLineEnd, pdLineNormal, numLines );
+
+	SteerToAvoidWallsCUDAKernel<<<grid, block, shMemSize>>>(	pdPosition,
+																pdDirection,
+																pdSide,
+																pdSpeed,
+																pdRadius,
+
+																pdKNLIndices,
+																k,
+																
+																m_fMinTimeToCollision,
+																pdSteering,
+																numAgents,
+																numLines,
+																m_fWeight,
+																pdAppliedKernels,
+																m_doNotApplyWith
+																);
 	cutilCheckMsg( "AvoidWallsCUDAKernel failed" );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
+	// Unbind the textures.
+	SteerToAvoidWallsKernelUnbindTextures();
 }
 
 void AvoidWallsCUDA::close( void )
 {
-	// Nothing to do.
+	// Agent group data may have changed.
+	m_pAgentGroup->SetSyncHost();
 }

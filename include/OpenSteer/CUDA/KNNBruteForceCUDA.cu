@@ -5,27 +5,27 @@
 
 extern "C"
 {
-	__global__ void KNNBruteForceCUDAKernel(	float3 const*	pdPosition,			// Agent positions.
+	__global__ void KNNBruteForceCUDAKernel(	float4 const*	pdPosition,			// Agent positions.
 												float *			pdDistanceMatrix,	// Global storage for distance matrix.
 												size_t *		pdIndexMatrix,		// The indices which match postions in pdDistanceMatrix.
 												size_t const	k,					// Number of neighbors to consider.
 												size_t const	numAgents,			// Number of agents in the simulation.
-												float3 const*	pdPositionOther,
+												float4 const*	pdPositionOther,
 												uint const		numOther,
 												bool const		groupWithSelf
 												);
 
-	__global__ void KNNBruteForceCUDAKernelV2(	float3 const*	pdPosition,			// In:	Agent positions.
+	__global__ void KNNBruteForceCUDAKernelV2(	float4 const*	pdPosition,			// In:	Agent positions.
 												uint *			pdKNNIndices,		// Out:	Indices of K Nearest Neighbors in pdPosition.
 												float *			pdKNNDistances,		// Out:	Distances of each of the neighbors in pdKNNIndices.
 												size_t const	k,					// In:	Number of neighbors to consider.
 												size_t const	numAgents,			// In:	Number of agents in the simulation.
-												float3 const*	pdPositionOther,
+												float4 const*	pdPositionOther,
 												uint const		numOther,
 												bool const		groupWithSelf
 												);
 
-	__global__ void KNNBruteForceCUDAKernelV3(	float3 const*	pdPosition,			// Agent positions.
+	__global__ void KNNBruteForceCUDAKernelV3(	float4 const*	pdPosition,			// Agent positions.
 
 												uint *			pdKNNIndices,		// Output, indices of K Nearest Neighbors in pdPosition.
 												float *			pdKNNDistances,		// Output, distances of the K Nearest Neighbors in pdPosition.
@@ -33,7 +33,7 @@ extern "C"
 												size_t const	k,					// Number of neighbors to consider.
 												size_t const	numAgents,			// Number of agents in the simulation.
 
-												float3 const*	pdPositionOther,
+												float4 const*	pdPositionOther,
 												uint const		numOther,
 												bool const		groupWithSelf,
 
@@ -69,13 +69,13 @@ void KNNBruteForceCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
+	float4 const*	pdPosition		= m_pAgentGroupData->pdPosition();
 
 	uint const&		numAgents		= getNumAgents();
 	uint const&		k				= m_pKNNData->k();
 
 	uint const&		numOther		= m_pOtherGroup->Size();
-	float3 const*	pdPositionOther = m_pOtherGroup->pdPosition();
+	float4 const*	pdPositionOther = m_pOtherGroup->pdPosition();
 	bool const		groupWithSelf	= pdPosition == pdPositionOther;
 
 #if defined TIMING
@@ -158,7 +158,7 @@ void KNNBruteForceCUDAV2::run( void )
 	dim3 block = blockDim();
 
 	// Gather required data.
-	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
+	float4 const*	pdPosition		= m_pAgentGroupData->pdPosition();
 
 	uint *			pdKNNIndices	= m_pKNNData->pdKNNIndices();
 	float *			pdKNNDistances	= m_pKNNData->pdKNNDistances();
@@ -166,7 +166,7 @@ void KNNBruteForceCUDAV2::run( void )
 	
 	uint const&		numAgents		= getNumAgents();
 
-	float3 const*	pdPositionOther	= m_pOtherGroup->pdPosition();
+	float4 const*	pdPositionOther	= m_pOtherGroup->pdPosition();
 	uint const&		numOther		= m_pOtherGroup->Size();
 	bool const		groupWithSelf	= pdPosition == pdPositionOther;
 
@@ -208,7 +208,7 @@ void KNNBruteForceCUDAV3::run( void )
 	dim3 block = blockDim();
 
 	// Gather required data.
-	float3 const*	pdPosition		= m_pAgentGroupData->pdPosition();
+	float4 const*	pdPosition		= m_pAgentGroupData->pdPosition();
 	uint const&		numAgents		= getNumAgents();
 
 	uint *			pdKNNIndices	= m_pKNNData->pdKNNIndices();
@@ -216,7 +216,7 @@ void KNNBruteForceCUDAV3::run( void )
 	uint const&		k				= m_pKNNData->k();
 	bool const&		seedable		= m_pKNNData->seedable();
 
-	float3 const*	pdPositionOther	= m_pOtherGroup->pdPosition();
+	float4 const*	pdPositionOther	= m_pOtherGroup->pdPosition();
 	uint const&		numOther		= m_pOtherGroup->Size();
 	bool const		groupWithSelf	= m_pAgentGroup == m_pOtherGroup;
 

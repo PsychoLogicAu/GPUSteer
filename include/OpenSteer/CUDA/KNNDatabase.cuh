@@ -33,7 +33,7 @@ private:
 	dev_vector<uint>	m_dvCellIndicesSorted;	// Index of agent's current cell, sorted by cell index.
 	dev_vector<uint>	m_dvAgentIndicesSorted;	// Index of agent, sorted by cell index.
 
-	dev_vector<float3>	m_dvPositionSorted;		// Position of agent, sorted by cell index.
+	dev_vector<float4>	m_dvPositionSorted;		// Position of agent, sorted by cell index.
 
 	//
 	// Host vectors
@@ -43,7 +43,7 @@ private:
 	std::vector<uint>	m_hvCellIndicesSorted;
 	std::vector<uint>	m_hvAgentIndicesSorted;
 
-	std::vector<float3>	m_hvPositionSorted;
+	std::vector<float4>	m_hvPositionSorted;
 
 	bool	m_bSyncHost;
 	bool	m_bSyncDevice;
@@ -77,7 +77,7 @@ public:
 	uint *		pdCellIndicesSorted( void )						{ return m_dvCellIndicesSorted.begin(); }
 	uint *		pdAgentIndicesSorted( void )					{ return m_dvAgentIndicesSorted.begin(); }
 
-	float3 *	pdPositionSorted( void )						{ return m_dvPositionSorted.begin(); }
+	float4 *	pdPositionSorted( void )						{ return m_dvPositionSorted.begin(); }
 
 	// Host data.
 	std::vector<uint> const& hvCellIndices( void ) const		{ return m_hvCellIndices; }
@@ -88,8 +88,8 @@ public:
 	std::vector<uint> const& hvAgentIndicesSorted( void ) const	{ return m_hvAgentIndicesSorted; }
 	std::vector<uint> & hvAgentIndicesSorted( void )			{ m_bSyncDevice = true; return m_hvAgentIndicesSorted; }
 
-	std::vector<float3> const& hvPositionSorted( void ) const	{ return m_hvPositionSorted; }
-	std::vector<float3> & hvPositionSorted( void )				{ m_bSyncDevice = true; return m_hvPositionSorted; }
+	std::vector<float4> const& hvPositionSorted( void ) const	{ return m_hvPositionSorted; }
+	std::vector<float4> & hvPositionSorted( void )				{ m_bSyncDevice = true; return m_hvPositionSorted; }
 
 	void resize( uint const nSize );
 	void resizeCells( uint const nSize );

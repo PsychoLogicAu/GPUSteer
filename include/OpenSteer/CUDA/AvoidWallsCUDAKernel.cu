@@ -1,5 +1,3 @@
-#include "AvoidWallsCUDA.cuh"
-
 #include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
 
@@ -9,34 +7,62 @@ using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void AvoidWallsCUDAKernel(	// Agent data.
-											float3 const*	pdPosition,
-											float3 const*	pdDirection,
-											float3 const*	pdSide,
-											float const*	pdSpeed,
-											float const*	pdRadius,
+	
+	__host__ void SteerToAvoidWallsKernelBindTextures(	float4 const*	pdLineStart,
+														float4 const*	pdLineEnd,
+														float4 const*	pdLineNormal,
+														uint const		numLines
+														);
+	__host__ void SteerToAvoidWallsKernelUnbindTextures( void );
 
-											// Wall data.
-											float3 const*	pdLineStart,
-											float3 const*	pdLineEnd,
-											float3 const*	pdLineNormal,
+	__global__ void SteerToAvoidWallsCUDAKernel(		// Agent data.
+														float4 const*	pdPosition,
+														float4 const*	pdDirection,
+														float3 const*	pdSide,
+														float const*	pdSpeed,
+														float const*	pdRadius,
 
-											uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
-											uint const		k,				// Number of lines in KNL.
+														uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
+														uint const		k,				// Number of lines in KNL.
 
-											float const		minTimeToCollision,
+														float const		minTimeToCollision,
 
-											float3 *		pdSteering,
+														float4 *		pdSteering,
 
-											size_t const	numAgents,
-											float const		fWeight,
+														uint const		numAgents,
+														uint const		numLines,
 
-											uint *			pdAppliedKernels,
-											uint const		doNotApplyWith
-											);
+														float const		fWeight,
+														uint *			pdAppliedKernels,
+														uint const		doNotApplyWith
+														);
 }
 
 #define FEELER_LENGTH 4
+
+texture< float4, cudaTextureType1D, cudaReadModeElementType >	texLineStart;
+texture< float4, cudaTextureType1D, cudaReadModeElementType >	texLineEnd;
+texture< float4, cudaTextureType1D, cudaReadModeElementType >	texLineNormal;
+
+__host__ void SteerToAvoidWallsKernelBindTextures(	float4 const*	pdLineStart,
+													float4 const*	pdLineEnd,
+													float4 const*	pdLineNormal,
+													uint const		numLines
+													)
+{
+	static cudaChannelFormatDesc const float4ChannelDesc = cudaCreateChannelDesc< float4 >();
+
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texLineStart, pdLineStart, float4ChannelDesc, numLines * sizeof(float4) ) );
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texLineEnd, pdLineEnd, float4ChannelDesc, numLines * sizeof(float4) ) );
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texLineNormal, pdLineNormal, float4ChannelDesc, numLines * sizeof(float4) ) );
+}
+
+__host__ void SteerToAvoidWallsKernelUnbindTextures( void )
+{
+	CUDA_SAFE_CALL( cudaUnbindTexture( texLineStart ) );
+	CUDA_SAFE_CALL( cudaUnbindTexture( texLineEnd ) );
+	CUDA_SAFE_CALL( cudaUnbindTexture( texLineNormal ) );
+}
 
 __inline__ __device__ bool Intersect( float3 const& startA, float3 const& endA, float3 const& startB, float3 const& endB, float3 & intersectPoint )
 {
@@ -78,31 +104,27 @@ __inline__ __device__ bool Intersect( float3 const& startA, float3 const& endA, 
     return false;
 }
 
-__global__ void AvoidWallsCUDAKernel(	// Agent data.
-										float3 const*	pdPosition,
-										float3 const*	pdDirection,
-										float3 const*	pdSide,
-										float const*	pdSpeed,
-										float const*	pdRadius,
+__global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
+												float4 const*	pdPosition,
+												float4 const*	pdDirection,
+												float3 const*	pdSide,
+												float const*	pdSpeed,
+												float const*	pdRadius,
 
-										// Wall data.
-										float3 const*	pdLineStart,
-										float3 const*	pdLineEnd,
-										float3 const*	pdLineNormal,
+												uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
+												uint const		k,				// Number of lines in KNL.
 
-										uint const*		pdKNLIndices,	// Indices of the K Nearest line segments...
-										uint const		k,				// Number of lines in KNL.
+												float const		minTimeToCollision,
 
-										float const		minTimeToCollision,
+												float4 *		pdSteering,
 
-										float3 *		pdSteering,
+												uint const		numAgents,
+												uint const		numLines,
 
-										size_t const	numAgents,
-										float const		fWeight,
-
-										uint *			pdAppliedKernels,
-										uint const		doNotApplyWith
-										)
+												float const		fWeight,
+												uint *			pdAppliedKernels,
+												uint const		doNotApplyWith
+												)
 {
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -119,28 +141,27 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 	__shared__ float3 shDirection[THREADSPERBLOCK];
-	__shared__ float3 shSide[THREADSPERBLOCK];
 	__shared__ float3 shSteering[THREADSPERBLOCK];
+	__shared__ float3 shSide[THREADSPERBLOCK];
 	__shared__ float shSpeed[THREADSPERBLOCK];
 	__shared__ float shRadius[THREADSPERBLOCK];
 
 	// Copy this block's data to shared memory.
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shSide, pdSide );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+	POSITION_SH( threadIdx.x ) = POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x ) = DIRECTION_F3( index );
+	STEERING_SH( threadIdx.x ) = STEERING_F3( index );
 	SPEED_SH( threadIdx.x ) = SPEED( index );
 	RADIUS_SH( threadIdx.x ) = RADIUS( index );
+
 	for( uint i = 0; i < k; i++ )
 	{
 		shKNLIndices[ threadIdx.x * k + i ] = pdKNLIndices[ index * k + i ];
 	}
-	__syncthreads();
+	FLOAT3_GLOBAL_READ( shSide, pdSide );
 
 	// Get the agent's current velocity.
 	float3 const vel = VELOCITY_SH( threadIdx.x );
 
-	// TODO: Check where this array is stored in memory. If local, use shared mem.
 	// Compute the position of the agent after lookAheadTime time, and the position of the two feelers.
 	float3 feelers[] = {
 		float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( VELOCITY_SH( threadIdx.x ), minTimeToCollision ) ),
@@ -173,7 +194,6 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 				)
 			)
 	};
-	//float3 const futurePosition = 
 
 	// Index of the nearest intersecting line.
 	uint	feelerIndex;
@@ -187,7 +207,7 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 		uint lineIndex = shKNLIndices[ threadIdx.x * k + i ];
 
 		// Check for end of KNL.
-		if( UINT_MAX == lineIndex )
+		if( lineIndex >= numLines )
 			break;
 
 		// For each of the feelers...
@@ -195,7 +215,7 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 		{
 			float intersectDistance;
 			float3 intersectPoint;
-			if( Intersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], pdLineStart[ lineIndex ], pdLineEnd[ lineIndex ], intersectPoint ) )
+			if( Intersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], make_float3( tex1Dfetch( texLineStart, lineIndex) ), make_float3( tex1Dfetch( texLineEnd, lineIndex ) ), intersectPoint ) )
 			{
 				intersectDistance = float3_distance( POSITION_SH( threadIdx.x ), intersectPoint );
 
@@ -215,10 +235,8 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 	{
 		// Calculate the penetration distance.
 		float penetrationDistance = float3_length( float3_subtract( feelers[ feelerIndex ], nearestLineIntersectPoint ) );
-		steering = float3_scalar_multiply( pdLineNormal[ nearestLineIndex ], penetrationDistance );
+		steering = float3_scalar_multiply( make_float3( tex1Dfetch( texLineNormal, nearestLineIndex ) ), penetrationDistance );
 	}
-
-	__syncthreads();
 
 	// Apply the weight.
 	steering = float3_scalar_multiply( steering, fWeight );
@@ -231,5 +249,5 @@ __global__ void AvoidWallsCUDAKernel(	// Agent data.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

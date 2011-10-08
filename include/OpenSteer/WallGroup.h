@@ -20,7 +20,7 @@ public:
 	{}
 
 	bool LoadFromFile( char const* szFilename );
-	void SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds );
+	void SplitWalls( std::vector< bin_cell > const& cells );
 
 	WallGroupData &		GetWallGroupData( void ){ return m_wallGroupData; }
 
@@ -28,8 +28,8 @@ public:
 
 	// Overloaded pure virtuals.
 	virtual uint const&	Size( void ) const		{ return m_wallGroupData.size(); }
-	virtual float3 *	pdPosition( void )		{ return m_wallGroupData.pdLineMid(); }
-	virtual float3 *	pdDirection( void )		{ return NULL; }
+	virtual float4 *	pdPosition( void )		{ return m_wallGroupData.pdLineMid(); }
+	virtual float4 *	pdDirection( void )		{ return NULL; }
 	virtual float *		pdSpeed( void )			{ return NULL; }
 	virtual float *		pdRadius( void )		{ return NULL; }
 

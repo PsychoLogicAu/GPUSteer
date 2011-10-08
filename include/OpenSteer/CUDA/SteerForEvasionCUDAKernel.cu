@@ -10,9 +10,9 @@ using namespace OpenSteer;
 extern "C"
 {
 	__global__ void SteerForEvasionKernel(	// Agent data.
-											float3 const*	pdPosition,
-											float3 const*	pdDirection,
-											float3 *		pdSteering,
+											float4 const*	pdPosition,
+											float4 const*	pdDirection,
+											float4 *		pdSteering,
 
 											float3 const	menacePosition,
 											float3 const	menaceDirection,
@@ -29,9 +29,9 @@ extern "C"
 }
 
 __global__ void SteerForEvasionKernel(	// Agent data.
-										float3 const*	pdPosition,
-										float3 const*	pdDirection,
-										float3 *		pdSteering,
+										float4 const*	pdPosition,
+										float4 const*	pdDirection,
+										float4 *		pdSteering,
 
 										float3 const	menacePosition,
 										float3 const	menaceDirection,
@@ -58,9 +58,9 @@ __global__ void SteerForEvasionKernel(	// Agent data.
 	__shared__ float3 shDirection[ THREADSPERBLOCK ];
 	__shared__ float3 shSteering[ THREADSPERBLOCK ];
 
-	FLOAT3_GLOBAL_READ( shPosition, pdPosition );
-	FLOAT3_GLOBAL_READ( shDirection, pdDirection );
-	FLOAT3_GLOBAL_READ( shSteering, pdSteering );
+	POSITION_SH( threadIdx.x )	= POSITION_F3( index );
+	DIRECTION_SH( threadIdx.x )	= DIRECTION_F3( index );
+	STEERING_SH( threadIdx.x )	= STEERING_F3( index );
 
     // offset from this to menace, that distance, unit vector toward menace
     float3 const	offset			= float3_subtract( menacePosition, POSITION_SH( threadIdx.x ) );
@@ -90,5 +90,5 @@ __global__ void SteerForEvasionKernel(	// Agent data.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Copy the steering vectors back to global memory.
-	FLOAT3_GLOBAL_WRITE( pdSteering, shSteering );
+	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
 }

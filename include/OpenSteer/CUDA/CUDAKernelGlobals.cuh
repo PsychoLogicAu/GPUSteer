@@ -101,40 +101,49 @@ static __inline__ __device__ __host__ int ipow( int base, int exp )
 //
 // Global memory
 //
-// VehicleData
-#define STEERING(i)		pdSteering[i]
-#define SPEED(i)		pdSpeed[i]
-#define VELOCITY(i)		velocity( i, pdForward[i], pdSpeed[i] )
-#define POSITION(i)		pdPosition[i]
-#define FORWARD(i)		pdForward[i]		// TODO: remove all references to this and replace with DIRECTION.
-#define DIRECTION(i)	pdDirection[i]
-#define UP(i)			pdUp[i]
-#define SIDE(i)			pdSide[i]
+#define ID(i)				pdID[i]
 
-// VehicleConst
-#define MAXFORCE(i)		pdMaxForce[i]
-#define MASS(i)			pdMass[i]
-#define MAXSPEED(i)		pdMaxSpeed[i]
-#define RADIUS(i)		pdRadius[i]
+#define SIDE(i)				pdSide[i]
+#define UP(i)				pdUp[i]
+#define POSITION(i)			pdPosition[i]
+#define POSITION_F3(i)		make_float3( pdPosition[i] )
+#define DIRECTION(i)		pdDirection[i]
+#define DIRECTION_F3(i)		make_float3( pdDirection[i] )
+
+#define STEERING(i)			pdSteering[i]
+#define STEERING_F3(i)		make_float3( pdSteering[i] )
+#define SPEED(i)			pdSpeed[i]
+
+#define VELOCITY(i)			velocity( i, pdForward[i], pdSpeed[i] )
+
+#define MAXSPEED(i)			pdMaxSpeed[i]
+#define MAXFORCE(i)			pdMaxForce[i]
+#define RADIUS(i)			pdRadius[i]
+#define MASS(i)				pdMass[i]
+
+#define APPLIEDKERNELS(i)	pdAppliedKernels[i]
 
 //
 // Shared memory
 //
-// VehicleData
-#define STEERING_SH(i)		shSteering[i]
-#define SPEED_SH(i)			shSpeed[i]
-#define VELOCITY_SH(i)		velocity( i, shDirection, shSpeed )
-#define POSITION_SH(i)		shPosition[i]
+#define ID_SH(i)			shID[i]
 
-#define FORWARD_SH(i)		shForward[i]
-#define DIRECTION_SH(i)		shDirection[i]
-#define UP_SH(i)			shUp[i]
 #define SIDE_SH(i)			shSide[i]
+#define UP_SH(i)			shUp[i]
+#define DIRECTION_SH(i)		shDirection[i]
+#define DIRECTION_SH_F4(i)	make_float4( shDirection[i], 0.f )
+#define POSITION_SH(i)		shPosition[i]
+#define POSITION_SH_F4(i)	make_float4( shPosition[i], 0.f )
 
-// VehicleConst
-#define MAXFORCE_SH(i)		shMaxForce[i]
-#define MASS_SH(i)			shMass[i]
+#define STEERING_SH(i)		shSteering[i]
+#define STEERING_SH_F4(i)	make_float4( shSteering[i], 0.f )
+#define SPEED_SH(i)			shSpeed[i]
+
+#define VELOCITY_SH(i)		velocity( i, shDirection, shSpeed )
+
 #define MAXSPEED_SH(i)		shMaxSpeed[i]
+#define MAXFORCE_SH(i)		shMaxForce[i]
 #define RADIUS_SH(i)		shRadius[i]
+#define MASS_SH(i)			shMass[i]
 
 #endif
