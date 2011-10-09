@@ -5,6 +5,8 @@
 #include <vector_types.h>
 #include <vector_functions.h>
 
+#define EPSILON	0.001f
+
 #include "Utilities.h"
 
 static __inline__ __host__ __device__ float3 make_float3( float4 const& f4 )
@@ -28,80 +30,80 @@ static __inline__ __host__ __device__ float3 float3_add( float3 const& lhs, floa
 {
 	return make_float3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
 }
-static __inline__ __host__ __device__ float4 float4_add( float4 const& lhs, float4 const& rhs )
-{
-	return make_float4( lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w );
-}
+//static __inline__ __host__ __device__ float4 float4_add( float4 const& lhs, float4 const& rhs )
+//{
+//	return make_float4( lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w );
+//}
 
 // vector subtraction
 static __inline__ __host__ __device__ float3 float3_subtract(float3 const& lhs, float3 const& rhs)
 {
 	return make_float3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
 }
-static __inline__ __host__ __device__ float4 float4_subtract( float4 const& lhs, float4 const& rhs )
-{
-	return make_float4( lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w );
-}
+//static __inline__ __host__ __device__ float4 float4_subtract( float4 const& lhs, float4 const& rhs )
+//{
+//	return make_float4( lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w );
+//}
 
 // unary minus
 static __inline__ __host__ __device__  float3 float3_minus(float3 const& v)
 {
 	return make_float3(-v.x, -v.y, -v.z);
 }
-static __inline__ __host__ __device__  float4 float4_minus( float4 const& v )
-{
-	return make_float4( -v.x, -v.y, -v.z, -v.w );
-}
+//static __inline__ __host__ __device__  float4 float4_minus( float4 const& v )
+//{
+//	return make_float4( -v.x, -v.y, -v.z, -v.w );
+//}
 
 // vector times scalar product (scale length of vector times argument)
 static __inline__ __host__ __device__  float3 float3_scalar_multiply(float3 const& v, const float s)
 {
 	return make_float3(v.x * s, v.y * s, v.z * s);
 }
-static __inline__ __host__ __device__  float4 float4_scalar_multiply( float4 const& v, const float s )
-{
-	return make_float4( v.x * s, v.y * s, v.z * s, v.w * s );
-}
+//static __inline__ __host__ __device__  float4 float4_scalar_multiply( float4 const& v, const float s )
+//{
+//	return make_float4( v.x * s, v.y * s, v.z * s, v.w * s );
+//}
 
 // vector divided by a scalar (divide length of vector by argument)
 static __inline__ __host__ __device__  float3 float3_scalar_divide(float3 const& v, const float s)
 {
 	return make_float3(v.x / s, v.y / s, v.z / s);
 }
-static __inline__ __host__ __device__  float4 float4_scalar_divide( float4 const& v, const float s)
-{
-	return make_float4( v.x / s, v.y / s, v.z / s, v.w / s );
-}
+//static __inline__ __host__ __device__  float4 float4_scalar_divide( float4 const& v, const float s)
+//{
+//	return make_float4( v.x / s, v.y / s, v.z / s, v.w / s );
+//}
 
 // dot product
 static __inline__ __host__ __device__  float float3_dot(float3 const& lhs, float3 const& rhs)
 {
 	return (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z);
 }
-static __inline__ __host__ __device__  float float4_dot( float4 const& lhs, float4 const& rhs )
-{
-	return (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z) + (lhs.w * rhs.w);
-}
+//static __inline__ __host__ __device__  float float4_dot( float4 const& lhs, float4 const& rhs )
+//{
+//	return (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z) + (lhs.w * rhs.w);
+//}
 
 // length squared
 static __inline__ __host__ __device__  float float3_lengthSquared(float3 const& v)
 {
 	return float3_dot(v, v);
 }
-static __inline__ __host__ __device__  float float4_lengthSquared( float4 const& v )
-{
-	return float4_dot( v, v );
-}
+//static __inline__ __host__ __device__  float float4_lengthSquared( float4 const& v )
+//{
+//	return float4_dot( v, v );
+//}
 
 // length
 static __inline__ __host__ __device__  float float3_length(float3 const& v)
 {
 	return sqrt(float3_lengthSquared(v));
 }
-static __inline__ __host__ __device__  float float4_length( float4 const& v )
-{
-	return sqrt( float4_lengthSquared( v ) );
-}
+//static __inline__ __host__ __device__  float float4_length( float4 const& v )
+//{
+//	return sqrt( float4_lengthSquared( v ) );
+//}
 
 // normalize
 static __inline__ __host__ __device__  float3 float3_normalize (float3 const& v)
@@ -110,12 +112,12 @@ static __inline__ __host__ __device__  float3 float3_normalize (float3 const& v)
     const float len = float3_length(v);
     return (len > 0) ? float3_scalar_divide(v, len) : v;
 }
-static __inline__ __host__ __device__  float4 float4_normalize( float4 const& v )
-{
-    // skip divide if length is zero
-    const float len = float4_length( v );
-    return (len > 0) ? float4_scalar_divide( v, len ) : v;
-}
+//static __inline__ __host__ __device__  float4 float4_normalize( float4 const& v )
+//{
+//    // skip divide if length is zero
+//    const float len = float4_length( v );
+//    return (len > 0) ? float4_scalar_divide( v, len ) : v;
+//}
 
 // cross product
 static __inline__ __host__ __device__  float3 float3_cross(float3 const& lhs, float3 const& rhs)
@@ -130,20 +132,20 @@ static __inline__ __host__ __device__  bool float3_equals(float3 const& lhs, flo
 {
 	return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
 }
-static __inline__ __host__ __device__  bool float4_equals( float4 const& lhs, float4 const& rhs)
-{
-	return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
-}
+//static __inline__ __host__ __device__  bool float4_equals( float4 const& lhs, float4 const& rhs)
+//{
+//	return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
+//}
 
 // Compute the euclidean distance between two points.
 static __inline__ __host__ __device__  float float3_distance(float3 const& lhs, float3 const& rhs)
 {
 	return float3_length(float3_subtract(lhs, rhs));
 }
-static __inline__ __host__ __device__  float float4_distance( float4 const& lhs, float4 const& rhs)
-{
-	return float4_length( float4_subtract( lhs, rhs ) );
-}
+//static __inline__ __host__ __device__  float float4_distance( float4 const& lhs, float4 const& rhs)
+//{
+//	return float4_length( float4_subtract( lhs, rhs ) );
+//}
 
 // return component of vector parallel to a unit basis vector
 // (IMPORTANT NOTE: assumes "unitBasis" has unit magnitude (length==1))
@@ -372,6 +374,46 @@ static __inline__ __host__ float3 float3_randomVectorOnUnitRadiusXZDisk (void)
 static __inline__ __host__ __device__ float3 float3_LocalRotateForwardToSide(float3 const& v)
 {
 	return make_float3(-v.z, v.y, v.x);
+}
+
+__inline__ __host__ __device__ bool LinesIntersect( float3 const& startA, float3 const& endA, float3 const& startB, float3 const& endB, float3 & intersectPoint )
+{
+    float const denom = ((endB.z - startB.z)*(endA.x - startA.x))	-
+						((endB.x - startB.x)*(endA.z - startA.z));
+
+    float const numera =	((endB.x - startB.x)*(startA.z - startB.z)) -
+							((endB.z - startB.z)*(startA.x - startB.x));
+
+    float const numerb =	((endA.x - startA.x)*(startA.z - startB.z)) -
+							((endA.z - startA.z)*(startA.x - startB.x));
+
+    if( fabs( denom ) < EPSILON )
+    {
+        if( fabs( numera ) < EPSILON && fabs( numerb ) < EPSILON )
+        {
+			// Lines are coincident.
+			intersectPoint = startA;
+            return true;
+        }
+
+		// Lines are parallel.
+        return false;
+    }
+
+    float ua = numera / denom;
+    float ub = numerb / denom;
+
+    if( ua >= 0.0f && ua <= 1.0f && ub >= 0.0f && ub <= 1.0f )
+    {
+        // Get the intersection point.
+        intersectPoint.x = startA.x + ua*(endA.x - startA.x);
+		intersectPoint.y = 0.f;
+        intersectPoint.z = startA.z + ua*(endA.z - startA.z);
+
+        return true;
+    }
+
+    return false;
 }
 
 #endif

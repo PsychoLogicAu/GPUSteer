@@ -8,10 +8,6 @@
 
 #define THREADSPERBLOCK 256
 
-#define EPSILON	0.001f
-
-//#define TIMING
-
 // Kernel bit masks.
 static uint const KERNEL_PURSUE_BIT				= 1;
 static uint const KERNEL_EVADE_BIT				= 1 << 1;
@@ -27,6 +23,9 @@ static uint const KERNEL_AVOID_WALLS_BIT		= 1 << 8;
 static uint const KERNEL_AVOID_NEIGHBORS_BIT	= 1 << 9;
 
 static uint const KERNEL_FOLLOW_PATH_BIT		= 1 << 10;
+
+static uint const KERNEL_ANTI_PENETRATION_WALL	= 1 << 11;
+static uint const KERNEL_ANTI_PENETRATION_AGENT	= 1 << 12;
 
 #define COALESCE
 #if defined COALESCE

@@ -18,9 +18,9 @@ bool WallGroup::LoadFromFile( char const* szFilename )
 	return m_wallGroupData.LoadFromFile( szFilename );
 }
 
-void WallGroup::SplitWalls( std::vector< float3 > const& cellMinBounds, std::vector< float3 > const& cellMaxBounds )
+void WallGroup::SplitWalls( std::vector< bin_cell > const& cells )
 {
-	m_wallGroupData.SplitWalls( cellMinBounds, cellMaxBounds );
+	m_wallGroupData.SplitWalls( cells );
 
 	m_neighborDB.resize( Size() );
 }

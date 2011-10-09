@@ -516,6 +516,22 @@
 						</Filter>
 					</Filter>
 				</Filter>
+				<Filter
+					Name="Anti-Penetration"
+					>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDAKernel.cu"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

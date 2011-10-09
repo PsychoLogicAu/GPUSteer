@@ -9,39 +9,39 @@ using namespace OpenSteer;
 
 extern "C"
 {
-	__global__ void UpdateCUDAKernel(	float3 * pdSide,
-										float3 * pdUp,
-										float4 * pdDirection,
-										float4 * pdPosition,
+	__global__ void UpdateCUDAKernel(	float3 *		pdSide,
+										float3 *		pdUp,
+										float4 *		pdDirection,
+										float4 *		pdPosition,
 
-										float4 * pdSteering,
-										float * pdSpeed,
+										float4 *		pdSteering,
+										float *			pdSpeed,
 
-										float const* pdMaxForce,
-										float const* pdMaxSpeed,
-										float const* pdMass,
+										float const*	pdMaxForce,
+										float const*	pdMaxSpeed,
+										float const*	pdMass,
 
-										float const elapsedTime,
-										size_t const numAgents,
-										uint * pdAppliedKernels
+										float const		elapsedTime,
+										uint const		numAgents,
+										uint *			pdAppliedKernels
 										);
 }
 
-__global__ void UpdateCUDAKernel(	float3 * pdSide,
-									float3 * pdUp,
-									float4 * pdDirection,
-									float4 * pdPosition,
+__global__ void UpdateCUDAKernel(	float3 *		pdSide,
+									float3 *		pdUp,
+									float4 *		pdDirection,
+									float4 *		pdPosition,
 
-									float4 * pdSteering,
-									float * pdSpeed,
+									float4 *		pdSteering,
+									float *			pdSpeed,
 
-									float const* pdMaxForce,
-									float const* pdMaxSpeed,
-									float const* pdMass,
+									float const*	pdMaxForce,
+									float const*	pdMaxSpeed,
+									float const*	pdMass,
 
-									float const elapsedTime,
-									size_t const numAgents,
-									uint * pdAppliedKernels
+									float const		elapsedTime,
+									uint const		numAgents,
+									uint *			pdAppliedKernels
 									)
 {
 	int const index = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -78,10 +78,6 @@ __global__ void UpdateCUDAKernel(	float3 * pdSide,
 	// Set the applied kernels back to zero.
 	pdAppliedKernels[ index ] = 0;
 
-	// If we don't have a steering vector set, do nothing.
-	if( float3_equals( STEERING_SH( threadIdx.x ), float3_zero() ) )
-		return;
-
 	// Enforce limit on magnitude of steering force.
 	STEERING_SH( threadIdx.x ) = float3_truncateLength( STEERING_SH( threadIdx.x ), MAXFORCE_SH( threadIdx.x ) );
 
@@ -106,6 +102,8 @@ __global__ void UpdateCUDAKernel(	float3 * pdSide,
 		// derive new up basis vector from new forward and side.
 		UP_SH( threadIdx.x ) = float3_cross( SIDE_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ) );
 	}
+
+	// anti-penetration with wall here
 
 	// Euler integrate (per frame) velocity into position.
 	POSITION_SH( threadIdx.x ) = float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( newVelocity, elapsedTime ) );

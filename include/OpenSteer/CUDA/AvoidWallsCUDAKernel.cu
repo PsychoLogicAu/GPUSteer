@@ -64,46 +64,6 @@ __host__ void SteerToAvoidWallsKernelUnbindTextures( void )
 	CUDA_SAFE_CALL( cudaUnbindTexture( texLineNormal ) );
 }
 
-__inline__ __device__ bool Intersect( float3 const& startA, float3 const& endA, float3 const& startB, float3 const& endB, float3 & intersectPoint )
-{
-    float const denom = ((endB.z - startB.z)*(endA.x - startA.x))	-
-						((endB.x - startB.x)*(endA.z - startA.z));
-
-    float const numera =	((endB.x - startB.x)*(startA.z - startB.z)) -
-							((endB.z - startB.z)*(startA.x - startB.x));
-
-    float const numerb =	((endA.x - startA.x)*(startA.z - startB.z)) -
-							((endA.z - startA.z)*(startA.x - startB.x));
-
-    if( fabs( denom ) < EPSILON )
-    {
-        if( fabs( numera ) < EPSILON && fabs( numerb ) < EPSILON )
-        {
-			// Lines are coincident.
-			intersectPoint = startA;
-            return true;
-        }
-
-		// Lines are parallel.
-        return false;
-    }
-
-    float ua = numera / denom;
-    float ub = numerb / denom;
-
-    if( ua >= 0.0f && ua <= 1.0f && ub >= 0.0f && ub <= 1.0f )
-    {
-        // Get the intersection point.
-        intersectPoint.x = startA.x + ua*(endA.x - startA.x);
-		intersectPoint.y = 0.f;
-        intersectPoint.z = startA.z + ua*(endA.z - startA.z);
-
-        return true;
-    }
-
-    return false;
-}
-
 __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 												float4 const*	pdPosition,
 												float4 const*	pdDirection,
@@ -215,7 +175,7 @@ __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 		{
 			float intersectDistance;
 			float3 intersectPoint;
-			if( Intersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], make_float3( tex1Dfetch( texLineStart, lineIndex) ), make_float3( tex1Dfetch( texLineEnd, lineIndex ) ), intersectPoint ) )
+			if( LinesIntersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], make_float3( tex1Dfetch( texLineStart, lineIndex) ), make_float3( tex1Dfetch( texLineEnd, lineIndex ) ), intersectPoint ) )
 			{
 				intersectDistance = float3_distance( POSITION_SH( threadIdx.x ), intersectPoint );
 
