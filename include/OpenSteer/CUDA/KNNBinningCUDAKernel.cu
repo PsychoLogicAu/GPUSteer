@@ -441,7 +441,7 @@ __global__ void KNNBinningKernel(	// Group A
 	if( AIndexSorted >= numA )
 		return;
 
-	__shared__ float4 shAPosition[THREADSPERBLOCK];
+	__shared__ float3 shAPosition[THREADSPERBLOCK];
 
 	// Shared memory for local priority queue computations.
 	extern __shared__ uint shKNNIndices[];
@@ -462,7 +462,7 @@ __global__ void KNNBinningKernel(	// Group A
 	int const cellNeighborsOffset = cellIndex * neighborsPerCell;
 
 	// Coalesce read the positions.
-	FLOAT3_GLOBAL_READ( shAPosition, pdAPositionSorted );
+	shAPosition[ threadIdx.x ] = make_float3( pdAPositionSorted[ AIndexSorted ] );
 
 	// For each of the neighbors of the current cell...
 	for( int iCellNeighbor = 0; iCellNeighbor < neighborsPerCell; iCellNeighbor++ )
@@ -484,8 +484,7 @@ __global__ void KNNBinningKernel(	// Group A
 				continue;
 
 			// Compute the distance between this thread'a A position and the B position at otherIndexSorted
-			// TODO: texture memory.... (tex1Dfetch)
-			float const dist = float4_distance( shAPosition[threadIdx.x], tex1Dfetch( texBPositionSorted, BIndexSorted ) /*pdBPositionSorted[ BIndexSorted ]*/ );
+			float const dist = float3_distance( shAPosition[threadIdx.x], make_float3( tex1Dfetch( texBPositionSorted, BIndexSorted ) ) );
 
 			if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
 			{

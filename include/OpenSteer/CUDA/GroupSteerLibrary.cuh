@@ -21,6 +21,8 @@
 
 #include "SteerToFollowPathCUDA.cuh"
 
+#include "AntiPenetrationWallCUDA.cuh"
+
 #include "UpdateCUDA.h"
 
 namespace OpenSteer
@@ -158,6 +160,15 @@ static void steerForCohesion( AgentGroup * pAgentGroup, KNNData * pKNNData, Agen
 static void updateGroup( AgentGroup * pAgentGroup, const float elapsedTime )
 {
 	UpdateCUDA kernel( pAgentGroup, elapsedTime );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
+
+static void antiPenetrationWall( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, float const elapsedTime, uint const doNotApplyWith )
+{
+	AntiPenetrationWALLCUDA kernel( pAgentGroup, pKNNData, pWallGroup, elapsedTime, doNotApplyWith );
 
 	kernel.init();
 	kernel.run();

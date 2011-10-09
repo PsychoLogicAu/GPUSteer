@@ -291,6 +291,7 @@ public:
 	}
 };	// class agent_group_data
 typedef agent_group_data AgentGroupData;
+}	// namespace OpenSteer
 
 /// Compute the velocity of the vehicle at index i.
 static inline __host__ __device__ float3 velocity( size_t const i, float3 const* pDirection, float const* pSpeed )
@@ -303,5 +304,4 @@ static inline __host__ __device__ float3 predictFuturePosition( size_t const i, 
 	return float3_add( pPosition[i], float3_scalar_multiply( velocity( i, pForward, pSpeed ), fPredictionTime ));
 }
 
-}	// namespace OpenSteer
 #endif	// OPENSTEER_AGENTGROUPDATA_CUH
