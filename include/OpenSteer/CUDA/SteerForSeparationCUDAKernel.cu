@@ -104,14 +104,14 @@ __global__ void SteerForSeparationKernel(	float4 const*	pdPosition,
 
 		float3 const bPosition = make_float3( tex1Dfetch( texBPosition, BIndex ) );
 
-		//if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
-		//{
+		if( inBoidNeighborhood( POSITION_SH( threadIdx.x ), DIRECTION_SH( threadIdx.x ), bPosition, minDistance, maxDistance, cosMaxAngle ) )
+		{
 			float3 const offset = float3_subtract( bPosition, POSITION_SH( threadIdx.x ) );
 			float const distanceSquared = float3_dot( offset, offset );
 			steering = float3_add( steering, float3_scalar_divide( offset, -distanceSquared ) );
 
 			neighbors++;
-		//}
+		}
 	}
 
     // divide by neighbors, then normalize to pure direction

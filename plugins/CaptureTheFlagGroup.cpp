@@ -86,7 +86,7 @@ using namespace OpenSteer;
 //#define ANNOTATION_WALL_LINES
 //#define ANNOTATION_TEXT
 //#define ANNOTATION_CELLS
-//#define NO_DRAW
+#define NO_DRAW
 #define NO_DRAW_OBSTACLES
 
 // ----------------------------------------------------------------------------
@@ -112,18 +112,21 @@ class CtfObstacleGroup;
 //const float gDim						= 200;
 //const int gCells						= 50;
 
-const int gEnemyCount					= 10000;
-const float gDim						= 635;
-const int gCells						= 91;
+//const int gEnemyCount					= 10000;
+//const float gDim						= 635;
+////const int gCells						= 91;
+//const int gCells						= 200;
 
 //const int gEnemyCount					= 100000;
 //const float gDim						= 2000;
-//const int gCells						= 285;
+////const int gCells						= 285;
+//const int gCells						= 500;
 
-//const int gEnemyCount					= 1000000;
-//const float gDim						= 6350;
-////const int gCells						= 907;
+const int gEnemyCount					= 1000000;
+const float gDim						= 6350;
+//const int gCells						= 907;
 //const int gCells						= 1814;
+const int gCells						= 2048;
 
 
 
@@ -151,9 +154,9 @@ float const g_fMinTimeToWall			= 5.0f;		// Look-ahead time for wall avoidance.
 float const g_fPathPredictionTime		= 5.f;		// Point on path in future to aim for.
 
 // Weights for behaviors.
-float const	g_fWeightAlignment			= 1.f;
+float const	g_fWeightAlignment			= 2.f;
 float const	g_fWeightCohesion			= 1.f;
-float const	g_fWeightSeparation			= 2.f;
+float const	g_fWeightSeparation			= 3.f;
 
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightSeek				= 1.f;
@@ -165,11 +168,11 @@ float const g_fWeightWallAvoidance		= 1.f;
 float const g_fWeightAvoidNeighbors		= 1.f;
 
 // Masks for behaviors.
-uint const	g_maskAlignment				= KERNEL_AVOID_WALLS_BIT;
-uint const	g_maskCohesion				= KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskAlignment				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
+uint const	g_maskCohesion				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskSeparation			= KERNEL_AVOID_WALLS_BIT;
 
-uint const	g_maskSeek					= 0;//KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskSeek					= KERNEL_AVOID_WALLS_BIT;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
@@ -180,12 +183,12 @@ uint const	g_maskObstacleAvoidance		= 0;
 uint const	g_maskNeighborAvoidance		= 0;
 uint const	g_maskWallAvoidance			= 0;
 
-
-//float const g_fMaxFlockingDistance		= 2 * g_searchRadiusNeighbors * gDim / gCells;
-//float const g_fCosMaxFlockingAngle		= 360 * (float)M_PI / 180.f;	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
+float const g_fMaxSeparationDistance	= 1.f;
+float const g_fMaxFlockingDistance		= 7.f; //g_searchRadiusNeighbors * gDim / gCells;
+float const g_fCosMaxFlockingAngle		= cosf(170 * (float)M_PI / 180.f);	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
 float const g_fMinFlockingDistance		= 0.5f;
-float const g_fMaxFlockingDistance		= FLT_MAX;
-float const g_fCosMaxFlockingAngle		= cosf( 2 * (float)M_PI );
+//float const g_fMaxFlockingDistance		= FLT_MAX;
+//float const g_fCosMaxFlockingAngle		= cosf( 2 * (float)M_PI );
 
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
@@ -676,19 +679,19 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 
-	//steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
+	steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
 	steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
-	//steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
 	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
+	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
 
 	// Force anti-penetration.
-	antiPenetrationWall( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime, 0 );
+	//antiPenetrationWall( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime, 0 );
 
 	/*
 {
