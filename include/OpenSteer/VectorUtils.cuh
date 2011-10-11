@@ -142,6 +142,11 @@ static __inline__ __host__ __device__  float float3_distance(float3 const& lhs, 
 {
 	return float3_length(float3_subtract(lhs, rhs));
 }
+// Compute the euclidean distance between two points.
+static __inline__ __host__ __device__  float float3_distanceSquared(float3 const& lhs, float3 const& rhs)
+{
+	return float3_lengthSquared(float3_subtract(lhs, rhs));
+}
 //static __inline__ __host__ __device__  float float4_distance( float4 const& lhs, float4 const& rhs)
 //{
 //	return float4_length( float4_subtract( lhs, rhs ) );

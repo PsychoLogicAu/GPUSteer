@@ -86,8 +86,9 @@ using namespace OpenSteer;
 //#define ANNOTATION_WALL_LINES
 //#define ANNOTATION_TEXT
 //#define ANNOTATION_CELLS
-#define NO_DRAW
+//#define NO_DRAW
 #define NO_DRAW_OBSTACLES
+#define NO_DRAW_OUTSIDE_RANGE
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -117,16 +118,16 @@ class CtfObstacleGroup;
 ////const int gCells						= 91;
 //const int gCells						= 200;
 
-//const int gEnemyCount					= 100000;
-//const float gDim						= 2000;
-////const int gCells						= 285;
-//const int gCells						= 500;
+const int gEnemyCount					= 100000;
+const float gDim						= 2000;
+//const int gCells						= 285;
+const int gCells						= 500;
 
-const int gEnemyCount					= 1000000;
-const float gDim						= 6350;
-//const int gCells						= 907;
-//const int gCells						= 1814;
-const int gCells						= 2048;
+//const int gEnemyCount					= 1000000;
+//const float gDim						= 6350;
+////const int gCells						= 907;
+////const int gCells						= 1814;
+//const int gCells						= 2048;
 
 
 
@@ -147,16 +148,21 @@ uint const	g_searchRadiusObstacles		= 1;		// Distance in cells to search for obs
 uint const	g_searchRadiusWalls			= 1;		// Distance in cells to search for obstacles.
 
 float const g_fMaxPursuitPredictionTime	= 10.0f;		// Look-ahead time for pursuit.
-float const g_fMinSeparationDistance	= 0.5f;		// Agents will steer hard to avoid other agents within this radius, and brake if other agent is ahead.
 float const g_fMinTimeToCollision		= 2.0f;		// Look-ahead time for neighbor avoidance.
 float const g_fMinTimeToObstacle		= 5.0f;		// Look-ahead time for obstacle avoidance.
 float const g_fMinTimeToWall			= 5.0f;		// Look-ahead time for wall avoidance.
 float const g_fPathPredictionTime		= 5.f;		// Point on path in future to aim for.
 
+float const g_fMinSeparationDistance	= 0.5f;		// Mini
+float const g_fMaxSeparationDistance	= 1.3f;		// Maximum range for separation behavior.
+float const g_fMinFlockingDistance		= 0.5f;
+float const g_fMaxFlockingDistance		= 7.f;
+float const g_fCosMaxFlockingAngle		= cosf(150 * (float)M_PI / 180.f);	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
+
 // Weights for behaviors.
 float const	g_fWeightAlignment			= 2.f;
 float const	g_fWeightCohesion			= 1.f;
-float const	g_fWeightSeparation			= 3.f;
+float const	g_fWeightSeparation			= 10.f;
 
 float const g_fWeightPursuit			= 1.f;
 float const g_fWeightSeek				= 1.f;
@@ -172,23 +178,18 @@ uint const	g_maskAlignment				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskCohesion				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskSeparation			= KERNEL_AVOID_WALLS_BIT;
 
-uint const	g_maskSeek					= KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskSeek					= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 
-uint const	g_maskFollowPath			= 0;
+uint const	g_maskFollowPath			= KERNEL_SEPARATION_BIT;
 
 uint const	g_maskObstacleAvoidance		= 0;
 uint const	g_maskNeighborAvoidance		= 0;
 uint const	g_maskWallAvoidance			= 0;
 
-float const g_fMaxSeparationDistance	= 1.f;
-float const g_fMaxFlockingDistance		= 7.f; //g_searchRadiusNeighbors * gDim / gCells;
-float const g_fCosMaxFlockingAngle		= cosf(170 * (float)M_PI / 180.f);	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
-float const g_fMinFlockingDistance		= 0.5f;
-//float const g_fMaxFlockingDistance		= FLT_MAX;
-//float const g_fCosMaxFlockingAngle		= cosf( 2 * (float)M_PI );
+uint const	g_maskAntiPenetrationAgents	= KERNEL_AVOID_WALLS_BIT;
 
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
@@ -579,6 +580,7 @@ void CtfEnemyGroup::draw(void)
 	return;
 #endif
 
+
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
@@ -591,6 +593,11 @@ void CtfEnemyGroup::draw(void)
 	{
 		// Get its varialbe and constant data.
 		agd.getAgentData( i, ad );
+
+#if defined NO_DRAW_OUTSIDE_RANGE
+		if( float3_distanceSquared( make_float3( ad.position ), g_f3HomeBaseCenter ) > 2500.f )
+			continue;
+#endif
 
 		// Draw the agent.
 		drawBasic2dCircularVehicle( ad.radius, make_float3(ad.position), make_float3(ad.direction), ad.side, bodyColor );
@@ -667,6 +674,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
 	findKNearestNeighbors( this, m_pKNNWalls, g_pWorld->GetBinData(), g_pWorld->GetWalls(), g_searchRadiusWalls );
 
+
 	// Avoid collisions with walls.
 	steerToAvoidWalls( this, m_pKNNWalls, g_pWorld->GetWalls(), g_fMinTimeToWall, g_fWeightWallAvoidance, g_maskWallAvoidance );
 
@@ -683,15 +691,17 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
+	steerForSeparation( this, m_pKNNSelf, this, g_fMinSeparationDistance, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
 	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
-	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	//steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
 
 	// Force anti-penetration.
 	//antiPenetrationWall( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime, 0 );
+	antiPenetrationAgents( this, m_pKNNSelf, this, g_maskAntiPenetrationAgents );
 
 	/*
 {
@@ -1071,50 +1081,6 @@ float3 CtfSeeker::steerToEvadeAllDefenders (void)
     }
     return evade;
 }
-/*
-float3 CtfSeeker::XXXsteerToEvadeAllDefenders (void)
-{
-    // sum up weighted evasion
-    float3 evade = float3_zero();
-
-	AgentData edata;
-
-	AgentGroupConst & vgc = gEnemies->GetAgentGroupConst();
-	AgentGroupData & vgd = gEnemies->GetAgentGroupData();
-
-	// For each enemy...
-	for( size_t i = 0; i < gEnemies->Size(); i++ )
-	{
-		// Get its data and const.
-		vgc.getVehicleData( i, econst );
-		vgd.getVehicleData( i, edata );
-
-        const float3 eOffset = float3_subtract(edata.position, position());
-        const float eDistance = float3_length(eOffset);
-
-        // xxx maybe this should take into account e's heading? xxx // TODO: just that :)
-        const float timeEstimate = 0.5f * eDistance / edata.speed; //xxx
-        const float3 eFuture = edata.predictFuturePosition(timeEstimate);
-
-        // annotation
-        annotationXZCircle (econst.radius, eFuture, evadeColor, 20);
-
-        // steering to flee from eFuture (enemy's future position)
-        const float3 flee = xxxsteerForFlee (*this, eFuture);
-
-        const float eForwardDistance = float3_dot(forward(), eOffset);
-        const float behindThreshold = radius() * -2;
-
-        const float distanceWeight = 4 / eDistance;
-        const float forwardWeight = ((eForwardDistance > behindThreshold) ? 1.0f : 0.5f);
-
-		const float3 adjustedFlee = float3_scalar_multiply(flee, distanceWeight * forwardWeight);
-
-		evade = float3_add(evade, adjustedFlee);
-    }
-    return evade;
-}
-*/
 
 // ----------------------------------------------------------------------------
 
@@ -1266,6 +1232,7 @@ void CtfSeeker::updateState (const float currentTime)
 // ----------------------------------------------------------------------------
 void CtfSeeker::draw (void)
 {
+	/*
     // first call the draw method in the base class
     CtfBase::draw();
 
@@ -1294,11 +1261,11 @@ void CtfSeeker::draw (void)
     annote << std::setprecision(2) << std::setiosflags(std::ios::fixed)
            << speed() << std::ends;
     draw2dTextAt3dLocation (annote, textOrigin, gWhite);
-
+*/
 
     // display status in the upper left corner of the window
     std::ostringstream status;
-    status << seekerStateString << std::endl;
+    //status << seekerStateString << std::endl;
 	status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << gObstacles->Size() << std::endl;
 	status << std::left << std::setw( 25 ) << "No. agents: " << std::setw( 10 ) << gEnemies->Size() << std::endl;
 	status << std::left << std::setw( 25 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
