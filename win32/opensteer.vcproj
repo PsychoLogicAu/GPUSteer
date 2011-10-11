@@ -520,6 +520,18 @@
 					Name="Anti-Penetration"
 					>
 					<File
+						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cu"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDAKernel.cu"
+						>
+					</File>
+					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cu"
 						>
 					</File>

@@ -22,6 +22,7 @@
 #include "SteerToFollowPathCUDA.cuh"
 
 #include "AntiPenetrationWallCUDA.cuh"
+#include "AntiPenetrationAgentsCUDA.cuh"
 
 #include "UpdateCUDA.h"
 
@@ -169,6 +170,15 @@ static void updateGroup( AgentGroup * pAgentGroup, const float elapsedTime )
 static void antiPenetrationWall( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, float const elapsedTime, uint const doNotApplyWith )
 {
 	AntiPenetrationWALLCUDA kernel( pAgentGroup, pKNNData, pWallGroup, elapsedTime, doNotApplyWith );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
+
+static void antiPenetrationAgents( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, uint const doNotApplyWith )
+{
+	AntiPenetrationAgentsCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, doNotApplyWith );
 
 	kernel.init();
 	kernel.run();
