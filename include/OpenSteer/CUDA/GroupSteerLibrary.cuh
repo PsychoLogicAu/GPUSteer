@@ -158,9 +158,9 @@ static void steerForCohesion( AgentGroup * pAgentGroup, KNNData * pKNNData, Agen
 }
 
 // Applies the newly compute steering vector to the vehicles.
-static void updateGroup( AgentGroup * pAgentGroup, const float elapsedTime )
+static void updateGroup( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float elapsedTime )
 {
-	UpdateCUDA kernel( pAgentGroup, elapsedTime );
+	UpdateCUDA kernel( pAgentGroup, pKNNData, pWallGroup, elapsedTime );
 
 	kernel.init();
 	kernel.run();

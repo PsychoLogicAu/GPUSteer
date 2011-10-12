@@ -170,6 +170,8 @@ __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 		if( lineIndex >= numLines )
 			break;
 
+		// TODO: check for overlap with line.
+
 		// For each of the feelers...
 		for( uint iFeeler = 0; iFeeler < 3; iFeeler++ )
 		{

@@ -3,6 +3,9 @@
 
 #include "AbstractCUDAKernel.cuh"
 
+#include "KNNData.cuh"
+#include "../WallGroup.h"
+
 namespace OpenSteer
 {
 	class UpdateCUDA : public AbstractCUDAKernel
@@ -10,8 +13,11 @@ namespace OpenSteer
 	protected:
 		float m_fElapsedTime;
 
+		KNNData *	m_pKNNData;
+		WallGroup *	m_pWallGroup;
+
 	public:
-		UpdateCUDA( AgentGroup * pAgentGroup, const float fElapsedTime );
+		UpdateCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float fElapsedTime );
 		~UpdateCUDA( void ) {}
 
 		virtual void init( void );
