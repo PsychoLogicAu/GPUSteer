@@ -121,7 +121,13 @@ class CtfObstacleGroup;
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
 //const int gCells						= 285;
-const int gCells						= 500;
+const int gCells						= 512;
+
+//const int gEnemyCount					= 500000;
+//const float gDim						= 4000;
+////const int gCells						= 907;
+////const int gCells						= 1814;
+//const int gCells						= 1024;
 
 //const int gEnemyCount					= 1000000;
 //const float gDim						= 6350;
@@ -176,7 +182,7 @@ float const g_fWeightAvoidNeighbors		= 1.f;
 // Masks for behaviors.
 uint const	g_maskAlignment				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskCohesion				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
-uint const	g_maskSeparation			= KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskSeparation			= 0;//KERNEL_AVOID_WALLS_BIT;
 
 uint const	g_maskSeek					= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
@@ -189,7 +195,8 @@ uint const	g_maskObstacleAvoidance		= 0;
 uint const	g_maskNeighborAvoidance		= 0;
 uint const	g_maskWallAvoidance			= 0;
 
-uint const	g_maskAntiPenetrationAgents	= KERNEL_AVOID_WALLS_BIT;
+// Do not shove an agent which has been pushed out from a wall.
+uint const	g_maskAntiPenetrationAgents	= KERNEL_AVOID_WALLS_BIT | KERNEL_ANTI_PENETRATION_WALL;
 
 const float3 gWorldSize					= make_float3( gDim, 10.f, gDim );
 const uint3 gWorldCells					= make_uint3( gCells, 1, gCells );
@@ -595,7 +602,8 @@ void CtfEnemyGroup::draw(void)
 		agd.getAgentData( i, ad );
 
 #if defined NO_DRAW_OUTSIDE_RANGE
-		if( float3_distanceSquared( make_float3( ad.position ), g_f3HomeBaseCenter ) > 2500.f )
+		//if( float3_distanceSquared( make_float3( ad.position ), g_f3HomeBaseCenter ) > 2500.f )
+		if( float3_distanceSquared( make_float3( ad.position ), g_f3HomeBaseCenter ) > 5000.f )
 			continue;
 #endif
 
@@ -669,6 +677,9 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Update the positions in the KNNDatabase for the group.
 	updateKNNDatabase( this, g_pWorld->GetBinData() );
 
+	// Reset the applied kernels.
+	CUDA_SAFE_CALL( cudaMemset( m_agentGroupData.pdAppliedKernels(), 0, m_nCount * sizeof(uint) ) );
+
 	// Update the KNNDatabases
 	//findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
 	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
@@ -687,6 +698,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 
+	//float3 seekPoint = make_float3( 0.f, 0.f, 300.f );
 	steerToFollowPath( this, m_pPath, g_fPathPredictionTime, g_fWeightFollowPath, g_maskFollowPath );
 	steerForSeek( this, g_f3GoalPosition, g_fWeightSeek, g_maskSeek );
 
@@ -697,7 +709,8 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 
 
 	// Apply steering.
-	updateGroup( this, elapsedTime );
+//	updateGroup( this, elapsedTime );
+	updateGroup( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime );
 
 	// Force anti-penetration.
 	//antiPenetrationWall( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime, 0 );

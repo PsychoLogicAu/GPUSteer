@@ -85,6 +85,11 @@ __global__ void AntiPenetrationWallKernel(	float4 const*	pdPosition,
 	DIRECTION_SH( threadIdx.x ) = DIRECTION_F3( index );
 	SPEED_SH( threadIdx.x ) = SPEED( index );
 
+	for( uint i = 0; i < k; i++ )
+	{
+		shKNLIndices[ threadIdx.x * k + i ] = pdKNLIndices[ index * k + i ];
+	}
+
 	// Compute the future position of this agent.
 	float3 const futurePosition = float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( VELOCITY_SH( threadIdx.x ), elapsedTime ) );
 

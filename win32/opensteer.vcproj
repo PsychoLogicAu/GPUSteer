@@ -241,6 +241,10 @@
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
 						>
 					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernelNew.cu"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="Neighborhood"
