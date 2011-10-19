@@ -39,6 +39,11 @@ extern "C"
 
 												bool const		bSeed = false
 												);
+
+	__host__ void KNNBruteForceCUDAKernelV3BindTexture(	float4 const*	pdPositionOther,
+														uint const		numOther
+														);
+	__host__ void KNNBruteForceCUDAKernelV3UnbindTexture( void );
 }
 
 #include <thrust/device_ptr.h>
@@ -104,9 +109,11 @@ void KNNBruteForceCUDA::run( void )
 		// Sort the results (using thrust)
 		thrust::sort_by_key( pdDistanceStart, pdDistanceEnd, pdIndexStart );
 
+		CUDA_SAFE_CALL( cudaThreadSynchronize() );
+
 		// Copy the first k elements to the KNNData structure for output.
-		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNDistances() + i*k, m_pdDistanceMatrix, k * sizeof(float), cudaMemcpyDeviceToDevice ) );
-		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNIndices() + i*k, m_pdIndexMatrix, k * sizeof(uint), cudaMemcpyDeviceToDevice ) );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNDistances() + i*k, m_pdDistanceMatrix + i*numAgents, k * sizeof(float), cudaMemcpyDeviceToDevice ) );
+		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNIndices() + i*k, m_pdIndexMatrix + i*numAgents, k * sizeof(uint), cudaMemcpyDeviceToDevice ) );
 	}
 	
 #if defined TIMING
@@ -223,18 +230,23 @@ void KNNBruteForceCUDAV3::run( void )
 	// Compute the size of shared memory needed for each block.
 	size_t shMemSize = k * THREADSPERBLOCK * (sizeof(float) + sizeof(uint));
 
+	// Bind the texture.
+	KNNBruteForceCUDAKernelV3BindTexture( pdPositionOther, numOther );
+
 	// FIXME: there is a bug in the seeding part of KNNBruteForceV3
 	KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, pdPositionOther, numOther, groupWithSelf, seedable );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV3 failed." );
-
-	// Data will now be seedable.
-	m_pKNNData->seedable( true );
-
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	
+	// Unbind the texture.
+	KNNBruteForceCUDAKernelV3UnbindTexture();
 }
 
 void KNNBruteForceCUDAV3::close( void )
 {
+	// Data will now be seedable.
+	m_pKNNData->seedable( true );
+
 	// The KNNData has most likely changed.
 	m_pKNNData->setSyncHost();
 }

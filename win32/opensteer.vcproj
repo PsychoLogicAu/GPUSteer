@@ -37,7 +37,7 @@
 				GPUDebugInfo="true"
 				Arch1="21"
 				Arch2="0"
-				PtxAsOptionV="false"
+				PtxAsOptionV="true"
 				Optimization="0"
 				Runtime="3"
 			/>
@@ -195,6 +195,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\include\OpenSteer\CUDA\ExtractData.cu"
+					>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\ObstacleGroupData.cuh"
 					>
 				</File>
@@ -245,6 +249,14 @@
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernelNew.cu"
 						>
 					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\WrapWorldCUDA.cuh"
+						>
+					</File>
+					<File
+						RelativePath="..\include\OpenSteer\CUDA\WrapWorldCUDAKernel.cu"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="Neighborhood"
@@ -261,23 +273,55 @@
 						Name="KNNBinning"
 						>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\KNNBinData.cu"
-							>
-						</File>
-						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinData.cuh"
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cu"
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataGlobals.cuh"
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDA.cuh"
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV1.cu"
 							>
 						</File>
 						<File
-							RelativePath="..\include\OpenSteer\CUDA\KNNBinningCUDAKernel.cu"
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV1.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV2.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV2.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinning.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV1.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV1.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV1Kernel.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2Kernel.cu"
 							>
 						</File>
 						<File
@@ -586,7 +630,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\ConfigLoader.h"
+				RelativePath="..\include\OpenSteer\ConfigLoader.h"
 				>
 			</File>
 			<File
@@ -630,6 +674,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OpenSteer\Simulation.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OpenSteer\SteerLibrary.h"
 				>
 			</File>
@@ -664,22 +712,6 @@
 			<File
 				RelativePath="..\src\ConfigLoader.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\Draw.cpp"
@@ -710,6 +742,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\Simulation.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\SteerLibrary.cpp"
 				>
 			</File>
@@ -718,6 +754,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\include\OpenSteer\CUDA\WrapWorldCUDA.cu"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

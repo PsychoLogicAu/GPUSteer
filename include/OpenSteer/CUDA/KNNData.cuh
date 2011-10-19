@@ -53,6 +53,6 @@ public:
 	/// Get the KNN data for the agent at index.
 	void getAgentData( uint const index, uint * pKNNIndices, float * pKNNDistances );
 };	// class KNNData
-};	// namespace OpenSteer
+}	// namespace OpenSteer
 
 #endif

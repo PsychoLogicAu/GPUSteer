@@ -13,11 +13,11 @@ namespace OpenSteer
 	protected:
 		float m_fElapsedTime;
 
-		KNNData *	m_pKNNData;
-		WallGroup *	m_pWallGroup;
+		//KNNData *	m_pKNNData;
+		//WallGroup *	m_pWallGroup;
 
 	public:
-		UpdateCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float fElapsedTime );
+		UpdateCUDA( AgentGroup * pAgentGroup, /*KNNData * pKNNData, WallGroup * pWallGroup,*/ const float fElapsedTime );
 		~UpdateCUDA( void ) {}
 
 		virtual void init( void );

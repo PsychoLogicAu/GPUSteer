@@ -1,4 +1,4 @@
-#include "KNNBruteForceCUDA.cuh"
+//#include "KNNBruteForceCUDA.cuh"
 
 //#include "../AgentGroupData.cuh"
 #include "../VectorUtils.cuh"
@@ -7,8 +7,6 @@
 
 // For FLT_MAX.
 #include "float.h"
-
-using namespace OpenSteer;
 
 extern "C"
 {
@@ -50,7 +48,29 @@ extern "C"
 
 												bool const		bSeed = false
 												);
-	
+
+	__host__ void KNNBruteForceCUDAKernelV3BindTexture(		float4 const*	pdPositionOther,
+															uint const		numOther
+															);
+	__host__ void KNNBruteForceCUDAKernelV3UnbindTexture( void );
+}
+
+using namespace OpenSteer;
+
+texture< float4, cudaTextureType1D, cudaReadModeElementType >	texPositionOther;
+
+__host__ void KNNBruteForceCUDAKernelV3BindTexture(		float4 const*	pdPositionOther,
+														uint const		numOther
+														)
+{
+	static cudaChannelFormatDesc const float4ChannelDesc = cudaCreateChannelDesc< float4 >();
+
+	CUDA_SAFE_CALL( cudaBindTexture( NULL, texPositionOther, pdPositionOther, float4ChannelDesc, numOther * sizeof(float4) ) );
+}
+
+__host__ void KNNBruteForceCUDAKernelV3UnbindTexture( void )
+{
+	cudaUnbindTexture( texPositionOther );
 }
 
 __global__ void KNNBruteForceCUDAKernelV3(	float4 const*	pdPosition,			// Agent positions.
@@ -81,52 +101,42 @@ __global__ void KNNBruteForceCUDAKernelV3(	float4 const*	pdPosition,			// Agent 
 	__shared__ float3 shPosition[THREADSPERBLOCK];
 
 	POSITION_SH( threadIdx.x ) = POSITION_F3( index );
-	
-	// Set all elements of shKNNDistances to FLT_MAX.
-	for( uint i = 0; i < k; i++ )
-	{
-		shKNNIndices[(threadIdx.x * k) + i] = UINT_MAX;
-		shKNNDistances[(threadIdx.x * k) + i] = FLT_MAX;
-	}
 
-	__syncthreads();
-	
 	if( bSeed )
 	{
-		// Set the seeding values from the previous update.
+		// Load the indices of the k nearest neighbors from last frame from global memory.
 		for( uint i = 0; i < k; i++ )
 		{
-			// Get the index of the ith closest agent from the last frame.
-			uint const ind = pdKNNIndices[index * k + i];
+			shKNNIndices[ threadIdx.x * k + i ] = pdKNNIndices[ index * k + i ];
+			// Compute the current distance to this agent.
+			shKNNDistances[ threadIdx.x * k + i ] = float3_distance( POSITION_SH( threadIdx.x ), make_float3( tex1Dfetch( texPositionOther, shKNNIndices[ threadIdx.x * k + i ] ) ) );
+		}
 
-			if( UINT_MAX == ind )
-				continue;
-
-			// Compute the distance between this agent and the one at index.
-			float const dist = float3_distance( POSITION_SH( threadIdx.x ), make_float3( pdPositionOther[ ind ] ) );
-
-			if( dist < shKNNDistances[(threadIdx.x * k) + (k - 1)] )	// Distance of the kth closest agent.
+		// Re-sort using bubble sort.
+		bool sorted = true;
+		do
+		{
+			for( uint i = 1; i < k; i++ )
 			{
-				// Agent at index i is the new kth closest. Set the distance and index in shared mem.
-				shKNNDistances[(threadIdx.x * k) + (k - 1)] = dist;
-				shKNNIndices[(threadIdx.x * k) + (k - 1)] = ind;
-
-				// Bubble the values up... this is necessary as their positions may have changed relative to each other since the last update.
-				for( int slot = k - 2; slot >= 0; slot-- )
+				if( shKNNDistances[ threadIdx.x * k + (i - 1) ] > shKNNDistances[ threadIdx.x * k + i ] )
 				{
-					if( shKNNDistances[(threadIdx.x * k) + slot] > shKNNDistances[(threadIdx.x * k) + (slot + 1)] )
-					{
-						swap( shKNNDistances[(threadIdx.x * k) + slot], shKNNDistances[(threadIdx.x * k) + (slot + 1)] );
-						swap( shKNNIndices[(threadIdx.x * k) + slot], shKNNIndices[(threadIdx.x * k) + (slot + 1)] );
-					}
-					else
-						break;
+					sorted = false;
+
+					swap( shKNNDistances[ threadIdx.x * k + (i - 1) ], shKNNDistances[ threadIdx.x * k + i ] );
+					swap( shKNNIndices[ threadIdx.x * k + (i - 1) ], shKNNIndices[ threadIdx.x * k + i ] );
 				}
 			}
+		} while( ! sorted );
+	}
+	else
+	{
+		// Not seeding from last frame. Set all distances to FLT_MAX.
+		for( uint i = 0; i < k; i++ )
+		{
+			shKNNIndices[ threadIdx.x * k + i ] = UINT_MAX;
+			shKNNDistances[ threadIdx.x * k + i ] = FLT_MAX;
 		}
 	}
-
-	__syncthreads();
 
 	// For each of the agents...
 	for( uint otherIndex = 0; otherIndex < numOther; otherIndex++ )

@@ -249,6 +249,11 @@ public:
 		}
 	}
 
+	void setSyncDevice( void )
+	{
+		m_bSyncDevice = true;
+	}
+
 	void clear( void )
 	{
 		m_nSize = 0;

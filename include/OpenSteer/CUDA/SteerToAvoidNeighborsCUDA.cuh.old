@@ -11,16 +11,15 @@ namespace OpenSteer
 class SteerToAvoidNeighborsCUDA : public AbstractCUDAKernel
 {
 protected:
-	bool			m_bAvoidCloseNeighbors;
-	float			m_fMinTimeToCollision;
-	float			m_fMinSeparationDistance;
+	float m_fMinTimeToCollision;
+	float m_fMinSeparationDistance;
 
 	KNNData *		m_pKNNData;
 	AgentGroup *	m_pOtherGroup;
 
 public:
-	SteerToAvoidNeighborsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, bool const bAvoidCloseNeighbors, float const fWeight, uint const doNotApplyWith );
-	virtual ~SteerToAvoidNeighborsCUDA( void ) {}
+	SteerToAvoidNeighborsCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, float const fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight, uint const doNotApplyWith );
+	~SteerToAvoidNeighborsCUDA( void ) {}
 
 	virtual void init( void );
 	virtual void run( void );

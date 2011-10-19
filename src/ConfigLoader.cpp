@@ -1,9 +1,33 @@
-#include "ConfigLoader.h"
+#include "OpenSteer/ConfigLoader.h"
 
 #include <fstream>
 
 using namespace OpenSteer;
 
+using namespace std;
+
+Value::Value( void )
+:	m_value()
+{
+}
+
+Value::Value( std::string value )
+:	m_value( value )
+{
+}
+
+Value::~Value( void )
+{}
+
+float Value::asFloat( void )
+{
+	return (float)atof( m_value.c_str() );
+}
+
+int Value::asInt( void )
+{
+	return atoi( m_value.c_str() );
+}
 
 ConfigLoader::ConfigLoader( void )
 {
@@ -37,7 +61,7 @@ bool ConfigLoader::LoadFromFile( char const* szFilename )
 			Value value( val );
 
 			// Insert into the map.
-			_map[ key ] = value;
+			m_keyValueMap[ key ] = value;
 		}
 
 		inFile.close();

@@ -4,7 +4,7 @@
 #include "../WallGroup.h"
 
 #include "KNNBruteForceCUDA.cuh"
-#include "KNNBinningCUDA.cuh"
+#include "KNNBinning.cuh"
 
 #include "SteerForSeekCUDA.cuh"
 #include "SteerForFleeCUDA.cuh"
@@ -26,8 +26,19 @@
 
 #include "UpdateCUDA.h"
 
+#include "WrapWorldCUDA.cuh"
+
 namespace OpenSteer
 {
+
+static void wrapWorld( AgentGroup * pAgentGroup, float3 const& worldSize )
+{
+	WrapWorldCUDA kernel( pAgentGroup, worldSize );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
 
 static void steerForSeek( AgentGroup * pAgentGroup, float3 const& target, float const fWeight, uint const doNotApplyWith )
 {
@@ -88,9 +99,9 @@ static void steerToAvoidObstacles( AgentGroup * pAgentGroup, ObstacleGroup * pOb
 	kernel.close();
 }
 
-static void steerToAvoidNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, const float fMinTimeToCollision, float const fMinSeparationDistance, float const fWeight, uint const doNotApplyWith )
+static void steerToAvoidNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, AgentGroup * pOtherGroup, const float fMinTimeToCollision, float const fMinSeparationDistance, bool const bAvoidCloseNeighbors, float const fWeight, uint const doNotApplyWith )
 {
-	SteerToAvoidNeighborsCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, fMinTimeToCollision, fMinSeparationDistance, fWeight, doNotApplyWith );
+	SteerToAvoidNeighborsCUDA kernel( pAgentGroup, pKNNData, pOtherGroup, fMinTimeToCollision, fMinSeparationDistance, bAvoidCloseNeighbors, fWeight, doNotApplyWith );
 
 	kernel.init();
 	kernel.run();
@@ -117,11 +128,11 @@ static void updateKNNDatabase( BaseGroup * pGroup, KNNBinData * pKNNBinData )
 
 static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
 {
-	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup, searchRadius );
+	//KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup, searchRadius );
 
 	//KNNBruteForceCUDA kernel( pAgentGroup, pKNNData, pOtherGroup );
 	//KNNBruteForceCUDAV2 kernel( pAgentGroup, pKNNData, pOtherGroup );
-	//KNNBruteForceCUDAV3 kernel( pAgentGroup, pKNNData, pOtherGroup );
+	KNNBruteForceCUDAV3 kernel( pAgentGroup, pKNNData, pOtherGroup );
 
 	kernel.init();
 	kernel.run();
@@ -158,9 +169,9 @@ static void steerForCohesion( AgentGroup * pAgentGroup, KNNData * pKNNData, Agen
 }
 
 // Applies the newly compute steering vector to the vehicles.
-static void updateGroup( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float elapsedTime )
+static void updateGroup( AgentGroup * pAgentGroup, /*KNNData * pKNNData, WallGroup * pWallGroup,*/ const float elapsedTime )
 {
-	UpdateCUDA kernel( pAgentGroup, pKNNData, pWallGroup, elapsedTime );
+	UpdateCUDA kernel( pAgentGroup, /*pKNNData, pWallGroup,*/ elapsedTime );
 
 	kernel.init();
 	kernel.run();

@@ -54,11 +54,11 @@ extern "C"
 												);
 }
 
-UpdateCUDA::UpdateCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float fElapsedTime )
+UpdateCUDA::UpdateCUDA( AgentGroup * pAgentGroup, /*KNNData * pKNNData, WallGroup * pWallGroup,*/ const float fElapsedTime )
 :	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
-	m_fElapsedTime( fElapsedTime ),
+	m_fElapsedTime( fElapsedTime )/*,
 	m_pKNNData( pKNNData ),
-	m_pWallGroup( pWallGroup )
+	m_pWallGroup( pWallGroup )*/
 {
 }
 
@@ -89,53 +89,53 @@ void UpdateCUDA::run(void)
 
 	uint const&		numAgents			= getNumAgents();
 
-	uint const*		pdKNLIndices		= m_pKNNData->pdKNNIndices();
-	uint const&		k					= m_pKNNData->k();
+	//uint const*		pdKNLIndices		= m_pKNNData->pdKNNIndices();
+	//uint const&		k					= m_pKNNData->k();
 
-	float4 const*	pdLineStart			= m_pWallGroup->GetWallGroupData().pdLineStart();
-	float4 const*	pdLineEnd			= m_pWallGroup->GetWallGroupData().pdLineEnd();
-	float4 const*	pdLineNormal		= m_pWallGroup->GetWallGroupData().pdLineNormal();
-	uint const&		numLines			= m_pWallGroup->Size();
+	//float4 const*	pdLineStart			= m_pWallGroup->GetWallGroupData().pdLineStart();
+	//float4 const*	pdLineEnd			= m_pWallGroup->GetWallGroupData().pdLineEnd();
+	//float4 const*	pdLineNormal		= m_pWallGroup->GetWallGroupData().pdLineNormal();
+	//uint const&		numLines			= m_pWallGroup->Size();
 
-	size_t const	shMemSize			= k * THREADSPERBLOCK * sizeof(uint);
+	//size_t const	shMemSize			= k * THREADSPERBLOCK * sizeof(uint);
 
 	// Bind the textures.
-	UpdateCUDAKernelBindTextures( pdLineStart, pdLineEnd, pdLineNormal, numLines );
+	//UpdateCUDAKernelBindTextures( pdLineStart, pdLineEnd, pdLineNormal, numLines );
 
-	UpdateCUDAKernelNew<<< grid, block, shMemSize >>>(	pdSide,
-														pdUp,
-														pdDirection,
-														pdPosition,
+	//UpdateCUDAKernelNew<<< grid, block, shMemSize >>>(	pdSide,
+	//													pdUp,
+	//													pdDirection,
+	//													pdPosition,
 
-														pdSteering,
-														pdSpeed,
-														pdMaxForce,
-														pdMaxSpeed,
-														pdMass,
-														pdRadius,
+	//													pdSteering,
+	//													pdSpeed,
+	//													pdMaxForce,
+	//													pdMaxSpeed,
+	//													pdMass,
+	//													pdRadius,
 
-														pdKNLIndices,
-														k,
-														numLines,
+	//													pdKNLIndices,
+	//													k,
+	//													numLines,
 
-														m_fElapsedTime,
-														numAgents,
+	//													m_fElapsedTime,
+	//													numAgents,
 
-														pdAppliedKernels
-														);
+	//													pdAppliedKernels
+	//													);
 
 
 
-	//UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdDirection, pdPosition, pdSteering, pdSpeed,
-	//										pdMaxForce, pdMaxSpeed, pdMass,
-	//										m_fElapsedTime, numAgents,
-	//										pdAppliedKernels
-	//										);
+	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdDirection, pdPosition, pdSteering, pdSpeed,
+											pdMaxForce, pdMaxSpeed, pdMass,
+											m_fElapsedTime, numAgents,
+											pdAppliedKernels
+											);
 	cutilCheckMsg( "UpdateCUDAKernel failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
-	UpdateCUDAKernelUnbindTextures();
+	//UpdateCUDAKernelUnbindTextures();
 }
 
 void UpdateCUDA::close(void)

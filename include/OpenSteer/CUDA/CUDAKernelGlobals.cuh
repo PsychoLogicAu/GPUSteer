@@ -9,23 +9,24 @@
 #define THREADSPERBLOCK 256
 
 // Kernel bit masks.
-static uint const KERNEL_PURSUE_BIT				= 1;
-static uint const KERNEL_EVADE_BIT				= 1 << 1;
-static uint const KERNEL_SEEK_BIT				= 1 << 2;
-static uint const KERNEL_FLEE_BIT				= 1 << 3;
+static uint const KERNEL_PURSUE_BIT					= 1;
+static uint const KERNEL_EVADE_BIT					= 1 << 1;
+static uint const KERNEL_SEEK_BIT					= 1 << 2;
+static uint const KERNEL_FLEE_BIT					= 1 << 3;
 
-static uint const KERNEL_SEPARATION_BIT			= 1 << 4;
-static uint const KERNEL_ALIGNMENT_BIT			= 1 << 5;
-static uint const KERNEL_COHESION_BIT			= 1 << 6;
+static uint const KERNEL_SEPARATION_BIT				= 1 << 4;
+static uint const KERNEL_ALIGNMENT_BIT				= 1 << 5;
+static uint const KERNEL_COHESION_BIT				= 1 << 6;
 
-static uint const KERNEL_AVOID_OBSTACLES_BIT	= 1 << 7;
-static uint const KERNEL_AVOID_WALLS_BIT		= 1 << 8;
-static uint const KERNEL_AVOID_NEIGHBORS_BIT	= 1 << 9;
+static uint const KERNEL_AVOID_OBSTACLES_BIT		= 1 << 7;
+static uint const KERNEL_AVOID_WALLS_BIT			= 1 << 8;
+static uint const KERNEL_AVOID_NEIGHBORS_BIT		= 1 << 9;
+static uint const KERNEL_AVOID_CLOSE_NEIGHBORS_BIT	= 1 << 10;
 
-static uint const KERNEL_FOLLOW_PATH_BIT		= 1 << 10;
+static uint const KERNEL_FOLLOW_PATH_BIT			= 1 << 11;
 
-static uint const KERNEL_ANTI_PENETRATION_WALL	= 1 << 11;
-static uint const KERNEL_ANTI_PENETRATION_AGENT	= 1 << 12;
+static uint const KERNEL_ANTI_PENETRATION_WALL		= 1 << 12;
+static uint const KERNEL_ANTI_PENETRATION_AGENT		= 1 << 13;
 
 #define COALESCE
 #if defined COALESCE
