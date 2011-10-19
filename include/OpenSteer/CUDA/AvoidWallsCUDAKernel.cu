@@ -16,8 +16,8 @@ extern "C"
 	__host__ void SteerToAvoidWallsKernelUnbindTextures( void );
 
 	__global__ void SteerToAvoidWallsCUDAKernel(		// Agent data.
-														float4 const*	pdPosition,
-														float4 const*	pdDirection,
+														float4 *		pdPosition,
+														float4 *		pdDirection,
 														float3 const*	pdSide,
 														float const*	pdSpeed,
 														float const*	pdRadius,
@@ -65,8 +65,8 @@ __host__ void SteerToAvoidWallsKernelUnbindTextures( void )
 }
 
 __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
-												float4 const*	pdPosition,
-												float4 const*	pdDirection,
+												float4 *		pdPosition,
+												float4 *		pdDirection,
 												float3 const*	pdSide,
 												float const*	pdSpeed,
 												float const*	pdRadius,
@@ -160,24 +160,39 @@ __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 	float	nearestLineDistance = FLT_MAX;
 	uint	nearestLineIndex = UINT_MAX;
 	float3	nearestLineIntersectPoint;
+	float3	nearestLineNormal;
+
+	bool	touchingWall = false;
 
 	// For each of the K Nearest Lines...
 	for( uint i = 0; i < k; i++ )
 	{
-		uint lineIndex = shKNLIndices[ threadIdx.x * k + i ];
+		uint const	lineIndex = shKNLIndices[ threadIdx.x * k + i ];
 
 		// Check for end of KNL.
 		if( lineIndex >= numLines )
 			break;
 
-		// TODO: check for overlap with line.
+		float3 intersectPoint;
+
+		float3 const	lineNormal	= make_float3( tex1Dfetch( texLineNormal, lineIndex ) );
+		float3 const	lineStart	= make_float3( tex1Dfetch( texLineStart, lineIndex) );
+		float3 const	lineEnd		= make_float3( tex1Dfetch( texLineEnd, lineIndex ) );
+
+		// Check for overlap with line.
+		float3 closestPointToLine = float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( float3_minus( lineNormal ), RADIUS_SH( threadIdx.x ) ) );
+		if( LinesIntersect( POSITION_SH( threadIdx.x ), closestPointToLine, lineStart, lineEnd, intersectPoint ) )
+		{
+			touchingWall = true;
+			nearestLineNormal = lineNormal;
+			nearestLineDistance = float3_distance( POSITION_SH( threadIdx.x ), intersectPoint );
+		}
 
 		// For each of the feelers...
 		for( uint iFeeler = 0; iFeeler < 3; iFeeler++ )
 		{
 			float intersectDistance;
-			float3 intersectPoint;
-			if( LinesIntersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], make_float3( tex1Dfetch( texLineStart, lineIndex) ), make_float3( tex1Dfetch( texLineEnd, lineIndex ) ), intersectPoint ) )
+			if( LinesIntersect( POSITION_SH( threadIdx.x ), feelers[ iFeeler ], lineStart, lineEnd, intersectPoint ) )
 			{
 				intersectDistance = float3_distance( POSITION_SH( threadIdx.x ), intersectPoint );
 
@@ -188,28 +203,41 @@ __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 					nearestLineIndex = lineIndex;
 					nearestLineIntersectPoint = intersectPoint;
 					feelerIndex = iFeeler;
+					nearestLineNormal = lineNormal;
 				}
 			}
 		}
 	}
 
-	if( UINT_MAX != nearestLineIndex )
+	// Enforce anti-penetration.
+	if( touchingWall )
+	{
+		float const penetrationDistance = RADIUS_SH( threadIdx.x ) - nearestLineDistance;
+		POSITION_SH( threadIdx.x ) = float3_add( POSITION_SH( threadIdx.x ), float3_scalar_multiply( nearestLineNormal, penetrationDistance ) );
+		DIRECTION_SH( threadIdx.x ) = float3_normalize( float3_perpendicularComponent( DIRECTION_SH( threadIdx.x ), nearestLineNormal ) );
+
+		// Set the wall anti-penetration bit.
+		pdAppliedKernels[ index ] |= KERNEL_ANTI_PENETRATION_WALL;
+
+	}
+	else if( UINT_MAX != nearestLineIndex )
 	{
 		// Calculate the penetration distance.
-		float penetrationDistance = float3_length( float3_subtract( feelers[ feelerIndex ], nearestLineIntersectPoint ) );
-		steering = float3_scalar_multiply( make_float3( tex1Dfetch( texLineNormal, nearestLineIndex ) ), penetrationDistance );
+		float const penetrationDistance = float3_length( float3_subtract( feelers[ feelerIndex ], nearestLineIntersectPoint ) );
+		steering = float3_scalar_multiply( nearestLineNormal, penetrationDistance );
+
+		// Set the applied kernel bit.
+		pdAppliedKernels[ index ] |= KERNEL_AVOID_WALLS_BIT;
 	}
 
 	// Apply the weight.
 	steering = float3_scalar_multiply( steering, fWeight );
-
-	// Set the applied kernel bit.
-	if( ! float3_equals( steering, float3_zero() ) )
-		pdAppliedKernels[ index ] |= KERNEL_AVOID_WALLS_BIT;
 
 	// Add into the steering vector.
 	STEERING_SH( threadIdx.x ) = float3_add( steering, STEERING_SH( threadIdx.x ) );
 
 	// Write back to global memory.
 	STEERING( index ) = STEERING_SH_F4( threadIdx.x );
+	POSITION( index ) = POSITION_SH_F4( threadIdx.x );
+	DIRECTION( index ) = DIRECTION_SH_F4( threadIdx.x );
 }

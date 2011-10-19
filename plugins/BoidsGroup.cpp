@@ -82,10 +82,11 @@ using namespace OpenSteer;
 
 #define M_PI       3.14159265358979323846
 
-#define ANNOTATION_LINES
+//#define ANNOTATION_LINES
 //#define ANNOTATION_TEXT
-#define ANNOTATION_CELLS
+//#define ANNOTATION_CELLS
 //#define NO_DRAW
+//#define ONLY_DRAW_NEAR_CAMERA
 
 // ----------------------------------------------------------------------------
 // forward declarations
@@ -106,31 +107,39 @@ class BoidsWanderer;
 //const float	gDim						= 63;
 //const int	gCells						= 10;
 
-const int gEnemyCount					= 1000;
-const float gDim						= 200;
-const int gCells						= 28;
+//const int gEnemyCount					= 1000;
+//const float gDim						= 200;
+//const int gCells						= 28;
 
-//const int gEnemyCount					= 10000;
-//const float gDim						= 635;
-//const int gCells						= 91;
+const int gEnemyCount					= 10000;
+const float gDim						= 635;
+const int gCells						= 150;
 
+
+//const int gEnemyCount					= 100000;
+//const float gDim						= 2000;
+////const int gCells						= 285;
+//const int gCells						= 170;
 /*
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
 //const int gCells						= 285;
-const int gCells						= 150;
+const int gCells						= 400;
 */
-
-//const int gEnemyCount					= 1000000;
-//const float gDim						= 6350;
+/*
+const int gEnemyCount					= 1000000;
+const float gDim						= 6350;
 ////const int gCells						= 907;
 //const int gCells						= 1814;
-
-
+const int gCells						= 400;
+*/
 
 //const int gEnemyCount					= 1000;
 //const float gDim						= 100;
 //const int gCells						= 25;
+
+const float3 gWorldSize					= make_float3( gDim, gDim, gDim );
+const uint3 gWorldCells					= make_uint3( gCells, gCells, gCells );
 
 const int gObstacleCount				= 1;
 
@@ -164,11 +173,11 @@ float const g_fWeightWallAvoidance		= 10.f;
 float const g_fWeightAvoidNeighbors		= 2.f;
 
 // Masks for behaviors.
-uint const	g_maskAlignment				= 0;//KERNEL_SEPARATION_BIT;
-uint const	g_maskCohesion				= 0;//KERNEL_SEPARATION_BIT;
+uint const	g_maskAlignment				= KERNEL_SEPARATION_BIT;//KERNEL_SEPARATION_BIT;
+uint const	g_maskCohesion				= KERNEL_SEPARATION_BIT;//KERNEL_SEPARATION_BIT;
 uint const	g_maskSeparation			= 0;
 
-uint const	g_maskSeek					= 0; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
+uint const	g_maskSeek					= KERNEL_SEPARATION_BIT; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_SEPARATION_BIT;//KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
@@ -183,19 +192,17 @@ uint const	g_maskWallAvoidance			= 0;
 //float const g_fMaxFlockingDistance		= 2 * g_searchRadiusNeighbors * gDim / gCells;
 //float const g_fCosMaxFlockingAngle		= 360 * (float)M_PI / 180.f;	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
 float const g_fMinFlockingDistance		= 0.5f;
-float const g_fMaxSeparationDistance	= 2.f;
-float const g_fMaxFlockingDistance		= 7.f;
+float const g_fMaxSeparationDistance	= 1.f;
+//float const g_fMaxFlockingDistance		= 7.f;
+float const g_fMaxFlockingDistance		= FLT_MAX;
 
 //float const g_fCosMaxFlockingAngle		= cosf( 2 * (float)M_PI );
 float const g_fCosMaxFlockingAngle		= 0.98480775301220805936674302458952f;
 
-const float3 gWorldSize					= make_float3( gDim, gDim, gDim );
-const uint3 gWorldCells					= make_uint3( gCells, gCells, gCells );
-
 // Start position.
 float3 const g_f3StartBaseCenter		= make_float3( 0.f, 0.f, 0.f );
 float const g_fMinStartRadius			= 0.0f;
-float const g_fMaxStartRadius			= 0.15f * min( gWorldSize.x, min( gWorldSize.y, gWorldSize.z ) );
+float const g_fMaxStartRadius			= 0.5f * min( gWorldSize.x, min( gWorldSize.y, gWorldSize.z ) );
 
 const float gBrakingRate				= 0.75f;
 
@@ -519,6 +526,9 @@ void BoidsGroup::draw(void)
 	return;
 #endif
 
+#if defined ONLY_DRAW_NEAR_CAMERA
+	float3 const cameraPosition = make_float3( OpenSteerDemo::camera.position() );
+#endif
 	// Draw all of the enemies
 	float3 bodyColor = make_float3(0.6f, 0.4f, 0.4f); // redish
 
@@ -537,6 +547,12 @@ void BoidsGroup::draw(void)
 	{
 		// Get its varialbe and constant data.
 		m_agentGroupData.getAgentData( i, ad );
+
+#if defined ONLY_DRAW_NEAR_CAMERA
+		if( float3_distanceSquared( make_float3( ad.position ), cameraPosition ) > 10000.f )
+			continue;
+
+#endif
 
 		// Draw the agent.
 		drawBasic3dSphericalVehicle( ad.radius, make_float3(ad.position), make_float3(ad.direction), ad.side, ad.up, bodyColor );
@@ -588,6 +604,8 @@ void BoidsGroup::draw(void)
 
 void BoidsGroup::update(const float currentTime, const float elapsedTime)
 {
+	wrapWorld( this, gWorldSize );
+
 	// Update the positions in the KNNDatabase for the group.
 	updateKNNDatabase( this, g_pWorld->GetBinData() );
 
@@ -609,7 +627,7 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 	//steerForPursuit( this, g_pWanderer->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
-	steerForSeek( this, make_float3( g_pWanderer->position() ), g_fWeightSeek, g_maskSeek );
+	//steerForSeek( this, make_float3( g_pWanderer->position() ), g_fWeightSeek, g_maskSeek );
 
 	//steerForEvade( this, g_pWanderer->position(), g_pWanderer->forward(), g_pWanderer->speed(), g_fMaxPursuitPredictionTime, g_fWeightEvade, g_maskEvade );
 

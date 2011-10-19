@@ -57,8 +57,6 @@
 #include <list>
 #include "OpenSteer/SimpleVehicle.h"
 #include "OpenSteer/OpenSteerDemo.h"
-#include "OpenSteer/Proximity.h"
-#include "OpenSteer/ObstacleGroup.h"
 
 #include "OpenSteer/AgentGroup.h"
 
@@ -72,7 +70,7 @@
 
 #include "OpenSteer/WallGroup.h"
 
-#include "OpenSteer/CUDA/PolylinePathwayCUDA.cuh"
+//#include "OpenSteer/CUDA/PolylinePathwayCUDA.cuh"
 
 using namespace OpenSteer;
 
@@ -92,10 +90,8 @@ using namespace OpenSteer;
 
 // ----------------------------------------------------------------------------
 // forward declarations
-class CtfEnemyGroup;
-class CtfSeeker;
-class CtfBase;
-class CtfObstacleGroup;
+class CollisionGroup;
+class CollisionBase;
 
 #define SAFE_DELETE( x )	{ if( x ){ delete x; x = NULL; } }
 
@@ -113,21 +109,23 @@ class CtfObstacleGroup;
 //const float gDim						= 200;
 //const int gCells						= 50;
 
-//const int gEnemyCount					= 10000;
+const int gEnemyCount					= 10000;
 //const float gDim						= 635;
-////const int gCells						= 91;
-//const int gCells						= 200;
+const float gDim						= 935;
+//const int gCells						= 91;
+const int gCells						= 200;
 
-const int gEnemyCount					= 100000;
-const float gDim						= 2000;
-//const int gCells						= 285;
-const int gCells						= 512;
+//const int gEnemyCount					= 100000;
+//const float gDim						= 2000;
+////const int gCells						= 285;
+//const int gCells						= 512;
 
 //const int gEnemyCount					= 500000;
-//const float gDim						= 4000;
+//const float gDim						= 3000;
 ////const int gCells						= 907;
 ////const int gCells						= 1814;
-//const int gCells						= 1024;
+////const int gCells						= 1024;
+//const int gCells						= 1536;
 
 //const int gEnemyCount					= 1000000;
 //const float gDim						= 6350;
@@ -148,25 +146,22 @@ float const	g_fPathRadius				= 23.5f;
 uint const	g_knn						= 5;		// Number of near neighbors to keep track of.
 uint const	g_kno						= 2;		// Number of near obstacles to keep track of.
 uint const	g_knw						= 3;		// Number of near walls to keep track of.
-uint const	g_maxSearchRadius			= 1;		// Distance in cells for the maximum search radius.
-uint const	g_searchRadiusNeighbors		= 1;		// Distance in cells to search for neighbors.
-uint const	g_searchRadiusObstacles		= 1;		// Distance in cells to search for obstacles.
-uint const	g_searchRadiusWalls			= 1;		// Distance in cells to search for obstacles.
+uint const	g_searchRadius				= 1;		// Distance in cells for the maximum search radius.
 
 float const g_fMaxPursuitPredictionTime	= 10.0f;		// Look-ahead time for pursuit.
 float const g_fMinTimeToCollision		= 2.0f;		// Look-ahead time for neighbor avoidance.
 float const g_fMinTimeToObstacle		= 5.0f;		// Look-ahead time for obstacle avoidance.
-float const g_fMinTimeToWall			= 5.0f;		// Look-ahead time for wall avoidance.
+float const g_fMinTimeToWall			= 10.0f;		// Look-ahead time for wall avoidance.
 float const g_fPathPredictionTime		= 5.f;		// Point on path in future to aim for.
 
 float const g_fMinSeparationDistance	= 0.5f;		// Mini
-float const g_fMaxSeparationDistance	= 1.3f;		// Maximum range for separation behavior.
+float const g_fMaxSeparationDistance	= 1.2f;		// Maximum range for separation behavior.
 float const g_fMinFlockingDistance		= 0.5f;
 float const g_fMaxFlockingDistance		= 7.f;
 float const g_fCosMaxFlockingAngle		= cosf(150 * (float)M_PI / 180.f);	// 350 degrees - used in "An efficient GPU implementation for large scale individual-based simulation of collective behavior"
 
 // Weights for behaviors.
-float const	g_fWeightAlignment			= 2.f;
+float const	g_fWeightAlignment			= 2.5f;
 float const	g_fWeightCohesion			= 1.f;
 float const	g_fWeightSeparation			= 10.f;
 
@@ -182,9 +177,9 @@ float const g_fWeightAvoidNeighbors		= 1.f;
 // Masks for behaviors.
 uint const	g_maskAlignment				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
 uint const	g_maskCohesion				= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
-uint const	g_maskSeparation			= 0;//KERNEL_AVOID_WALLS_BIT;
+uint const	g_maskSeparation			= KERNEL_ANTI_PENETRATION_WALL;//0;//KERNEL_AVOID_WALLS_BIT;
 
-uint const	g_maskSeek					= KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT;
+uint const	g_maskSeek					= KERNEL_AVOID_WALLS_BIT;// | KERNEL_SEPARATION_BIT;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
@@ -194,6 +189,8 @@ uint const	g_maskFollowPath			= KERNEL_SEPARATION_BIT;
 uint const	g_maskObstacleAvoidance		= 0;
 uint const	g_maskNeighborAvoidance		= 0;
 uint const	g_maskWallAvoidance			= 0;
+
+float const	g_fMaxSpeed					= 3.f;
 
 // Do not shove an agent which has been pushed out from a wall.
 uint const	g_maskAntiPenetrationAgents	= KERNEL_AVOID_WALLS_BIT | KERNEL_ANTI_PENETRATION_WALL;
@@ -235,6 +232,10 @@ int resetCount = 0;
 
 // Function prototypes.
 void randomizeStartingPositionAndHeading( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side );
+
+class CtfWorld;
+class CtfEnemyGroup;
+class CtfObstacleGroup;
 
 class CtfWorld
 {
@@ -539,9 +540,9 @@ void CtfEnemyGroup::reset(void)
 		CtfBase enemy;
 		AgentData &edata = enemy.getVehicleData();
 
-		edata.speed = 3.0f;
+		edata.speed = g_fMaxSpeed;
 		edata.maxForce = 3.0f;
-		edata.maxSpeed = 3.0f;
+		edata.maxSpeed = g_fMaxSpeed;
 		randomizeStartingPositionAndHeading( edata );
 		
 		bool success = AddAgent( edata );
@@ -674,6 +675,8 @@ void CtfEnemyGroup::draw(void)
 
 void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 {
+	wrapWorld( this, gWorldSize );
+
 	// Update the positions in the KNNDatabase for the group.
 	updateKNNDatabase( this, g_pWorld->GetBinData() );
 
@@ -693,7 +696,7 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	//steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, g_maskObstacleAvoidance );
 
 	// Avoid collision with self.
-	//steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
+	//steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, false, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
 
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
@@ -705,12 +708,12 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 	// Flocking.
 	steerForSeparation( this, m_pKNNSelf, this, g_fMinSeparationDistance, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
 	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
-	//steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
+	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
 
 
 	// Apply steering.
 //	updateGroup( this, elapsedTime );
-	updateGroup( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime );
+	updateGroup( this, /*m_pKNNWalls, g_pWorld->GetWalls(),*/ elapsedTime );
 
 	// Force anti-penetration.
 	//antiPenetrationWall( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime, 0 );
@@ -1284,8 +1287,8 @@ void CtfSeeker::draw (void)
 	status << std::left << std::setw( 25 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
 	status << std::left << std::setw( 25 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
 	status << std::left << std::setw( 25 ) << "Search radius neighbors: " << std::setw( 10 ) << g_searchRadiusNeighbors << std::endl;
-	status << std::left << std::setw( 25 ) << "Search radius obstacles: " << std::setw( 10 ) << g_searchRadiusObstacles << std::endl;
-	status << std::left << std::setw( 25 ) << "Position: " << position().x << ", " << position().z << std::endl;
+	//status << std::left << std::setw( 25 ) << "Search radius obstacles: " << std::setw( 10 ) << g_searchRadiusObstacles << std::endl;
+	//status << std::left << std::setw( 25 ) << "Position: " << position().x << ", " << position().z << std::endl;
 	status << std::left << std::setw( 25 ) << "Reset count: " << std::setw( 10 ) << resetCount << std::ends;
     const float h = drawGetWindowHeight ();
     const float3 screenLocation = make_float3(10, h-50, 0);

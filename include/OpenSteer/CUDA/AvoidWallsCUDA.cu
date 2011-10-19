@@ -13,8 +13,8 @@ extern "C"
 	__host__ void SteerToAvoidWallsKernelUnbindTextures( void );
 
 	__global__ void SteerToAvoidWallsCUDAKernel(		// Agent data.
-														float4 const*	pdPosition,
-														float4 const*	pdDirection,
+														float4 *		pdPosition,
+														float4 *		pdDirection,
 														float3 const*	pdSide,
 														float const*	pdSpeed,
 														float const*	pdRadius,
@@ -55,8 +55,8 @@ void AvoidWallsCUDA::run( void )
 	dim3 block = blockDim();
 
 	// Gather the required device pointers.
-	float4 const*		pdPosition			= m_pAgentGroupData->pdPosition();
-	float4 const*		pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 *			pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 *			pdDirection			= m_pAgentGroupData->pdDirection();
 	float3 const*		pdSide				= m_pAgentGroupData->pdSide();
 	float const*		pdSpeed				= m_pAgentGroupData->pdSpeed();
 	float const*		pdRadius			= m_pAgentGroupData->pdRadius();

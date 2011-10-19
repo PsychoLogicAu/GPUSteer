@@ -1,27 +1,25 @@
-#include "KNNBinData.cuh"
+#include "KNNBinDataV2.cuh"
 
 #include "CUDAGlobals.cuh"
-
-//#include "DebugUtils.h"
 
 using namespace OpenSteer;
 
 extern "C"
 {
 	// Bind the textures to the input cudaArray.
-	__host__ void KNNBinningCUDABindTexture( cudaArray * pCudaArray );
+	__host__ void KNNBinningV2BindTexture( cudaArray * pCudaArray );
 	// Unbind the textures.
-	__host__ void KNNBinningCUDAUnbindTexture( void );
+	__host__ void KNNBinningV2UnbindTexture( void );
 
 	// Use to precompute the neighbors of each cell once per decomposition.
-	__global__ void KNNBinningComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
+	__global__ void KNNBinningV2ComputeCellNeighbors2D(	bin_cell const*	pdCells,			// In:	Cell data.
 														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
 														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
 														int const		radius,				// In:	Search radius.
 														size_t const	numCells			// In:	Number of cells.
 														);
 
-	__global__ void KNNBinningComputeCellNeighbors3D(	bin_cell const*	pdCells,			// In:	Cell data.
+	__global__ void KNNBinningV2ComputeCellNeighbors3D(	bin_cell const*	pdCells,			// In:	Cell data.
 														uint *			pdCellNeighbors,	// Out:	Array of computed cell neighbors.
 														size_t const	neighborsPerCell,	// In:	Number of neighbors per cell.
 														uint const		radius,				// In:	Search radius.
@@ -29,7 +27,7 @@ extern "C"
 														);
 }
 
-KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
+KNNBinDataV2::KNNBinDataV2( uint3 const& worldCells, float3 const& worldSize, uint const searchRadius )
 :	m_worldCells( worldCells ),
 	m_worldSize( worldSize ),
 	m_nSearchRadius( searchRadius )
@@ -43,7 +41,7 @@ KNNBinData::KNNBinData( uint3 const& worldCells, float3 const& worldSize, uint c
 	ComputeCellNeighbors( m_worldCells.y > 1 );
 }
 
-void KNNBinData::ComputeCellNeighbors( bool b3D )
+void KNNBinDataV2::ComputeCellNeighbors( bool b3D )
 {
 	dim3 grid = gridDim();
 	dim3 block = blockDim();
@@ -55,24 +53,24 @@ void KNNBinData::ComputeCellNeighbors( bool b3D )
 	m_dvCellNeighbors.resize( m_nCells * m_nNeighborsPerCell );
 
 	// Bind the texture.
-	KNNBinningCUDABindTexture( pdCellIndexArray() );
+	KNNBinningV2BindTexture( pdCellIndexArray() );
 
 	if( b3D )
 	{
-		KNNBinningComputeCellNeighbors3D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
+		KNNBinningV2ComputeCellNeighbors3D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
 	}
 	else
 	{
-		KNNBinningComputeCellNeighbors2D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
+		KNNBinningV2ComputeCellNeighbors2D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
 	}
 	cutilCheckMsg( "KNNBinningComputeCellNeighbors failed." );
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the texture.
-	KNNBinningCUDAUnbindTexture();
+	KNNBinningV2UnbindTexture();
 }
 
-void KNNBinData::CreateCells( void )
+void KNNBinDataV2::CreateCells( void )
 {
 	float3 const step =				make_float3(	m_worldSize.x / m_worldCells.x,		// width
 													m_worldSize.y / m_worldCells.y,		// height
@@ -160,10 +158,10 @@ Texture addressing in CUDA operates as follows.
 	CUDA_SAFE_CALL( cudaMemcpy3D( &copyParms ) );
 
 	// Copy the m_worldSize and m_worldCells values to constant memory.
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSize", &m_worldSize, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStep", &step, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalized", &stepNormalized, sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCells", &m_worldCells, sizeof(uint3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldSizeV2", &m_worldSize, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepV2", &step, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldStepNormalizedV2", &stepNormalized, sizeof(float3) ) );
+	CUDA_SAFE_CALL( cudaMemcpyToSymbol( "constWorldCellsV2", &m_worldCells, sizeof(uint3) ) );
 
 	// Free host memory.
 	free( phCellIndices );
