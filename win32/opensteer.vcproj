@@ -630,10 +630,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\OpenSteer\ConfigLoader.h"
-				>
-			</File>
-			<File
 				RelativePath="..\include\OpenSteer\Draw.h"
 				>
 			</File>
@@ -707,10 +703,6 @@
 			</File>
 			<File
 				RelativePath="..\src\Clock.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\ConfigLoader.cpp"
 				>
 			</File>
 			<File

@@ -55,6 +55,9 @@
 #include <sstream>
 #include <fstream>
 #include <list>
+
+#include "OpenSteer/Simulation.h"
+
 #include "OpenSteer/SimpleVehicle.h"
 #include "OpenSteer/OpenSteerDemo.h"
 #include "OpenSteer/Proximity.h"
@@ -103,9 +106,9 @@ class BoidsWanderer;
 
 // Using cell diameter of 7
 
-//const int	gEnemyCount					= 100;
-//const float	gDim						= 63;
-//const int	gCells						= 10;
+const int	gEnemyCount					= 100;
+const float	gDim						= 63;
+const int	gCells						= 10;
 
 //const int gEnemyCount					= 1000;
 //const float gDim						= 200;
@@ -116,10 +119,10 @@ class BoidsWanderer;
 //const int gCells						= 150;
 
 
-const int gEnemyCount					= 100000;
-const float gDim						= 2000;
-//const int gCells						= 285;
-const int gCells						= 170;
+//const int gEnemyCount					= 100000;
+//const float gDim						= 2000;
+////const int gCells						= 285;
+//const int gCells						= 170;
 /*
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;

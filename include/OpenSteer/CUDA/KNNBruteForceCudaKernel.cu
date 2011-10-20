@@ -113,9 +113,11 @@ __global__ void KNNBruteForceCUDAKernelV3(	float4 const*	pdPosition,			// Agent 
 		}
 
 		// Re-sort using bubble sort.
-		bool sorted = true;
+		bool sorted;
 		do
 		{
+			sorted = true;
+
 			for( uint i = 1; i < k; i++ )
 			{
 				if( shKNNDistances[ threadIdx.x * k + (i - 1) ] > shKNNDistances[ threadIdx.x * k + i ] )

@@ -54,11 +54,9 @@ extern "C"
 												);
 }
 
-UpdateCUDA::UpdateCUDA( AgentGroup * pAgentGroup, /*KNNData * pKNNData, WallGroup * pWallGroup,*/ const float fElapsedTime )
+UpdateCUDA::UpdateCUDA( AgentGroup * pAgentGroup, const float fElapsedTime )
 :	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
-	m_fElapsedTime( fElapsedTime )/*,
-	m_pKNNData( pKNNData ),
-	m_pWallGroup( pWallGroup )*/
+	m_fElapsedTime( fElapsedTime )
 {
 }
 
@@ -89,43 +87,6 @@ void UpdateCUDA::run(void)
 
 	uint const&		numAgents			= getNumAgents();
 
-	//uint const*		pdKNLIndices		= m_pKNNData->pdKNNIndices();
-	//uint const&		k					= m_pKNNData->k();
-
-	//float4 const*	pdLineStart			= m_pWallGroup->GetWallGroupData().pdLineStart();
-	//float4 const*	pdLineEnd			= m_pWallGroup->GetWallGroupData().pdLineEnd();
-	//float4 const*	pdLineNormal		= m_pWallGroup->GetWallGroupData().pdLineNormal();
-	//uint const&		numLines			= m_pWallGroup->Size();
-
-	//size_t const	shMemSize			= k * THREADSPERBLOCK * sizeof(uint);
-
-	// Bind the textures.
-	//UpdateCUDAKernelBindTextures( pdLineStart, pdLineEnd, pdLineNormal, numLines );
-
-	//UpdateCUDAKernelNew<<< grid, block, shMemSize >>>(	pdSide,
-	//													pdUp,
-	//													pdDirection,
-	//													pdPosition,
-
-	//													pdSteering,
-	//													pdSpeed,
-	//													pdMaxForce,
-	//													pdMaxSpeed,
-	//													pdMass,
-	//													pdRadius,
-
-	//													pdKNLIndices,
-	//													k,
-	//													numLines,
-
-	//													m_fElapsedTime,
-	//													numAgents,
-
-	//													pdAppliedKernels
-	//													);
-
-
-
 	UpdateCUDAKernel<<< grid, block >>>(	pdSide, pdUp, pdDirection, pdPosition, pdSteering, pdSpeed,
 											pdMaxForce, pdMaxSpeed, pdMass,
 											m_fElapsedTime, numAgents,
@@ -135,7 +96,7 @@ void UpdateCUDA::run(void)
 	CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
-	//UpdateCUDAKernelUnbindTextures();
+	UpdateCUDAKernelUnbindTextures();
 }
 
 void UpdateCUDA::close(void)
@@ -143,3 +104,86 @@ void UpdateCUDA::close(void)
 	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
 	m_pAgentGroup->SetSyncHost();
 }
+
+#pragma region UpdateWithAntiPenetrationCUDA
+
+UpdateWithAntiPenetrationCUDA::UpdateWithAntiPenetrationCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float fElapsedTime )
+:	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
+	m_fElapsedTime( fElapsedTime ),
+	m_pKNNData( pKNNData ),
+	m_pWallGroup( pWallGroup )
+{
+}
+
+void UpdateWithAntiPenetrationCUDA::init( void )
+{
+	// Nothing to do.
+}
+
+void UpdateWithAntiPenetrationCUDA::run(void)
+{
+	dim3 grid = gridDim();
+	dim3 block = blockDim();
+
+	// Gather pointers to the required data...
+	float3 *		pdSide				= m_pAgentGroupData->pdSide();
+	float3 *		pdUp				= m_pAgentGroupData->pdUp();
+	float4 *		pdDirection			= m_pAgentGroupData->pdDirection();
+	float4 *		pdPosition			= m_pAgentGroupData->pdPosition();
+	float4 *		pdSteering			= m_pAgentGroupData->pdSteering();
+	float *			pdSpeed				= m_pAgentGroupData->pdSpeed();
+
+	float const*	pdMaxForce			= m_pAgentGroupData->pdMaxForce();
+	float const*	pdMaxSpeed			= m_pAgentGroupData->pdMaxSpeed();
+	float const*	pdMass				= m_pAgentGroupData->pdMass();
+	float const*	pdRadius			= m_pAgentGroupData->pdRadius();
+
+	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
+
+	uint const&		numAgents			= getNumAgents();
+
+	uint const*		pdKNLIndices		= m_pKNNData->pdKNNIndices();
+	uint const&		k					= m_pKNNData->k();
+
+	float4 const*	pdLineStart			= m_pWallGroup->GetWallGroupData().pdLineStart();
+	float4 const*	pdLineEnd			= m_pWallGroup->GetWallGroupData().pdLineEnd();
+	float4 const*	pdLineNormal		= m_pWallGroup->GetWallGroupData().pdLineNormal();
+	uint const&		numLines			= m_pWallGroup->Size();
+
+	size_t const	shMemSize			= k * THREADSPERBLOCK * sizeof(uint);
+
+	// Bind the textures.
+	UpdateCUDAKernelBindTextures( pdLineStart, pdLineEnd, pdLineNormal, numLines );
+
+	UpdateCUDAKernelNew<<< grid, block, shMemSize >>>(	pdSide,
+														pdUp,
+														pdDirection,
+														pdPosition,
+
+														pdSteering,
+														pdSpeed,
+														pdMaxForce,
+														pdMaxSpeed,
+														pdMass,
+														pdRadius,
+
+														pdKNLIndices,
+														k,
+														numLines,
+
+														m_fElapsedTime,
+														numAgents,
+
+														pdAppliedKernels
+														);
+
+	// Unbind the textures.
+	UpdateCUDAKernelUnbindTextures();
+}
+
+void UpdateWithAntiPenetrationCUDA::close(void)
+{
+	// Device data has changed. Instruct the AgentGroup it needs to synchronize the host.
+	m_pAgentGroup->SetSyncHost();
+}
+#pragma endregion

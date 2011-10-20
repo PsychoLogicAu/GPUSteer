@@ -13,17 +13,31 @@ namespace OpenSteer
 	protected:
 		float m_fElapsedTime;
 
-		//KNNData *	m_pKNNData;
-		//WallGroup *	m_pWallGroup;
-
 	public:
-		UpdateCUDA( AgentGroup * pAgentGroup, /*KNNData * pKNNData, WallGroup * pWallGroup,*/ const float fElapsedTime );
-		~UpdateCUDA( void ) {}
+		UpdateCUDA( AgentGroup * pAgentGroup, const float fElapsedTime );
+		virtual ~UpdateCUDA( void ) {}
 
 		virtual void init( void );
 		virtual void run( void );
 		virtual void close( void );
-	};
+	};	// class UpdateCUDA
+
+	class UpdateWithAntiPenetrationCUDA : public AbstractCUDAKernel
+	{
+	protected:
+		float m_fElapsedTime;
+
+		KNNData *	m_pKNNData;
+		WallGroup *	m_pWallGroup;
+
+	public:
+		UpdateWithAntiPenetrationCUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float fElapsedTime );
+		virtual ~UpdateWithAntiPenetrationCUDA( void ) {}
+
+		virtual void init( void );
+		virtual void run( void );
+		virtual void close( void );
+	};	// class UpdateWithAntiPenetrationCUDA
 }
 
 #endif
