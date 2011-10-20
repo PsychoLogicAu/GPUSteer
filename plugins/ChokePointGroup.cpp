@@ -721,70 +721,11 @@ void CtfEnemyGroup::update(const float currentTime, const float elapsedTime)
 
 	// Apply steering.
 //	updateGroup( this, elapsedTime );
-	updateGroup( this, /*m_pKNNWalls, g_pWorld->GetWalls(),*/ elapsedTime );
+	updateGroupWithAntiPenetration( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime );
 
 	// Force anti-penetration.
 	//antiPenetrationWall( this, m_pKNNWalls, g_pWorld->GetWalls(), elapsedTime, 0 );
 	antiPenetrationAgents( this, m_pKNNSelf, this, g_maskAntiPenetrationAgents );
-
-	/*
-{
-    // determine upper bound for pursuit prediction time
-    const float seekerToGoalDist = Vec3::distance (gHomeBaseCenter,
-                                                   gSeeker->position());
-    const float adjustedDistance = seekerToGoalDist - radius()-gHomeBaseRadius;
-    const float seekerToGoalTime = ((adjustedDistance < 0 ) ?
-                                    0 :
-                                    (adjustedDistance/gSeeker->speed()));
-    const float maxPredictionTime = seekerToGoalTime * 0.9f;
-
-    // determine steering (pursuit, obstacle avoidance, or braking)
-    Vec3 steer (0, 0, 0);
-    if (gSeeker->state == running)
-    {
-        const Vec3 avoidance =
-            steerToAvoidObstacles (gAvoidancePredictTimeMin,
-                                   (ObstacleGroup&) allObstacles);
-
-        // saved for annotation
-        avoiding = (avoidance == Vec3::zero);
-
-        if (avoiding)
-            steer = steerForPursuit (*gSeeker, maxPredictionTime);
-        else
-            steer = avoidance;
-    }
-    else
-    {
-        applyBrakingForce (gBrakingRate, elapsedTime);
-    }
-    applySteeringForce (steer, elapsedTime);
-
-    // annotation
-    annotationVelocityAcceleration ();
-    recordTrailVertex (currentTime, position());
-
-
-    // detect and record interceptions ("tags") of seeker
-    const float seekerToMeDist = Vec3::distance (position(), 
-                                                 gSeeker->position());
-    const float sumOfRadii = radius() + gSeeker->radius();
-    if (seekerToMeDist < sumOfRadii)
-    {
-        if (gSeeker->state == running) gSeeker->state = tagged;
-
-        // annotation:
-        if (gSeeker->state == tagged)
-        {
-            const Vec3 color (0.8f, 0.5f, 0.5f);
-            annotationXZDisk (sumOfRadii,
-                        (position() + gSeeker->position()) / 2,
-                        color,
-                        20);
-        }
-    }
-}
-	*/
 }
 
 // ----------------------------------------------------------------------------

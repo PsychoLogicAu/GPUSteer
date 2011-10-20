@@ -128,11 +128,11 @@ static void updateKNNDatabase( BaseGroup * pGroup, KNNBinData * pKNNBinData )
 
 static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
 {
-	//KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup, searchRadius );
+	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup, searchRadius );
 
 	//KNNBruteForceCUDA kernel( pAgentGroup, pKNNData, pOtherGroup );
 	//KNNBruteForceCUDAV2 kernel( pAgentGroup, pKNNData, pOtherGroup );
-	KNNBruteForceCUDAV3 kernel( pAgentGroup, pKNNData, pOtherGroup );
+	//KNNBruteForceCUDAV3 kernel( pAgentGroup, pKNNData, pOtherGroup );
 
 	kernel.init();
 	kernel.run();
@@ -169,9 +169,18 @@ static void steerForCohesion( AgentGroup * pAgentGroup, KNNData * pKNNData, Agen
 }
 
 // Applies the newly compute steering vector to the vehicles.
-static void updateGroup( AgentGroup * pAgentGroup, /*KNNData * pKNNData, WallGroup * pWallGroup,*/ const float elapsedTime )
+static void updateGroup( AgentGroup * pAgentGroup, const float elapsedTime )
 {
-	UpdateCUDA kernel( pAgentGroup, /*pKNNData, pWallGroup,*/ elapsedTime );
+	UpdateCUDA kernel( pAgentGroup, elapsedTime );
+
+	kernel.init();
+	kernel.run();
+	kernel.close();
+}
+
+static void updateGroupWithAntiPenetration( AgentGroup * pAgentGroup, KNNData * pKNNData, WallGroup * pWallGroup, const float elapsedTime )
+{
+	UpdateWithAntiPenetrationCUDA kernel( pAgentGroup, pKNNData, pWallGroup, elapsedTime );
 
 	kernel.init();
 	kernel.run();
