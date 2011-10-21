@@ -634,6 +634,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OpenSteer\Globals.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OpenSteer\LocalSpace.h"
 				>
 			</File>
@@ -667,10 +671,6 @@
 			</File>
 			<File
 				RelativePath="..\include\OpenSteer\SimpleVehicle.h"
-				>
-			</File>
-			<File
-				RelativePath="..\include\OpenSteer\Simulation.h"
 				>
 			</File>
 			<File
@@ -731,10 +731,6 @@
 			</File>
 			<File
 				RelativePath="..\src\SimpleVehicle.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\Simulation.cpp"
 				>
 			</File>
 			<File

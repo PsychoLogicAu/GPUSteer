@@ -56,6 +56,8 @@
 #include <fstream>
 #include <list>
 
+#include "OpenSteer/Globals.h"
+
 #include "OpenSteer/Simulation.h"
 
 #include "OpenSteer/SimpleVehicle.h"
@@ -95,17 +97,29 @@ using namespace OpenSteer;
 // forward declarations
 class BoidsGroup;
 class BoidsBase;
-class BoidsObstacleGroup;
-class BoidsWanderer;
+//class BoidsObstacleGroup;
+class BoidsProxy;
+class BoidsWorld;
+class BoidsSimulation;
 
-#define SAFE_DELETE( x )	{ if( x ){ delete x; x = NULL; } }
+// ----------------------------------------------------------------------------
+// state for OpenSteerDemo PlugIn
+//
+// XXX consider moving this inside CtfPlugIn
+// XXX consider using STL (any advantage? consistency?)
+//BoidsGroup *			g_pBoids;
+//BoidsObstacleGroup *	g_pObstacles;
+//BoidsWorld *			g_pWorld;
+//BoidsProxy *			g_pCameraProxy;
+
+BoidsSimulation *		g_pSimulation;
 
 // ----------------------------------------------------------------------------
 // globals
 
-
+#pragma region obsolete
 // Using cell diameter of 7
-
+/*
 const int	gEnemyCount					= 100;
 const float	gDim						= 63;
 const int	gCells						= 10;
@@ -123,19 +137,19 @@ const int	gCells						= 10;
 //const float gDim						= 2000;
 ////const int gCells						= 285;
 //const int gCells						= 170;
-/*
+
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
 //const int gCells						= 285;
 const int gCells						= 400;
-*/
-/*
+
+
 const int gEnemyCount					= 1000000;
 const float gDim						= 6350;
 ////const int gCells						= 907;
 //const int gCells						= 1814;
 const int gCells						= 400;
-*/
+
 
 //const int gEnemyCount					= 1000;
 //const float gDim						= 100;
@@ -180,15 +194,15 @@ uint const	g_maskAlignment				= KERNEL_SEPARATION_BIT;//KERNEL_SEPARATION_BIT;
 uint const	g_maskCohesion				= KERNEL_SEPARATION_BIT;//KERNEL_SEPARATION_BIT;
 uint const	g_maskSeparation			= 0;
 
-uint const	g_maskSeek					= KERNEL_SEPARATION_BIT; //KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT /*| KERNEL_AVOID_NEIGHBORS_BIT*/;
+uint const	g_maskSeek					= KERNEL_SEPARATION_BIT;
 uint const	g_maskFlee					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskPursuit				= KERNEL_SEPARATION_BIT;//KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 uint const	g_maskEvade					= KERNEL_AVOID_OBSTACLES_BIT | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_NEIGHBORS_BIT;
 
-uint const	g_maskFollowPath			= /*KERNEL_AVOID_WALLS_BIT |*/ KERNEL_AVOID_OBSTACLES_BIT;
+uint const	g_maskFollowPath			= KERNEL_AVOID_OBSTACLES_BIT;
 
 uint const	g_maskObstacleAvoidance		= 0;
-uint const	g_maskNeighborAvoidance		= KERNEL_AVOID_OBSTACLES_BIT /*| KERNEL_AVOID_WALLS_BIT*/;
+uint const	g_maskNeighborAvoidance		= KERNEL_AVOID_OBSTACLES_BIT;
 uint const	g_maskWallAvoidance			= 0;
 
 
@@ -202,10 +216,13 @@ float const g_fMaxFlockingDistance		= FLT_MAX;
 //float const g_fCosMaxFlockingAngle		= cosf( 2 * (float)M_PI );
 float const g_fCosMaxFlockingAngle		= 0.98480775301220805936674302458952f;
 
+
 // Start position.
 float3 const g_f3StartBaseCenter		= make_float3( 0.f, 0.f, 0.f );
 float const g_fMinStartRadius			= 0.0f;
 float const g_fMaxStartRadius			= 0.5f * min( gWorldSize.x, min( gWorldSize.y, gWorldSize.z ) );
+*/
+#pragma endregion
 
 const float gBrakingRate				= 0.75f;
 
@@ -218,34 +235,35 @@ const float gAvoidancePredictTimeMax	= 2.0f;
 float const gAvoidancePredictTime		= gAvoidancePredictTimeMin;
 
 // Function prototypes.
-void randomizeStartingPositionAndHeadingBoids( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side );
+void randomizeStartingPositionAndHeadingBoids( float4 & position, float3 & up, float4 & forward, float3 & side, float const minRadius, float const maxRadius, float3 const& startPosition );
 
 //void randomizeStartingPositionAndHeading(VehicleData &vehicleData, VehicleConst &vehicleConst)
-void randomizeStartingPositionAndHeadingBoids( float4 & position, float const radius, float3 & up, float4 & forward, float3 & side )
+void randomizeStartingPositionAndHeadingBoids( float4 & position, float3 & up, float4 & forward, float3 & side, float const minRadius, float const maxRadius, float3 const& startPosition )
 {
     // randomize position on a ring between inner and outer radii
     // centered around the home base
-    const float rRadius = frandom2 ( g_fMinStartRadius, g_fMaxStartRadius );
+    const float rRadius = frandom2 ( minRadius, maxRadius );
 	float3 const randomOnSphere = float3_scalar_multiply( float3_RandomVectorInUnitRadiusSphere(), rRadius );
 
-    position = make_float4( float3_add( g_f3StartBaseCenter, randomOnSphere ), 0.f );
+    position = make_float4( float3_add( startPosition, randomOnSphere ), 0.f );
 
 	float3 newForward;
     randomizeHeading( up, newForward, side );
 	forward = make_float4( newForward, 0.f );
 }
 
-class BoidsWorld
+class BoidsWorld : public SimulationWorld
 {
 private:
-// Bin data to be used for KNN lookups.
+	// Bin data to be used for KNN lookups.
 	KNNBinData *							m_pKNNBinData;
 
 public:
-	BoidsWorld( uint3 const& worldCells, float3 const& worldSize, uint const maxSearchRadius )
-	:	m_pKNNBinData( NULL )
+	BoidsWorld( SimulationParams * pSimulationParams, WorldParams * pWorldParams )
+	:	SimulationWorld( pSimulationParams, pWorldParams ),
+		m_pKNNBinData( NULL )
 	{
-		m_pKNNBinData = new KNNBinData( worldCells, worldSize, maxSearchRadius );
+		m_pKNNBinData = new KNNBinData( m_pWorldParams->m_u3Cells, m_pWorldParams->m_f3Dimensions, pSimulationParams->m_nSearchRadius );
 	}
 
 	~BoidsWorld( void )
@@ -303,15 +321,7 @@ public:
 };
 
 
-// ----------------------------------------------------------------------------
-// state for OpenSteerDemo PlugIn
-//
-// XXX consider moving this inside CtfPlugIn
-// XXX consider using STL (any advantage? consistency?)
-BoidsGroup *			g_pBoids;
-//BoidsObstacleGroup *	g_pObstacles;
-BoidsWorld *			g_pWorld;
-BoidsWanderer *			g_pWanderer;
+
 
 // ----------------------------------------------------------------------------
 // This PlugIn uses two vehicle types: CtfSeeker and CtfEnemy.  They have a
@@ -332,64 +342,20 @@ public:
     float3 bodyColor;
 };
 
-class BoidsWanderer : public BoidsBase
-{
-public:
-    // constructor
-    BoidsWanderer () {reset ();}
-
-    // reset state
-    void reset (void)
-	{
-		randomizeStartingPositionAndHeadingBoids( position(), radius(), up(), forward(), side() );
-		setPosition( make_float4( 0.f, 0.f, 0.f, 0.f ) );
-	}
-
-    // per frame simulation update
-    void update (const float currentTime, const float elapsedTime )
-	{
-		float3 steer;
-		
-		float const halfDim = 0.4f * gDim;
-		float4 const& position = _data.position;
-
-		if( position.x < -halfDim || position.x > halfDim ||
-			position.y < -halfDim || position.y > halfDim ||
-			position.z < -halfDim || position.z > halfDim  )
-		{
-			// Outside of the world bounds. Seek back in.
-			steer = steerForSeek( *this, make_float3( 0.f, 0.f, 0.f ) );
-		}
-		else
-		{
-			// Inside of the world bonds. Wander.
-			steer = steerForWander( *this, elapsedTime );
-		}
-
-		applySteeringForce (steer, elapsedTime);
-	}
-
-    void draw (void)
-	{
-		float3 const bodyColor = { 0.1f, 0.1f, 0.9f };	// very bluish
-		drawBasic3dSphericalVehicle( radius(), make_float3(position()), make_float3(forward()), side(), up(), bodyColor );
-	}
-};
-
-class BoidsGroup : public AgentGroup
+class BoidsGroup : public SimulationGroup
 {
 private:
 	KNNData *				m_pKNNSelf;
 	KNNData *				m_pKNNObstacles;
 
 public:
-	BoidsGroup( BoidsWorld * pWorld )
-	:	AgentGroup( gWorldCells, g_knn ),
+	BoidsGroup( SimulationParams * pSimulationParams, GroupParams * pGroupParams )
+	:	SimulationGroup( pSimulationParams, pGroupParams ),
 		m_pKNNSelf( NULL ),
 		m_pKNNObstacles( NULL )
 	{
-		m_pKNNSelf = new KNNData( gEnemyCount, g_knn );
-		m_pKNNObstacles = new KNNData( gEnemyCount, g_kno );
+		m_pKNNSelf = new KNNData( m_pGroupParams->m_nNumAgents, m_pSimulationParams->m_nKNN );
+		m_pKNNObstacles = new KNNData( m_pGroupParams->m_nNumAgents, m_pSimulationParams->m_nKNO );
 
 		reset();
 	}
@@ -405,6 +371,91 @@ public:
 	void update(const float currentTime, const float elapsedTime);
 };
 
+class BoidsProxy : public BoidsBase
+{
+public:
+    // constructor
+    BoidsProxy (){}
+
+	// Pull the latest data from the selected agent.
+    void update( uint const selectedAgent, BoidsGroup * pBoids )
+	{
+		pBoids->GetAgentGroupData().getAgentData( selectedAgent, _data );
+	}
+};
+
+class BoidsSimulation : public Simulation
+{
+	friend class BoidsGroup;
+	friend class BoidsPlugIn;
+protected:
+	BoidsWorld *	m_pWorld;
+	BoidsProxy *	m_pCameraProxy;
+	BoidsGroup *	m_pBoids;
+
+
+
+public:
+	BoidsSimulation( void )
+	:	m_pCameraProxy( NULL ),
+		m_pWorld( NULL ),
+		m_pBoids( NULL )
+	{
+		m_pCameraProxy = new BoidsProxy;
+	}
+	virtual ~BoidsSimulation( void )
+	{
+		SAFE_DELETE( m_pCameraProxy );
+		SAFE_DELETE( m_pWorld );
+		SAFE_DELETE( m_pBoids );
+	}
+
+	virtual void load( char const* szFilename )
+	{
+		Simulation::load( szFilename );
+
+		srand( m_SimulationParams.m_nSeed );
+		OpenSteerDemo::maxSelectedVehicleIndex = m_SimulationParams.m_vecGroupParams[0].m_nNumAgents;
+
+		SAFE_DELETE( m_pWorld );
+		SAFE_DELETE( m_pBoids );
+
+		m_pWorld = new BoidsWorld( &m_SimulationParams, &m_SimulationParams.m_WorldParams );
+		m_pBoids = new BoidsGroup( &m_SimulationParams, &m_SimulationParams.m_vecGroupParams[0] );
+	}
+
+	void update( float const currentTime, float const elapsedTime )
+	{
+		// Update the boids group
+		m_pBoids->update(currentTime, elapsedTime);
+
+		// Update the camera proxy object.
+		m_pCameraProxy->update( OpenSteerDemo::selectedVehicleIndex, m_pBoids );
+	}
+
+	void draw( void )
+	{
+        // draw the enemy
+		m_pBoids->draw();
+
+		// draw the world
+		m_pWorld->draw();
+
+		// display status in the upper left corner of the window
+		std::ostringstream status;
+		//status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << g_pObstacles->Size() << std::endl;
+		status << std::left << std::setw( 25 ) << "No. agents: " << m_pBoids->Size() << std::endl;
+		status << std::left << std::setw( 25 ) << "World dim: " << m_SimulationParams.m_WorldParams.m_f3Dimensions << std::endl;
+		status << std::left << std::setw( 25 ) << "World cells: " << m_SimulationParams.m_WorldParams.m_u3Cells << std::endl;
+		status << std::left << std::setw( 25 ) << "Search radius: " << m_SimulationParams.m_nSearchRadius << std::endl;
+		status << std::left << std::setw( 25 ) << "Camera proxy position: " << make_float3( m_pCameraProxy->position() ) << std::endl;
+		const float h = drawGetWindowHeight ();
+		const float3 screenLocation = make_float3(10, h-50, 0);
+		draw2dTextAt2dLocation (status, screenLocation, gGray80);
+	}
+};
+
+/*
 #define testOneObstacleOverlap(radius, center)					\
 {																\
     float d = float3_distance (od.position, center);			\
@@ -432,14 +483,6 @@ private:
 			od.radius = frandom2 (1.5f, 4.0f); // random radius between 1.5 and 4
 			//od.position = float3_scalar_multiply(float3_randomVectorOnUnitRadiusXZDisk(), g_fMaxStartRadius * 1.1f);
 			od.position = make_float4( float3_scalar_multiply(float3_RandomVectorInUnitRadiusSphere(), g_fMaxStartRadius * 0.9f), 0.f );
-
-/*
-			// Make sure it doesn't overlap with the home base.
-			float d = float3_distance (od.position, make_float3( 0.f, 0.f, 0.f ) );
-			float clearance = d - (od.radius + (g_fHomeBaseRadius - requiredClearance));
-			if ( clearance < minClearance )
-				minClearance = clearance;
-*/
 
 			// Make sure it doesn't overlap with any of the other obstacles.
 			for( size_t i = 0; i < Size(); i++ )
@@ -488,28 +531,22 @@ public:
 		}
 	}
 };
-//
-//void randomizeHeading( VehicleData &vehicleData )
-//{	
-//	vehicleData.up = float3_up();
-//	vehicleData.forward = float3_RandomUnitVectorOnXZPlane();
-//	vehicleData.side = float3_LocalRotateForwardToSide(vehicleData.forward);
-//}
+*/
 
 void BoidsGroup::reset(void)
 {
 	Clear();
 	//static unsigned int id = 0;
 	// Add the required number of enemies.
-	while(Size() < gEnemyCount)
+	while( Size() < m_pGroupParams->m_nNumAgents )
 	{
-		BoidsBase enemy;
-		AgentData &aData = enemy.getVehicleData();
+		BoidsBase boid;
+		AgentData &aData = boid.getVehicleData();
 
 		aData.speed = 3.0f;
 		aData.maxForce = 3.0f;
 		aData.maxSpeed = 3.0f;
-		randomizeStartingPositionAndHeadingBoids( aData.position, aData.radius, aData.up, aData.direction, aData.side );
+		randomizeStartingPositionAndHeadingBoids( aData.position, aData.up, aData.direction, aData.side, m_pGroupParams->m_fMinStartRadius, m_pGroupParams->m_fMaxStartRadius, m_pGroupParams->m_f3StartPosition );
 		
 		bool success = AddAgent( aData );
 	}
@@ -519,8 +556,8 @@ void BoidsGroup::reset(void)
 
 	// Compute the initial KNN for this group with itself.
 	// Update the KNN database for the group.
-	updateKNNDatabase( this, g_pWorld->GetBinData() );
-	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
+	updateKNNDatabase( this, g_pSimulation->m_pWorld->GetBinData() );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pSimulation->m_pWorld->GetBinData(), this, m_pSimulationParams->m_nSearchRadius );
 }
 
 void BoidsGroup::draw(void)
@@ -537,7 +574,7 @@ void BoidsGroup::draw(void)
 
 	AgentData ad;
 
-	AgentGroupData & m_agentGroupData = g_pBoids->GetAgentGroupData();
+	AgentGroupData & m_agentGroupData = GetAgentGroupData();
 
 #if defined ANNOTATION_LINES || defined ANNOTATION_TEXT
 	// Temporary storage used for annotation.
@@ -546,7 +583,7 @@ void BoidsGroup::draw(void)
 #endif
 
 	// For each enemy...
-	for( size_t i = 0; i < g_pBoids->Size(); i++ )
+	for( size_t i = 0; i < Size(); i++ )
 	{
 		// Get its varialbe and constant data.
 		m_agentGroupData.getAgentData( i, ad );
@@ -607,14 +644,14 @@ void BoidsGroup::draw(void)
 
 void BoidsGroup::update(const float currentTime, const float elapsedTime)
 {
-	wrapWorld( this, gWorldSize );
+	wrapWorld( this, m_pSimulationParams->m_WorldParams.m_f3Dimensions );
 
 	// Update the positions in the KNNDatabase for the group.
-	updateKNNDatabase( this, g_pWorld->GetBinData() );
+	updateKNNDatabase( this, g_pSimulation->m_pWorld->GetBinData() );
 
 	// Update the KNNDatabases
-	//findKNearestNeighbors( this, m_pKNNObstacles, g_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
-	findKNearestNeighbors( this, m_pKNNSelf, g_pWorld->GetBinData(), this, g_searchRadiusNeighbors );
+	//findKNearestNeighbors( this, m_pKNNObstacles, g_pSimulation->m_pWorld->GetBinData(), gObstacles, g_searchRadiusObstacles );
+	findKNearestNeighbors( this, m_pKNNSelf, g_pSimulation->m_pWorld->GetBinData(), this, m_pSimulationParams->m_nSearchRadius );
 
 	// Avoid collision with obstacles.
 	//steerToAvoidObstacles( this, gObstacles, m_pKNNObstacles, g_fMinTimeToObstacle, g_fWeightObstacleAvoidance, g_maskObstacleAvoidance );
@@ -623,9 +660,9 @@ void BoidsGroup::update(const float currentTime, const float elapsedTime)
 	//steerToAvoidNeighbors( this, m_pKNNSelf, this,  g_fMinTimeToCollision, g_fMinSeparationDistance, g_fWeightAvoidNeighbors, g_maskNeighborAvoidance );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxSeparationDistance, g_fCosMaxFlockingAngle, g_fWeightSeparation, g_maskSeparation );
-	steerForCohesion( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightCohesion, g_maskCohesion );
-	steerForAlignment( this, m_pKNNSelf, this, g_fMinFlockingDistance, g_fMaxFlockingDistance, g_fCosMaxFlockingAngle, g_fWeightAlignment, g_maskAlignment );
+	steerForSeparation( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxSeparationDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightSeparation, m_pSimulationParams->m_nMaskSeparation );
+	steerForCohesion( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightCohesion, m_pSimulationParams->m_nMaskCohesion );
+	steerForAlignment( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightAlignment, m_pSimulationParams->m_nMaskAlignment );
 
 	// Pursue target.
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
@@ -683,109 +720,58 @@ public:
     {
 		OpenSteerDemo::setAnnotationOff();
 
-		g_pWorld = new BoidsWorld( gWorldCells, gWorldSize, g_maxSearchRadius );
-
-		//g_pKNNBinData = new KNNBinData( gWorldCells, gWorldSize, g_searchRadius );
-		//g_pWallData = new wall_data;
-		//g_pWallData->SplitWalls( g_pKNNBinData->hvCells() );
-
-		//g_pObstacles = new BoidsObstacleGroup( gWorldCells, g_kno );
-		//g_pObstacles->reset();
-
 		int numDevices;
 		cudaGetDeviceCount(&numDevices);
 
 		// TODO: more intelligent selection of the CUDA device.
-
 		CUDA_SAFE_CALL( cudaSetDevice( 0 ) );
 
-        // create the specified number of enemies, 
-        // storing pointers to them in an array.
-		g_pBoids = new BoidsGroup( g_pWorld );
-
-		g_pWanderer = new BoidsWanderer;
-		all.push_back( g_pWanderer );
-
-		/*
-        // initialize camera
-		OpenSteerDemo::init3dCamera( *g_pWanderer );
-		OpenSteerDemo::camera.mode = Camera::cmFixedDistanceOffset;
-        OpenSteerDemo::camera.fixedTarget = make_float3(15, 0, 0);
-        OpenSteerDemo::camera.fixedPosition = make_float3(0, 0, 500);
-		*/
+		g_pSimulation = new BoidsSimulation;
 
 		// initialize camera
-        OpenSteerDemo::init3dCamera ( *g_pWanderer );
+		OpenSteerDemo::init3dCamera ( *g_pSimulation->m_pCameraProxy );
 		OpenSteerDemo::camera.mode = Camera::cmFixedDistanceOffset;
         OpenSteerDemo::camera.fixedDistDistance = 100.f;
         OpenSteerDemo::camera.fixedDistVOffset = 1.f;
         OpenSteerDemo::camera.lookdownDistance = 20;
         OpenSteerDemo::camera.aimLeadTime = 0.5;
         OpenSteerDemo::camera.povOffset = make_float3( 0, 0.5, -2 );
+
+		reset();
+
+		all.push_back( g_pSimulation->m_pCameraProxy );
     }
 
-    void update (const float currentTime, const float elapsedTime)
+	void reset (void)
     {
-		// update the enemy group
-		g_pBoids->update(currentTime, elapsedTime);
+		g_pSimulation->reset();
+		g_pSimulation->load( "BoidsGroup.params" );
 
-		g_pWanderer->update( currentTime, elapsedTime );
-	}
 
-    void redraw (const float currentTime, const float elapsedTime)
-    {
-		AbstractVehicle& selected = *g_pWanderer;
-
-		// update camera
-        OpenSteerDemo::updateCamera (currentTime, elapsedTime, selected);
-
-		// draw the obstacles
-		//g_pObstacles->draw();
-
-        // draw the enemy
-		g_pBoids->draw();
-
-		// draw the world
-		g_pWorld->draw();
-
-		// display status in the upper left corner of the window
-		std::ostringstream status;
-		//status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << g_pObstacles->Size() << std::endl;
-		status << std::left << std::setw( 25 ) << "No. agents: " << std::setw( 10 ) << g_pBoids->Size() << std::endl;
-		status << std::left << std::setw( 25 ) << "World dim: " << std::setw( 10 ) << gDim << std::endl;
-		status << std::left << std::setw( 25 ) << "World cells: " << std::setw( 10 ) << gCells << std::endl;
-		status << std::left << std::setw( 25 ) << "Search radius neighbors: " << std::setw( 10 ) << g_searchRadiusNeighbors << std::endl;
-		status << std::left << std::setw( 25 ) << "Search radius obstacles: " << std::setw( 10 ) << g_searchRadiusObstacles << std::endl;
-		status << std::left << std::setw( 25 ) << "Wanderer position: " << selected.position().x << ", " << selected.position().y << ", " << selected.position().z << std::endl;
-		const float h = drawGetWindowHeight ();
-		const float3 screenLocation = make_float3(10, h-50, 0);
-		draw2dTextAt2dLocation (status, screenLocation, gGray80);
-    }
-
-    void close (void)
-    {
-		delete g_pBoids;
-
-		//delete g_pObstacles;
-
-		delete g_pWorld;
-
-		delete g_pWanderer;
-    }
-
-    void reset (void)
-    {
-		g_pBoids->reset();
-
-		//g_pObstacles->reset();
-
-		g_pWanderer->reset();
 
         // reset camera position
 		//OpenSteerDemo::camera.reset();
 
         // make camera jump immediately to new position
         OpenSteerDemo::camera.doNotSmoothNextMove ();
+    }
+
+    void update (const float currentTime, const float elapsedTime)
+    {
+		g_pSimulation->update( currentTime, elapsedTime );
+	}
+
+    void redraw (const float currentTime, const float elapsedTime)
+    {
+		// update camera
+		OpenSteerDemo::updateCamera (currentTime, elapsedTime, *g_pSimulation->m_pCameraProxy);
+
+		g_pSimulation->draw();
+    }
+
+    void close (void)
+    {
+		SAFE_DELETE( g_pSimulation );
     }
 
     void handleFunctionKeys (int keyNumber)

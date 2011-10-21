@@ -1,7 +1,10 @@
 #ifndef OPENSTEER_SIMULATION_H
 #define OPENSTEER_SIMULATION_H
 
+#include "OpenSteer/Globals.h"
 #include "OpenSteer/CUDA/CUDAGlobals.cuh"
+
+#include "OpenSteer/AgentGroup.h"
 
 #include <string>
 #include <fstream>
@@ -12,11 +15,6 @@ namespace OpenSteer
 
 class GroupParams
 {
-protected:
-	uint					m_nNumAgents;
-	std::vector< float3 >	m_vecPathPoints;
-	bool					m_bPathIsCyclic;
-
 public:
 	GroupParams( void )
 	:	m_nNumAgents( 0 ),
@@ -26,32 +24,46 @@ public:
 	virtual ~GroupParams( void )
 	{}
 
-	void open( std::ifstream & fs );
+	void load( std::ifstream & fs );
+
+
+	uint					m_nNumAgents;
+	float3					m_f3StartPosition;
+	float					m_fMinStartRadius;
+	float					m_fMaxStartRadius;
+	std::vector< float3 >	m_vecPathPoints;
+	bool					m_bPathIsCyclic;
 };	// class BaseGroup
 
 class WorldParams
 {
-protected:
-	float3				m_f3Dimensions;
-	uint3				m_u3Cells;
-	uint				m_nObstacleCount;
-	std::string			m_strMapFilename;
-
 public:
 	WorldParams( void )
 	{}
 	virtual ~WorldParams( void )
 	{}
 
-	void open( std::ifstream & fs );
+	void load( std::ifstream & fs );
+
+	float3				m_f3Dimensions;
+	uint3				m_u3Cells;
+	uint				m_nObstacleCount;
+	std::string			m_strMapFilename;
 };	// class BaseWorld
 
-class Simulation
+class SimulationParams
 {
 protected:
-	WorldParams 					m_WorldParams;
-	std::vector< GroupParams * >	m_vecGroups;
+public:
+	SimulationParams( void ){}
+	~SimulationParams( void ) {}
 
+	void load( char const* szFilename );
+
+	WorldParams 				m_WorldParams;
+	std::vector< GroupParams >	m_vecGroupParams;
+
+	uint	m_nSeed;
 	uint	m_nKNN;
 	uint	m_nKNO;
 	uint	m_nKNW;
@@ -90,24 +102,72 @@ protected:
 	uint	m_nMaskAvoidObstacles;
 	uint	m_nMaskAvoidWalls;
 	uint	m_nMaskAvoidNeighbors;
+};	// class SimulationParams
 
-
+class Simulation
+{
+protected:
+	SimulationParams	m_SimulationParams;
 
 public:
-	Simulation( void );
-	virtual ~Simulation( void );
+	Simulation( void )
+	:	m_SimulationParams()
+	{}
 
-	virtual void open( char const* szFilename );
-	virtual void reset( void );
-	virtual void close( void );
-	virtual void redraw( const float currentTime, const float elapsedTime );
-	virtual void update( const float currentTime, const float elapsedTime );
+	virtual ~Simulation( void )
+	{}
 
+	virtual void load( char const* szFilename )
+	{
+		m_SimulationParams.load( szFilename );
+	}
 
-};	// class Simulation
+	virtual void reset( void )
+	{
+		m_SimulationParams.m_vecGroupParams.clear();
+	}
 
+	SimulationParams const& Params( void ) { return m_SimulationParams; }
+};
 
+class SimulationWorld
+{
+	friend class SimulationGroup;
+protected:
+	WorldParams *		m_pWorldParams;
+	SimulationParams *	m_pSimulationParams;
 
+public:
+	SimulationWorld( SimulationParams * pSimulationParams, WorldParams * pWorldParams )
+	:	m_pWorldParams( pWorldParams ),
+		m_pSimulationParams( pSimulationParams )
+	{}
+
+	virtual ~SimulationWorld( void )
+	{}
+};
+
+class SimulationGroup : public AgentGroup
+{
+	friend class SimulationWorld;
+protected:
+	GroupParams *		m_pGroupParams;
+	SimulationParams *	m_pSimulationParams;
+
+public:
+	SimulationGroup( SimulationParams * pSimulationParams, GroupParams * pGroupParams )
+	:	AgentGroup( pSimulationParams->m_WorldParams.m_u3Cells, pSimulationParams->m_nKNN ),
+		m_pGroupParams( pGroupParams ),
+		m_pSimulationParams( pSimulationParams )
+	{ }
+
+	virtual ~SimulationGroup( void )
+	{ }
+
+	virtual void reset(void) = 0;
+	virtual void draw(void) = 0;
+	virtual void update(const float currentTime, const float elapsedTime) = 0;
+};
 
 }	// namespace OpenSteer
 #endif

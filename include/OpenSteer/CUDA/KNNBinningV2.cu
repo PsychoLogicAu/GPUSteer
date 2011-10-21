@@ -70,7 +70,7 @@ extern "C"
 
 #pragma region KNNBinningV2UpdateDBCUDA
 
-KNNBinningV2UpdateDBCUDA::KNNBinningV2UpdateDBCUDA( BaseGroup * pGroup, KNNBinData * pKNNBinData )
+KNNBinningV2UpdateDBCUDA::KNNBinningV2UpdateDBCUDA( BaseGroup * pGroup, KNNBinDataV2 * pKNNBinData )
 :	AbstractCUDAKernel( NULL, 1.f, 0 ),
 	m_pGroup( pGroup ),
 	m_pKNNBinData( pKNNBinData )
@@ -173,7 +173,7 @@ void KNNBinningV2UpdateDBCUDA::close( void )
 
 #pragma region KNNBinningV2
 
-KNNBinningV2CUDA::KNNBinningV2CUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
+KNNBinningV2CUDA::KNNBinningV2CUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinDataV2 * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
 :	AbstractCUDAKernel( pAgentGroup, 1.f, 0 ),
 	m_pKNNData( pKNNData ),
 	m_pKNNBinData( pKNNBinData ),

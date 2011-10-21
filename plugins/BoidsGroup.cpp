@@ -55,6 +55,9 @@
 #include <sstream>
 #include <fstream>
 #include <list>
+
+#include "OpenSteer/Globals.h"
+
 #include "OpenSteer/SimpleVehicle.h"
 #include "OpenSteer/OpenSteerDemo.h"
 #include "OpenSteer/Proximity.h"
@@ -94,8 +97,6 @@ class BoidsGroup;
 class BoidsBase;
 class BoidsObstacleGroup;
 class BoidsWanderer;
-
-#define SAFE_DELETE( x )	{ if( x ){ delete x; x = NULL; } }
 
 // ----------------------------------------------------------------------------
 // globals
