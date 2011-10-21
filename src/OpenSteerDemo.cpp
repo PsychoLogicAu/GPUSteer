@@ -75,8 +75,8 @@ OpenSteer::PlugIn* OpenSteer::OpenSteerDemo::selectedPlugIn = NULL;
 // near a vehicle causes it to become the Selected Vehicle.
 
 
-OpenSteer::AbstractVehicle* OpenSteer::OpenSteerDemo::selectedVehicle = NULL;
-
+unsigned int OpenSteer::OpenSteerDemo::selectedVehicleIndex = 0;
+unsigned int OpenSteer::OpenSteerDemo::maxSelectedVehicleIndex = 1;
 
 // ----------------------------------------------------------------------------
 // phase: identifies current phase of the per-frame update cycle
@@ -239,7 +239,7 @@ void
 OpenSteer::OpenSteerDemo::openSelectedPlugIn (void)
 {
     camera.reset ();
-    selectedVehicle = NULL;
+    selectedVehicleIndex = 0;
     selectedPlugIn->open ();
 }
 
@@ -259,11 +259,7 @@ OpenSteer::OpenSteerDemo::updateSelectedPlugIn (const float currentTime,
     doDelayedResetPlugInXXX ();
 
     // if no vehicle is selected, and some exist, select the first one
-    if (selectedVehicle == NULL)
-    {
-        const AVGroup& vehicles = allVehiclesOfSelectedPlugIn();
-        if (vehicles.size() > 0) selectedVehicle = vehicles.front();
-    }
+    //++selectedVehicleIndex %= maxSelectedVehicleIndex;
 
     // invoke selected PlugIn's Update method
     selectedPlugIn->update (currentTime, elapsedTime);
@@ -304,7 +300,8 @@ void
 OpenSteer::OpenSteerDemo::closeSelectedPlugIn (void)
 {
     selectedPlugIn->close ();
-    selectedVehicle = NULL;
+    selectedVehicleIndex = 0;
+	maxSelectedVehicleIndex = 1;
 }
 
 
@@ -371,25 +368,26 @@ OpenSteer::OpenSteerDemo::allVehiclesOfSelectedPlugIn (void)
 void 
 OpenSteer::OpenSteerDemo::selectNextVehicle (void)
 {
-    if (selectedVehicle != NULL)
-    {
-        // get a container of all vehicles
-        const AVGroup& all = allVehiclesOfSelectedPlugIn ();
-        const AVIterator first = all.begin();
-        const AVIterator last = all.end();
+    //if (selectedVehicle != NULL)
+    //{
+    //    // get a container of all vehicles
+    //    const AVGroup& all = allVehiclesOfSelectedPlugIn ();
+    //    const AVIterator first = all.begin();
+    //    const AVIterator last = all.end();
 
-        // find selected vehicle in container
-        const AVIterator s = std::find (first, last, selectedVehicle);
+    //    // find selected vehicle in container
+    //    const AVIterator s = std::find (first, last, selectedVehicle);
 
-        // normally select the next vehicle in container
-        selectedVehicle = *(s+1);
+    //    // normally select the next vehicle in container
+    //    selectedVehicle = *(s+1);
 
-        // if we are at the end of the container, select the first vehicle
-        if (s == last-1) selectedVehicle = *first;
+    //    // if we are at the end of the container, select the first vehicle
+    //    if (s == last-1) selectedVehicle = *first;
 
-        // if the search failed, use NULL
-        if (s == last) selectedVehicle = NULL;
-    }
+    //    // if the search failed, use NULL
+    //    if (s == last) selectedVehicle = NULL;
+    //}
+	++selectedVehicleIndex %= maxSelectedVehicleIndex;
 }
 
 
@@ -400,7 +398,7 @@ OpenSteer::OpenSteerDemo::selectNextVehicle (void)
 void 
 OpenSteer::OpenSteerDemo::selectVehicleNearestScreenPosition (int x, int y)
 {
-    selectedVehicle = findVehicleNearestScreenPosition (x, y);
+    //selectedVehicle = findVehicleNearestScreenPosition (x, y);
 }
 
 
@@ -525,7 +523,7 @@ OpenSteer::OpenSteerDemo::position3dCamera (AbstractVehicle& selected,
                                             float distance,
                                             float /*elevation*/)
 {
-    selectedVehicle = &selected;
+    //selectedVehicle = &selected;
     if (&selected)
     {
         const float3 behind = float3_scalar_multiply(make_float3(selected.forward()), -distance);

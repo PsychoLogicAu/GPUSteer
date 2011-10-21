@@ -73,7 +73,9 @@ namespace OpenSteer {
         // currently selected vehicle.  Generally the one the camera follows and
         // for which additional information may be displayed.  Clicking the mouse
         // near a vehicle causes it to become the Selected Vehicle.
-        static AbstractVehicle* selectedVehicle;
+        //static AbstractVehicle* selectedVehicle;
+		static unsigned int selectedVehicleIndex;
+		static unsigned int maxSelectedVehicleIndex;
 
         // -------------------------------------------- initialize, update and exit
 

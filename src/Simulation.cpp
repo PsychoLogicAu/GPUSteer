@@ -1,8 +1,10 @@
 #include "OpenSteer/Simulation.h"
 
+#include <cassert>
+
 using namespace OpenSteer;
 
-void GroupParams::open( std::ifstream & fs )
+void GroupParams::load( std::ifstream & fs )
 {
 	std::string str, key;
 
@@ -13,6 +15,7 @@ void GroupParams::open( std::ifstream & fs )
 		if( str == "#" )
 		{
 			std::getline( fs, str );
+			fs >> str;
 			continue;
 		}
 
@@ -20,9 +23,13 @@ void GroupParams::open( std::ifstream & fs )
 		fs >> str;	// Remove delimiter.
 
 		if( key == "numAgents" )
-		{
 			fs >> m_nNumAgents;
-		}
+		else if( key == "startPosition" )
+			fs >> m_f3StartPosition.x >> m_f3StartPosition.y >> m_f3StartPosition.z;
+		else if( key == "minStartRadius" )
+			fs >> m_fMinStartRadius;
+		else if( key == "maxStartRadius" )
+			fs >> m_fMaxStartRadius;
 		else if( key == "<path>" )
 		{
 			fs >> str;
@@ -32,6 +39,7 @@ void GroupParams::open( std::ifstream & fs )
 				if( str == "#" )
 				{
 					std::getline( fs, str );
+					fs >> str;
 					continue;
 				}
 
@@ -54,13 +62,14 @@ void GroupParams::open( std::ifstream & fs )
 		}
 		else
 		{
+			assert( 0 );
 		}
 
 		fs >> str;
 	}
 }
 
-void WorldParams::open( std::ifstream & fs )
+void WorldParams::load( std::ifstream & fs )
 {
 	std::string str, key;
 
@@ -71,6 +80,7 @@ void WorldParams::open( std::ifstream & fs )
 		if( str == "#" )
 		{
 			std::getline( fs, str );
+			fs >> str;
 			continue;
 		}
 
@@ -95,14 +105,14 @@ void WorldParams::open( std::ifstream & fs )
 		}
 		else
 		{
-
+			assert( 0 );
 		}
 
 		fs >> str;
 	}
 }
 
-void Simulation::open( char const* szFilename )
+void SimulationParams::load( char const* szFilename )
 {
 	std::ifstream fs( szFilename );
 
@@ -118,18 +128,37 @@ void Simulation::open( char const* szFilename )
 		if( str == "#" )
 		{
 			std::getline( fs, str );
+			fs >> str;
 			continue;
 		}
 
 		key = str;
-		fs >> str;	// Remove delimiter.
-		
+
 		// Load the world.
 		if( key == "<world>" )
 		{
-			m_WorldParams.open( fs );
+			m_WorldParams.load( fs );
+
+			fs >> str;
+			continue;
 		}
 
+		// Load the group.
+		if( key == "<group>" )
+		{
+			GroupParams gp;
+
+			gp.load( fs );
+			m_vecGroupParams.push_back( gp );
+
+			fs >> str;
+			continue;
+		}
+
+		fs >> str;	// Remove delimiter.
+
+		if( key == "seed" )
+			fs >> m_nSeed;
 		else if( key == "knn" )
 			fs >> m_nKNN;
 		else if( key == "kno" )
@@ -200,22 +229,9 @@ void Simulation::open( char const* szFilename )
 			fs >> m_nMaskAvoidWalls;
 		else if( key == "maskAvoidNeighbors" )
 			fs >> m_nMaskAvoidNeighbors;
-
-
-/*
-	# Weights
-
-	# Masks
-
-*/
-
-
-
+		else
+			assert( 0 );
 
 		fs >> str;
 	}
-
-
-
-
 }

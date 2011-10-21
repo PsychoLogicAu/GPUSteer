@@ -25,6 +25,12 @@ static inline __host__ std::ostream& operator<<(std::ostream &os, const float3 &
 	return os;
 }
 
+static inline __host__ std::ostream& operator<<(std::ostream &os, const uint3 &v)
+{
+	os << "[" << v.x << ", " << v.y << ", " << v.z << "]";
+	return os;
+}
+
 // vector addition
 static __inline__ __host__ __device__ float3 float3_add( float3 const& lhs, float3 const& rhs )
 {

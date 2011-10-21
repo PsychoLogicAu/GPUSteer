@@ -28,6 +28,8 @@ static uint const KERNEL_FOLLOW_PATH_BIT			= 1 << 11;
 static uint const KERNEL_ANTI_PENETRATION_WALL		= 1 << 12;
 static uint const KERNEL_ANTI_PENETRATION_AGENT		= 1 << 13;
 
+static uint const KERNEL_ALL_BIT					= UINT_MAX;
+
 #define COALESCE
 #if defined COALESCE
 	#define FLOAT3_GLOBAL_READ( shDest, pdSource )		{																							\
