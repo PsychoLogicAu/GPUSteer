@@ -65,7 +65,6 @@ void SteerToFollowPathCUDA::run( void )
 
 	uint *			pdAppliedKernels	= m_pAgentGroupData->pdAppliedKernels();
 
-
 	FollowPathCUDAKernel<<< grid, block >>>(	// Agent data.
 												pdPosition, pdDirection, pdSpeed,
 												pdSteering,

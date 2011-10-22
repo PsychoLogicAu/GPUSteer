@@ -12,7 +12,7 @@ void GroupParams::load( std::ifstream & fs )
 	while( str != "</group>" )
 	{
 		// Handle comments.
-		if( str == "#" )
+		if( str[0] == '#' )
 		{
 			std::getline( fs, str );
 			fs >> str;
@@ -30,13 +30,16 @@ void GroupParams::load( std::ifstream & fs )
 			fs >> m_fMinStartRadius;
 		else if( key == "maxStartRadius" )
 			fs >> m_fMaxStartRadius;
+		else if( key == "maxSpeed" )
+			fs >> m_fMaxSpeed;
+		else if( key == "maxForce" )
+			fs >> m_fMaxForce;
 		else if( key == "<path>" )
 		{
-			fs >> str;
 			while( str != "</path>" )
 			{
 				// Handle comments.
-				if( str == "#" )
+				if( str[0] == '#' )
 				{
 					std::getline( fs, str );
 					fs >> str;
@@ -55,6 +58,10 @@ void GroupParams::load( std::ifstream & fs )
 				else if( key == "cyclic" )
 				{
 					fs >> m_bPathIsCyclic;
+				}
+				else if( key == "radius" )
+				{
+					fs >> m_fPathRadius;
 				}
 
 				fs >> str;
@@ -77,7 +84,7 @@ void WorldParams::load( std::ifstream & fs )
 	while( str != "</world>" )
 	{
 		// Handle comments.
-		if( str == "#" )
+		if( str[0] == '#' )
 		{
 			std::getline( fs, str );
 			fs >> str;
@@ -125,7 +132,7 @@ void SimulationParams::load( char const* szFilename )
 	while( str != "</simulation>" )
 	{
 		// Handle comments.
-		if( str == "#" )
+		if( str[0] == '#' )
 		{
 			std::getline( fs, str );
 			fs >> str;
@@ -209,6 +216,8 @@ void SimulationParams::load( char const* szFilename )
 		// Masks.
 		else if( key == "maskAlignment" )
 			fs >> m_nMaskAlignment;
+		else if( key == "maskAntiPenetrationAgents" )
+			fs >> m_nMaskAntiPenetrationAgents;
 		else if( key == "maskCohesion" )
 			fs >> m_nMaskCohesion;
 		else if( key == "maskSeparation" )

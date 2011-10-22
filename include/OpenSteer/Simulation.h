@@ -26,12 +26,20 @@ public:
 
 	void load( std::ifstream & fs );
 
-
+	// Number of agents.
 	uint					m_nNumAgents;
+
+	float					m_fMaxSpeed;
+	float					m_fMaxForce;
+
+	// Starting position of group.
 	float3					m_f3StartPosition;
 	float					m_fMinStartRadius;
 	float					m_fMaxStartRadius;
+
+	// Path.
 	std::vector< float3 >	m_vecPathPoints;
+	float					m_fPathRadius;
 	bool					m_bPathIsCyclic;
 };	// class BaseGroup
 
@@ -92,6 +100,7 @@ public:
 	float	m_fWeightAvoidNeighbors;
 	//	Masks
 	uint	m_nMaskAlignment;
+	uint	m_nMaskAntiPenetrationAgents;
 	uint	m_nMaskCohesion;
 	uint	m_nMaskSeparation;
 	uint	m_nMaskPursuit;
