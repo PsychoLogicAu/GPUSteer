@@ -543,9 +543,9 @@ void BoidsGroup::reset(void)
 		BoidsBase boid;
 		AgentData &aData = boid.getVehicleData();
 
-		aData.speed = 3.0f;
-		aData.maxForce = 3.0f;
-		aData.maxSpeed = 3.0f;
+		aData.speed = m_pGroupParams->m_fMaxSpeed;
+		aData.maxForce = m_pGroupParams->m_fMaxForce;
+		aData.maxSpeed = m_pGroupParams->m_fMaxSpeed;
 		randomizeStartingPositionAndHeadingBoids( aData.position, aData.up, aData.direction, aData.side, m_pGroupParams->m_fMinStartRadius, m_pGroupParams->m_fMaxStartRadius, m_pGroupParams->m_f3StartPosition );
 		
 		bool success = AddAgent( aData );
@@ -772,6 +772,9 @@ public:
     void close (void)
     {
 		SAFE_DELETE( g_pSimulation );
+		
+		// clear the group of all vehicles
+		all.clear();
     }
 
     void handleFunctionKeys (int keyNumber)

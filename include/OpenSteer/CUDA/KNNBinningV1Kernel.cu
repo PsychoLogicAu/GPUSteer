@@ -16,8 +16,8 @@ __constant__ float3		constWorldStepV1;
 __constant__ float3		constWorldStepNormalizedV1;
 __constant__ uint3		constWorldCellsV1;
 
-//#define CELL_INDEX( pos )	( tex3D( texCellIndices, pos.x, pos.y, pos.z ) )	// <--- for choke point.
-#define CELL_INDEX( pos )	( tex3D( texCellIndices, pos.x, pos.z, pos.y ) )	// <--- for boids.
+#define CELL_INDEX( pos )	( tex3D( texCellIndices, pos.x, pos.y, pos.z ) )	// <--- for choke point.
+//#define CELL_INDEX( pos )	( tex3D( texCellIndices, pos.x, pos.z, pos.y ) )	// <--- for boids.
 
 // Kernel declarations.
 extern "C"

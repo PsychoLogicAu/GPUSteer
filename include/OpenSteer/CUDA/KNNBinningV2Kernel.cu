@@ -16,8 +16,8 @@ __constant__ float3		constWorldStepNormalizedV2;
 __constant__ uint3		constWorldCellsV2;
 
 // Fetch the cell index from texCellIndicesNormalized at a given world {x,y,z} position.
-#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.z, pos.y ) )
-//#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )
+#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.z, pos.y ) )	// <--- for boids.
+//#define CELL_INDEX_NORMALIZED( pos )	( tex3D( texCellIndicesNormalized, pos.x, pos.y, pos.z ) )	// <--- for choke point.
 
 // Fetch the cell index from texCellIndices at a given texel (x,y,z) coordinate.
 //#define CELL_INDEX( x, y, z )			( tex3D( texCellIndices, x, y, z ) )

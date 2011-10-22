@@ -121,9 +121,8 @@ class CtfObstacleGroup;
 
 const int gEnemyCount					= 100000;
 const float gDim						= 2000;
-//const int gCells						= 285;
+const int gCells						= 285;
 //const int gCells						= 512;
-const int gCells						= 2048;
 
 //const int gEnemyCount					= 500000;
 //const float gDim						= 3000;
@@ -1348,13 +1347,13 @@ public:
     void redraw (const float currentTime, const float elapsedTime)
     {
         // selected vehicle (user can mouse click to select another)
-        AbstractVehicle& selected = *OpenSteerDemo::selectedVehicle;
+        //AbstractVehicle& selected = *OpenSteerDemo::selectedVehicle;
 
         // vehicle nearest mouse (to be highlighted)
         AbstractVehicle& nearMouse = *OpenSteerDemo::vehicleNearestToMouse ();
 
         // update camera
-        OpenSteerDemo::updateCamera (currentTime, elapsedTime, selected);
+        OpenSteerDemo::updateCamera (currentTime, elapsedTime, *ctfSeeker);
 
         // draw "ground plane" centered between base and selected vehicle
 		const float3 goalOffset = float3_subtract(g_f3HomeBaseCenter, make_float3(OpenSteerDemo::camera.position()));
@@ -1362,10 +1361,10 @@ public:
         const float3 cameraForward = make_float3(OpenSteerDemo::camera.xxxls().forward());
         const float goalDot = float3_dot(cameraForward, goalDirection);
         const float blend = remapIntervalClip (goalDot, 1, 0, 0.5, 0);
-        const float3 gridCenter = interpolate (blend,
-                                             make_float3(selected.position()),
-                                             g_f3HomeBaseCenter);
-        OpenSteerDemo::gridUtility (gridCenter);
+        //const float3 gridCenter = interpolate (blend,
+        //                                     make_float3(selected.position()),
+        //                                     g_f3HomeBaseCenter);
+        //OpenSteerDemo::gridUtility (gridCenter);
 
         // draw the seeker, obstacles and home base
         ctfSeeker->draw();
