@@ -253,20 +253,6 @@
 			<File
 				RelativePath=".\ChokePointNew.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\GroupCollision.cpp"
@@ -288,6 +274,18 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<Filter
+				Name="params"
+				>
+				<File
+					RelativePath="..\..\Data\BoidsGroup.params"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Data\ChokePoint.params"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="src"
