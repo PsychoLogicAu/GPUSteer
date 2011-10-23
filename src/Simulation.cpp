@@ -67,6 +67,8 @@ void GroupParams::load( std::ifstream & fs )
 				fs >> str;
 			}
 		}
+		else if( key == "bodyColor" )
+			fs >> m_f3BodyColor.x >> m_f3BodyColor.y >> m_f3BodyColor.z;
 		else
 		{
 			assert( 0 );
@@ -194,6 +196,8 @@ void SimulationParams::load( char const* szFilename )
 			fs >> m_fMaxFlockingDistance;
 		else if( key == "cosMaxFlockingAngle" )
 			fs >> m_fCosMaxFlockingAngle;
+		else if( key == "avoidCloseNeighbors" )
+			fs >> m_bAvoidCloseNeighbors;
 		// Weights.
 		else if( key == "weightAlignment" )
 			fs >> m_fWeightAlignment;

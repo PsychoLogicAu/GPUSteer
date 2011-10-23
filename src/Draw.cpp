@@ -472,6 +472,12 @@ namespace {
         static int frameRatePresetIndex = 0;
         switch (++frameRatePresetIndex)
         {
+		case 4:
+            // animation mode at 30 fps
+            OpenSteer::OpenSteerDemo::clock.setFixedFrameRate (30);
+            OpenSteer::OpenSteerDemo::clock.setAnimationMode (true);
+            OpenSteer::OpenSteerDemo::clock.setVariableFrameRateMode (false);
+            break;
         case 3: 
             // animation mode at 60 fps
             OpenSteer::OpenSteerDemo::clock.setFixedFrameRate (60);

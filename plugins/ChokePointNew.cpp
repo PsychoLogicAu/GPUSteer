@@ -55,24 +55,10 @@
 #include <sstream>
 #include <fstream>
 #include <list>
-#include "OpenSteer/Simulation.h"
-#include "OpenSteer/SimpleVehicle.h"
-#include "OpenSteer/OpenSteerDemo.h"
-#include "OpenSteer/Proximity.h"
-//#include "OpenSteer/ObstacleGroup.h"
 
-#include "OpenSteer/AgentGroup.h"
-
-#include "OpenSteer/CUDA/CUDAKernelGlobals.cuh"
-#include "OpenSteer/CUDA/GroupSteerLibrary.cuh"
-
-#include "OpenSteer/AgentData.h"
-
-// Include the required KNN headers.
-#include "OpenSteer/CUDA/KNNBinData.cuh"
+#include "PluginCommon.h"
 
 #include "OpenSteer/WallGroup.h"
-
 #include "OpenSteer/CUDA/PolylinePathwayCUDA.cuh"
 
 using namespace OpenSteer;
@@ -85,26 +71,9 @@ using namespace OpenSteer;
 	#define M_PI       3.14159265358979323846
 #endif
 
-//#define ANNOTATION_LINES
-//#define ANNOTATION_WALL_LINES
-//#define ANNOTATION_TEXT
-//#define ANNOTATION_CELLS
-//#define NO_DRAW
-//#define NO_DRAW_OBSTACLES
-//#define NO_DRAW_OUTSIDE_RANGE
-
-static bool	g_bDrawAnnotationLines		= false;
-static bool	g_bDrawAnnotationWallLines	= false;
-static bool	g_bDrawAnnotationText		= false;
-static bool	g_bDrawAnnotationCells		= false;
-static bool	g_bNoDraw					= false;
-static bool	g_bNoDrawOutsideRange		= true;
-static bool	g_bNoDrawObstacles			= false;
-
 // ----------------------------------------------------------------------------
 // forward declarations
-class CtfBase;
-class CtfProxy;
+
 class CtfGroup;
 
 //class CtfObstacleGroup;
@@ -119,24 +88,9 @@ CtfSimulation *		g_pSimulation;
 // count the number of times the simulation has reset (e.g. for overnight runs)
 int resetCount = 0;
 
-// Function prototypes.
-void randomizeStartingPositionAndHeadingCtf( float4 & position, float3 & up, float4 & forward, float3 & side, float const minRadius, float const maxRadius, float3 const& startPosition );
 
-void randomizeStartingPositionAndHeadingCtf( float4 & position, float3 & up, float4 & forward, float3 & side, float const minRadius, float const maxRadius, float3 const& startPosition )
-{
-    // randomize position on a ring between inner and outer radii
-    // centered around the home base
-    const float rRadius = frandom2 ( minRadius, maxRadius );
-	float3 const randomOnRing = float3_scalar_multiply( float3_RandomUnitVectorOnXZPlane(), rRadius );
 
-    position = make_float4( float3_add( startPosition, randomOnRing ), 0.f );
 
-	float3 newForward;
-    randomizeHeading( up, newForward, side );
-	up = make_float3( 0.f, 1.f, 0.f );
-	newForward.y = 0.f;
-	forward = make_float4( newForward, 0.f );
-}
 
 #pragma region obsolete
 /*
@@ -395,47 +349,9 @@ public:
 	void update(const float currentTime, const float elapsedTime);
 };
 
-// ----------------------------------------------------------------------------
-// This PlugIn uses two vehicle types: CtfSeeker and CtfEnemy.  They have a
-// common base class: CtfBase which is a specialization of SimpleVehicle.
-class CtfBase : public SimpleVehicle
-{
-public:
-	// for draw method
-    float3 bodyColor;
 
-    // constructor
-    CtfBase () {reset ();}
 
-	// reset state
-	void reset (void)
-	{
-		_data.id = serialNumber;
 
-		SimpleVehicle::reset ();  // reset the vehicle 
-	}
-
-	// ----------------------------------------------------------------------------
-	// draw this character/vehicle into the scene
-	void draw (void)
-	{
-		drawBasic2dCircularVehicle (*this, bodyColor);
-		//drawTrail ();
-	}
-};
-
-class CtfProxy : public CtfBase
-{
-public:
-    // constructor
-    CtfProxy (){}
-
-	// Pull the latest data from the selected agent.
-    void update( uint const selectedAgent, CtfGroup * pGroup )
-	{
-		pGroup->GetAgentGroupData().getAgentData( selectedAgent, _data );
-	}
-};
 /*
 class CtfObstacleGroup : public ObstacleGroup
 {
@@ -510,14 +426,14 @@ public:
 class CtfSimulation : public Simulation
 {
 	friend class CtfGroup;
-	friend class CtfPlugIn;
+	friend class ChokePointPlugIn;
 
 protected:
 	CtfWorld *			m_pWorld;
 	CtfGroup *			m_pGroup;
 	//CtfObstacleGroup *	m_pObstacles;
 
-	CtfProxy *			m_pCameraProxy;
+	CameraProxy *			m_pCameraProxy;
 
 public:
 	CtfSimulation( void )
@@ -526,7 +442,7 @@ public:
 		//m_pObstacles( NULL ),
 		m_pCameraProxy( NULL )
 	{
-		m_pCameraProxy = new CtfProxy;
+		m_pCameraProxy = new CameraProxy;
 	}
 
 	virtual ~CtfSimulation( void )
@@ -602,13 +518,13 @@ void CtfGroup::reset(void)
 	// Add the required number of enemies.
 	while( Size() < m_pGroupParams->m_nNumAgents )
 	{
-		CtfBase agent;
+		PluginBase agent;
 		AgentData &aData = agent.getVehicleData();
 
 		aData.speed = m_pGroupParams->m_fMaxSpeed;
 		aData.maxForce = m_pGroupParams->m_fMaxForce;
 		aData.maxSpeed = m_pGroupParams->m_fMaxSpeed;
-		randomizeStartingPositionAndHeadingCtf( aData.position, aData.up, aData.direction, aData.side, m_pGroupParams->m_fMinStartRadius, m_pGroupParams->m_fMaxStartRadius, m_pGroupParams->m_f3StartPosition );
+		randomizeStartingPositionAndHeading2D( aData.position, aData.up, aData.direction, aData.side, m_pGroupParams->m_fMinStartRadius, m_pGroupParams->m_fMaxStartRadius, m_pGroupParams->m_f3StartPosition );
 		
 		bool success = AddAgent( aData );
 	}
@@ -765,7 +681,7 @@ void CtfGroup::update(const float currentTime, const float elapsedTime)
 // PlugIn for OpenSteerDemo
 
 
-class CtfPlugIn : public PlugIn
+class ChokePointPlugIn : public PlugIn
 {
 private:
 
@@ -775,7 +691,7 @@ public:
 
     float selectionOrderSortKey (void) {return 0.01f;}
 
-    virtual ~CtfPlugIn() {} // be more "nice" to avoid a compiler warning
+    virtual ~ChokePointPlugIn() {} // be more "nice" to avoid a compiler warning
 
     void open (void)
     {
@@ -882,11 +798,11 @@ public:
     const AVGroup& allVehicles (void) {return (const AVGroup&) all;}
 
     // a group (STL vector) of all vehicles in the PlugIn
-    std::vector<CtfBase*> all;
+    std::vector<PluginBase*> all;
 };
 
 
-CtfPlugIn gCtfPlugIn;
+ChokePointPlugIn gChokePointPlugIn;
 
 
 // ----------------------------------------------------------------------------

@@ -251,11 +251,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\ChokePointNew.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GroupCollision.cpp"
+				RelativePath="..\plugins\ChokePointNew.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -274,6 +270,18 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\plugins\MultiGroup.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\plugins\PluginCommon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\plugins\PluginCommon.h"
+				>
+			</File>
 			<Filter
 				Name="params"
 				>
@@ -283,6 +291,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Data\ChokePoint.params"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Data\MultiGroup.params"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Data\MultiGroup3.params"
 					>
 				</File>
 			</Filter>

@@ -41,6 +41,8 @@ public:
 	std::vector< float3 >	m_vecPathPoints;
 	float					m_fPathRadius;
 	bool					m_bPathIsCyclic;
+
+	float3					m_f3BodyColor;
 };	// class BaseGroup
 
 class WorldParams
@@ -86,6 +88,7 @@ public:
 	float	m_fMinFlockingDistance;
 	float	m_fMaxFlockingDistance;
 	float	m_fCosMaxFlockingAngle;
+	bool	m_bAvoidCloseNeighbors;
 	//	Behavior	weights
 	float	m_fWeightAlignment;
 	float	m_fWeightCohesion;
