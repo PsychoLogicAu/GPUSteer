@@ -133,6 +133,7 @@ void randomizeStartingPositionAndHeadingCtf( float4 & position, float3 & up, flo
 
 	float3 newForward;
     randomizeHeading( up, newForward, side );
+	up = make_float3( 0.f, 1.f, 0.f );
 	newForward.y = 0.f;
 	forward = make_float4( newForward, 0.f );
 }
@@ -743,7 +744,7 @@ void CtfGroup::update(const float currentTime, const float elapsedTime)
 	//steerForPursuit( this, gSeeker->getVehicleData(), g_fMaxPursuitPredictionTime, g_fWeightPursuit, g_maskPursuit );
 
 	// Flocking.
-	steerForSeparation( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinSeparationDistance, m_pSimulationParams->m_fMaxSeparationDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightSeparation, m_pSimulationParams->m_nMaskSeparation );
+	steerForSeparation( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinSeparationDistance, m_pSimulationParams->m_fMaxSeparationDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightSeparation, KERNEL_ANTI_PENETRATION_WALL/*m_pSimulationParams->m_nMaskSeparation*/ );
 	steerForAlignment( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightAlignment, m_pSimulationParams->m_nMaskAlignment );
 	steerForCohesion( this, m_pKNNSelf, this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightCohesion, m_pSimulationParams->m_nMaskCohesion );
 
