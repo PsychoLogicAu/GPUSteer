@@ -86,7 +86,7 @@ class CtfSimulation;
 CtfSimulation *		g_pSimulation;
 
 // count the number of times the simulation has reset (e.g. for overnight runs)
-int resetCount = 0;
+static int					resetCount = 0;
 
 
 

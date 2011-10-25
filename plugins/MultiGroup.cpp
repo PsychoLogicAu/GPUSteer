@@ -79,7 +79,7 @@ MultiGroupSimulation *		g_pSimulation;
 static uint					g_nNumGroups = 0;
 
 // count the number of times the simulation has reset (e.g. for overnight runs)
-int resetCount = 0;
+static int					resetCount = 0;
 
 class MultiGroupWorld : public SimulationWorld
 {
@@ -200,7 +200,10 @@ public:
 		}
 
 		// Create the path.
-		m_pPath = new PolylinePathwayCUDA( m_pGroupParams->m_vecPathPoints, m_pGroupParams->m_fPathRadius, m_pGroupParams->m_bPathIsCyclic );
+		if( ! m_pGroupParams->m_vecPathPoints.empty() )
+		{
+			m_pPath = new PolylinePathwayCUDA( m_pGroupParams->m_vecPathPoints, m_pGroupParams->m_fPathRadius, m_pGroupParams->m_bPathIsCyclic );
+		}
 
 		reset();
 	}
@@ -568,8 +571,11 @@ void Group::update( const float currentTime, const float elapsedTime )
 	steerForAlignment( this, m_pKNNGroups[m_iThisGroup], this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightAlignment, m_pSimulationParams->m_nMaskAlignment );
 	steerForCohesion( this, m_pKNNGroups[m_iThisGroup], this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightCohesion, m_pSimulationParams->m_nMaskCohesion );
 
-	//steerToFollowPath( this, m_pPath, m_pSimulationParams->m_fPathPredictionTime, m_pSimulationParams->m_fWeightFollowPath, m_pSimulationParams->m_nMaskFollowPath );
-	steerForSeek( this, m_pPath->hvPoints()[1], m_pSimulationParams->m_fWeightSeek, m_pSimulationParams->m_nMaskSeek );
+	if( m_pPath )
+	{
+		steerToFollowPath( this, m_pPath, m_pSimulationParams->m_fPathPredictionTime, m_pSimulationParams->m_fWeightFollowPath, m_pSimulationParams->m_nMaskFollowPath );
+		steerForSeek( this, m_pPath->hvPoints()[1], m_pSimulationParams->m_fWeightSeek, m_pSimulationParams->m_nMaskSeek );
+	}
 
 	// Apply steering.
 	updateGroup( this, elapsedTime );
@@ -592,7 +598,7 @@ private:
 
 public:
 
-    const char* name (void) {return "Choke Point";}
+    const char* name (void) {return "Multi Group Right Angle";}
 
     float selectionOrderSortKey (void) {return 0.01f;}
 
@@ -612,8 +618,8 @@ public:
 
         // initialize camera
         OpenSteerDemo::init2dCamera( *g_pSimulation->m_pCameraProxy );
-        OpenSteerDemo::camera.mode = Camera::cmFixedDistanceOffset;
-        OpenSteerDemo::camera.fixedTarget = make_float3(15, 0, 0);
+		OpenSteerDemo::camera.mode = Camera::cmFixed;
+        OpenSteerDemo::camera.fixedTarget = make_float3(1, 0, 0);
         OpenSteerDemo::camera.fixedPosition = make_float3(0, 100, 0);
 
 		reset();
@@ -628,7 +634,7 @@ public:
         resetCount++;
 
 		g_pSimulation->reset();
-		g_pSimulation->load( "MultiGroup3.params" );
+		g_pSimulation->load( "MultiGroup1VStationary.params" );
 
         // make camera jump immediately to new position
         OpenSteerDemo::camera.doNotSmoothNextMove ();

@@ -8,7 +8,7 @@ using namespace OpenSteer;
 
 //#include "DebugUtils.h"
 
-#define TIMING
+//#define TIMING
 
 // Kernel file function prototypes.
 extern "C"
