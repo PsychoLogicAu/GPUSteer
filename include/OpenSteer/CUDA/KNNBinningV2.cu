@@ -6,7 +6,7 @@ using namespace OpenSteer;
 
 #include <thrust/sort.h>
 
-#define TIMING
+//#define TIMING
 
 // Kernel file function prototypes.
 extern "C"
