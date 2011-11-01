@@ -35,7 +35,7 @@ void WrapWorldCUDA::run( void )
 										numAgents
 										);
 	cutilCheckMsg( "WrapWorldKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void WrapWorldCUDA::close( void )

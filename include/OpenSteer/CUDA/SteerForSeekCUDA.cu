@@ -57,7 +57,7 @@ void SteerForSeekCUDA::run(void)
 												m_doNotApplyWith
 												);
 	cutilCheckMsg( "SteerForSeekCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerForSeekCUDA::close(void)

@@ -21,6 +21,8 @@ private:
 	uint				m_nSize;
 	// Number of cells.
 	uint				m_nCells;
+	// Number of cells in each dimension.
+	uint3				m_n3WorldCells;
 
 	//
 	// Device vectors
@@ -49,15 +51,23 @@ private:
 	bool	m_bSyncDevice;
 
 public:
-	KNNDatabase( uint const k, uint const size, uint const cells )
+	KNNDatabase( uint const k, uint const size, uint3 const worldCells )
 		:	m_nSize( size ),
 			m_nK( k ),
-			m_nCells( cells ),
+			m_nCells( worldCells.x * worldCells.y * worldCells.z ),
 			m_bSyncHost( false ),
-			m_bSyncDevice( false )
+			m_bSyncDevice( false ),
+			m_n3WorldCells( worldCells ),
+			m_dvCellStart(worldCells.x * worldCells.y * worldCells.z),
+			m_dvCellEnd(worldCells.x * worldCells.y * worldCells.z),
+			m_dvCellIndices(size),
+			m_dvCellIndicesSorted(size),
+			m_dvAgentIndicesSorted(size),
+			m_dvPositionSorted(size)
+
 	{
-		resize( size );
-		resizeCells( cells );
+		resize( m_nSize );
+		resizeCells( m_nCells );
 	}
 
 	~KNNDatabase( void )
@@ -66,7 +76,10 @@ public:
 	//
 	// Accessor/mutators
 	//
-	uint const&	k( void ) const									{ return m_nK; }
+	uint const&		k( void ) const									{ return m_nK; }
+	uint const&		size( void ) const								{ return m_nSize; }
+	uint const&		cells( void ) const								{ return m_nCells; }
+	uint3 const&	worldCells( void ) const						{ return m_n3WorldCells; }
 
 	// Device data.
 	uint *		pdCellStart( void )								{ return m_dvCellStart.begin(); }

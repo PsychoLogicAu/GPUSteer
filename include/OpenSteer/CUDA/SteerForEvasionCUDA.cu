@@ -69,7 +69,7 @@ void SteerForEvadeCUDA::run( void )
 												m_doNotApplyWith
 												);
 	cutilCheckMsg( "SteerForEvasionKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerForEvadeCUDA::close( void )

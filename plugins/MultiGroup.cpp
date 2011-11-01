@@ -61,6 +61,8 @@
 #include "OpenSteer/WallGroup.h"
 #include "OpenSteer/CUDA/PolylinePathwayCUDA.cuh"
 
+#include "OpenSteer/ExtractData.h"
+
 using namespace OpenSteer;
 
 // ----------------------------------------------------------------------------
@@ -307,7 +309,7 @@ class MultiGroupSimulation : public Simulation
 
 protected:
 	MultiGroupWorld *		m_pWorld;
-	Group **				m_pGroups;
+	Group **				m_ppGroups;
 	//CtfObstacleGroup *	m_pObstacles;
 
 	CameraProxy *			m_pCameraProxy;
@@ -315,7 +317,7 @@ protected:
 public:
 	MultiGroupSimulation( void )
 	:	m_pWorld( NULL ),
-		m_pGroups( NULL ),
+		m_ppGroups( NULL ),
 		m_pCameraProxy( NULL )
 	{
 		m_pCameraProxy = new CameraProxy;
@@ -327,8 +329,8 @@ public:
 		SAFE_DELETE( m_pCameraProxy );
 
 		for( uint i = 0; i < g_nNumGroups; i++ )
-			SAFE_DELETE( m_pGroups[ i ] );
-		SAFE_DELETE_ARRAY( m_pGroups );
+			SAFE_DELETE( m_ppGroups[ i ] );
+		SAFE_DELETE_ARRAY( m_ppGroups );
 
 	}
 
@@ -336,8 +338,8 @@ public:
 	{
 		SAFE_DELETE( m_pWorld );
 		for( uint i = 0; i < g_nNumGroups; i++ )
-			SAFE_DELETE( m_pGroups[ i ] );
-		SAFE_DELETE_ARRAY( m_pGroups );
+			SAFE_DELETE( m_ppGroups[ i ] );
+		SAFE_DELETE_ARRAY( m_ppGroups );
 
 		Simulation::load( szFilename );
 
@@ -347,9 +349,9 @@ public:
 		OpenSteerDemo::maxSelectedVehicleIndex = m_SimulationParams.m_vecGroupParams[0].m_nNumAgents;
 
 		// Create the groups.
-		m_pGroups = new Group*[ g_nNumGroups ];
+		m_ppGroups = new Group*[ g_nNumGroups ];
 		for( uint i = 0; i < g_nNumGroups; i++ )
-			m_pGroups[ i ] = new Group( &m_SimulationParams, &m_SimulationParams.m_vecGroupParams[ i ], i );
+			m_ppGroups[ i ] = new Group( &m_SimulationParams, &m_SimulationParams.m_vecGroupParams[ i ], i );
 
 		// Create the world.
 		m_pWorld = new MultiGroupWorld( &m_SimulationParams, &m_SimulationParams.m_WorldParams );
@@ -359,21 +361,21 @@ public:
 	{
 		// Pre-update all the groups.
 		for( uint i = 0; i < g_nNumGroups; i++ )
-			m_pGroups[ i ]->preUpdate();
+			m_ppGroups[ i ]->preUpdate();
 
 		// Update the groups
 		for( uint i = 0; i < g_nNumGroups; i++ )
-			m_pGroups[ i ]->update( currentTime, elapsedTime );
+			m_ppGroups[ i ]->update( currentTime, elapsedTime );
 
 		// Update the camera proxy object.
-		m_pCameraProxy->update( OpenSteerDemo::selectedVehicleIndex, m_pGroups[0] );
+		m_pCameraProxy->update( OpenSteerDemo::selectedVehicleIndex, m_ppGroups[0] );
 	}
 
 	void draw( void )
 	{
         // draw the groups
 		for( uint i = 0; i < g_nNumGroups; i++ )
-			m_pGroups[ i ]->draw();
+			m_ppGroups[ i ]->draw();
 
 		// draw the world
 		m_pWorld->draw();
@@ -386,7 +388,7 @@ public:
 		//status << std::left << std::setw( 25 ) << "No. obstacles: " << std::setw( 10 ) << g_pObstacles->Size() << std::endl;
 		for( uint i = 0; i < g_nNumGroups; i++ )
 		{
-			status << std::left << std::setw( 25 ) << "No. agents group " << i << ": " << m_pGroups[i]->Size() << std::endl;
+			status << std::left << std::setw( 25 ) << "No. agents group " << i << ": " << m_ppGroups[i]->Size() << std::endl;
 		}
 		status << std::left << std::setw( 25 ) << "World dim: " << m_SimulationParams.m_WorldParams.m_f3Dimensions << std::endl;
 		status << std::left << std::setw( 25 ) << "World cells: " << m_SimulationParams.m_WorldParams.m_u3Cells << std::endl;
@@ -397,6 +399,24 @@ public:
 		const float h = drawGetWindowHeight ();
 		const float3 screenLocation = make_float3(10, h-50, 0);
 		draw2dTextAt2dLocation (status, screenLocation, gGray80);
+	}
+
+	void extractData( void )
+	{
+		static uint frame = 1;
+
+		if( frame % 30 == 0 )
+		{
+			char szFilename[100] = {0};
+			sprintf_s( szFilename, "Frames/cell_density_frame_%d", frame );
+
+			WriteCellDensity( szFilename, m_ppGroups[0] );
+
+			sprintf_s( szFilename, "Frames/cell_avg_velocity_frame_%d", frame );
+			WriteAvgCellVelocity( szFilename, m_ppGroups[0] );
+		}
+
+		frame++;
 	}
 };
 
@@ -509,9 +529,9 @@ void Group::draw(void)
 				// Draw the KNN links.
 				for( uint j = 0; j < m_pSimulationParams->m_nKNN; j++ )
 				{
-					if( KNNIndices[j] < g_pSimulation->m_pGroups[ g ]->Size() )
+					if( KNNIndices[j] < g_pSimulation->m_ppGroups[ g ]->Size() )
 					{
-						g_pSimulation->m_pGroups[ g ]->GetAgentGroupData().getAgentData( KNNIndices[j], adOther );
+						g_pSimulation->m_ppGroups[ g ]->GetAgentGroupData().getAgentData( KNNIndices[j], adOther );
 						drawLine( make_float3( ad.position ), make_float3( adOther.position ), make_float3( 1.f, 1.f, 1.f ) );
 					}
 				}
@@ -540,7 +560,7 @@ void Group::update( const float currentTime, const float elapsedTime )
 	// Update the KNNDatabases for the groups.
 	for( uint i = 0; i < g_nNumGroups; i++ )
 	{
-		findKNearestNeighbors( this, m_pKNNGroups[ i ], g_pSimulation->m_pWorld->GetBinData(), g_pSimulation->m_pGroups[ i ], m_pSimulationParams->m_nSearchRadius );
+		findKNearestNeighbors( this, m_pKNNGroups[ i ], g_pSimulation->m_pWorld->GetBinData(), g_pSimulation->m_ppGroups[ i ], m_pSimulationParams->m_nSearchRadius );
 	}
 
 	// Avoid collisions with walls.
@@ -555,7 +575,7 @@ void Group::update( const float currentTime, const float elapsedTime )
 		if( i == m_iThisGroup )
 			continue;
 
-		steerToAvoidNeighbors( this, m_pKNNGroups[i], g_pSimulation->m_pGroups[i], m_pSimulationParams->m_fMinTimeToCollision, m_pSimulationParams->m_fMinSeparationDistance, m_pSimulationParams->m_bAvoidCloseNeighbors, m_pSimulationParams->m_fWeightAvoidNeighbors, m_pSimulationParams->m_nMaskAvoidNeighbors );
+		steerToAvoidNeighbors( this, m_pKNNGroups[i], g_pSimulation->m_ppGroups[i], m_pSimulationParams->m_fMinTimeToCollision, m_pSimulationParams->m_fMinSeparationDistance, m_pSimulationParams->m_bAvoidCloseNeighbors, m_pSimulationParams->m_fWeightAvoidNeighbors, m_pSimulationParams->m_nMaskAvoidNeighbors );
 	}
 
 	// Pursue target.
@@ -565,7 +585,7 @@ void Group::update( const float currentTime, const float elapsedTime )
 	for( uint i = 0; i < g_nNumGroups; i++ )
 	{
 		// Maintain separation from all groups.
-		steerForSeparation( this, m_pKNNGroups[i], g_pSimulation->m_pGroups[i], m_pSimulationParams->m_fMinSeparationDistance, m_pSimulationParams->m_fMaxSeparationDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightSeparation, m_pSimulationParams->m_nMaskSeparation );
+		steerForSeparation( this, m_pKNNGroups[i], g_pSimulation->m_ppGroups[i], m_pSimulationParams->m_fMinSeparationDistance, m_pSimulationParams->m_fMaxSeparationDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightSeparation, m_pSimulationParams->m_nMaskSeparation );
 	}
 	// Maintain alignment and cohesion only with self.
 	steerForAlignment( this, m_pKNNGroups[m_iThisGroup], this, m_pSimulationParams->m_fMinFlockingDistance, m_pSimulationParams->m_fMaxFlockingDistance, m_pSimulationParams->m_fCosMaxFlockingAngle, m_pSimulationParams->m_fWeightAlignment, m_pSimulationParams->m_nMaskAlignment );
@@ -584,7 +604,7 @@ void Group::update( const float currentTime, const float elapsedTime )
 	// Force anti-penetration.
 	for( uint i = 0; i < g_nNumGroups; i++ )
 	{
-		antiPenetrationAgents( this, m_pKNNGroups[i], g_pSimulation->m_pGroups[i], m_pSimulationParams->m_nMaskAntiPenetrationAgents );
+		antiPenetrationAgents( this, m_pKNNGroups[i], g_pSimulation->m_ppGroups[i], m_pSimulationParams->m_nMaskAntiPenetrationAgents );
 	}
 }
 
@@ -622,6 +642,10 @@ public:
         OpenSteerDemo::camera.fixedTarget = make_float3(1, 0, 0);
         OpenSteerDemo::camera.fixedPosition = make_float3(0, 100, 0);
 
+		// Set animation mode with frame rate of 30.
+		OpenSteerDemo::clock.setAnimationMode( true );
+		OpenSteerDemo::clock.setFixedFrameRate( 30 );
+
 		reset();
 		resetCount = 0;
 
@@ -634,7 +658,7 @@ public:
         resetCount++;
 
 		g_pSimulation->reset();
-		g_pSimulation->load( "MultiGroup1VStationary.params" );
+		g_pSimulation->load( "MultiGroup2.params" );
 
         // make camera jump immediately to new position
         OpenSteerDemo::camera.doNotSmoothNextMove ();
@@ -644,6 +668,8 @@ public:
     {
 		// Update the simulation.
 		g_pSimulation->update( currentTime, elapsedTime );
+
+		g_pSimulation->extractData();
 	}
 
     void redraw (const float currentTime, const float elapsedTime)

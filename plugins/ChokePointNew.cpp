@@ -61,6 +61,8 @@
 #include "OpenSteer/WallGroup.h"
 #include "OpenSteer/CUDA/PolylinePathwayCUDA.cuh"
 
+#include "OpenSteer/ExtractData.h"
+
 using namespace OpenSteer;
 
 #ifndef min
@@ -87,7 +89,7 @@ CtfSimulation *		g_pSimulation;
 
 // count the number of times the simulation has reset (e.g. for overnight runs)
 static int					resetCount = 0;
-
+static float				g_fNoDrawRange = 13000.f;
 
 
 
@@ -263,6 +265,12 @@ public:
 			// For each of the cells...
 			for( std::vector< bin_cell >::const_iterator it = cells.begin(); it != cells.end(); ++it )
 			{
+				if( g_bNoDrawOutsideRange )
+				{
+					if( float3_distanceSquared( it->position, make_float3( OpenSteerDemo::camera.position() ) ) > g_fNoDrawRange )
+						continue;
+				}
+
 				/*
 				0    1
 				+----+
@@ -478,11 +486,11 @@ public:
 
 	void draw( void )
 	{
-        // draw the enemy
-		m_pGroup->draw();
-
 		// draw the world
 		m_pWorld->draw();
+
+		// draw the agents
+		m_pGroup->draw();
 
 		// Draw the obstacles
 		//m_pObstacles->draw();
@@ -500,6 +508,24 @@ public:
 		const float h = drawGetWindowHeight ();
 		const float3 screenLocation = make_float3(10, h-50, 0);
 		draw2dTextAt2dLocation (status, screenLocation, gGray80);
+	}
+
+	void extractData( void )
+	{
+		static uint frame = 1;
+
+		if( frame % 30 == 0 )
+		{
+			char szFilename[100];
+			sprintf_s( szFilename, "Frames/cell_density_frame_%d.tiff", frame );
+
+			WriteCellDensity( szFilename, m_pGroup );
+
+			sprintf_s( szFilename, "Frames/cell_avg_velocity_frame_%d.tiff", frame );
+			WriteAvgCellVelocity( szFilename, m_pGroup );
+		}
+
+		frame++;
 	}
 };
 
@@ -558,7 +584,7 @@ void CtfGroup::draw(void)
 
 		if( g_bNoDrawOutsideRange )
 		{
-			if( float3_distanceSquared( make_float3( ad.position ), make_float3( OpenSteerDemo::camera.position() ) ) > 20000.f )
+			if( float3_distanceSquared( make_float3( ad.position ), make_float3( OpenSteerDemo::camera.position() ) ) > g_fNoDrawRange )
 				continue;
 		}
 
@@ -709,7 +735,11 @@ public:
         OpenSteerDemo::init2dCamera( *g_pSimulation->m_pCameraProxy );
         OpenSteerDemo::camera.mode = Camera::cmFixedDistanceOffset;
         OpenSteerDemo::camera.fixedTarget = make_float3(15, 0, 0);
-        OpenSteerDemo::camera.fixedPosition = make_float3(80, 60, 0);
+        OpenSteerDemo::camera.fixedPosition = make_float3(60, 40, 0);
+
+		// Set animation mode with frame rate of 30.
+		OpenSteerDemo::clock.setAnimationMode( true );
+		OpenSteerDemo::clock.setFixedFrameRate( 30 );
 
 		reset();
 		resetCount = 0;
@@ -733,6 +763,8 @@ public:
     {
 		// Update the simulation.
 		g_pSimulation->update( currentTime, elapsedTime );
+
+		g_pSimulation->extractData();
 	}
 
     void redraw (const float currentTime, const float elapsedTime)

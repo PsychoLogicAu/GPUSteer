@@ -14,8 +14,8 @@ protected:
 	size_t						m_nCount;
 
 public:
-	BaseGroup( uint const k, uint const size, uint const cells )
-	:	m_neighborDB( k, size, cells ),
+	BaseGroup( uint const k, uint const size, uint3 const worldCells )
+	:	m_neighborDB( k, size, worldCells ),
 		m_nCount( 0 )
 	{}
 	virtual ~BaseGroup( void ) {}

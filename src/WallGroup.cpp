@@ -3,7 +3,7 @@
 using namespace OpenSteer;
 
 WallGroup::WallGroup( uint3 const& worldCells, uint const knw )
-:	BaseGroup( knw, 0, worldCells.x*worldCells.y*worldCells.z )
+:	BaseGroup( knw, 0, worldCells )
 {
 	// Nothing to do.
 }

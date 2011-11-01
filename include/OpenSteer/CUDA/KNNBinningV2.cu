@@ -117,7 +117,8 @@ void KNNBinningV2UpdateDBCUDA::run( void )
 	// Call KNNBinningBuildDB to build the database. 
 	KNNBinningV2BuildDB<<< grid, block >>>( pdPosition, pdAgentIndicesSorted, pdCellIndices, numAgents );
 	cutilCheckMsg( "KNNBinningV2BuildDB failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	CUDA_SAFE_CALL( cudaDeviceSynchronize() );
 
 	// Copy pdCellIndices to  pdCellIndicesSorted.
 	CUDA_SAFE_CALL( cudaMemcpy( pdCellIndicesSorted, pdCellIndices, numAgents * sizeof(uint), cudaMemcpyDeviceToDevice ) );
@@ -135,7 +136,7 @@ void KNNBinningV2UpdateDBCUDA::run( void )
 
 	// Call KNNBinningReorderDB to re-order the data in the DB.
 	KNNBinningV2ReorderDB<<< grid, block >>>( pdAgentIndicesSorted, pdCellIndicesSorted, pdPositionSorted, pdCellStart, pdCellEnd, numAgents );	cutilCheckMsg( "KNNBinningReorderDB failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	KNNBinningV2ReorderDBUnbindTextures();
@@ -244,7 +245,7 @@ void KNNBinningV2CUDA::run( void )
 													numA, numB, groupWithSelf
 													);
 	cutilCheckMsg( "KNNBinningV2Kernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	KNNBinningV2KernelUnbindTextures();

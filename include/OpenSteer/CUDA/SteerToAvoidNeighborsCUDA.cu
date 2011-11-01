@@ -134,7 +134,7 @@ void SteerToAvoidNeighborsCUDA::run( void )
 																			m_doNotApplyWith
 																			);
 		cutilCheckMsg( "SteerToAvoidCloseNeighborsCUDAKernel failed." );
-		CUDA_SAFE_CALL( cudaThreadSynchronize() );
+		//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 	}
 
 	shMemSize = THREADSPERBLOCK * k * sizeof(uint);
@@ -159,7 +159,7 @@ void SteerToAvoidNeighborsCUDA::run( void )
 																	m_doNotApplyWith | KERNEL_AVOID_CLOSE_NEIGHBORS_BIT
 																	);
 	cutilCheckMsg( "SteerToAvoidNeighborsCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	SteerToAvoidNeighborsKernelUnbindTextures();

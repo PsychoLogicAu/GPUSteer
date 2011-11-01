@@ -33,11 +33,11 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
+				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBPNG_ROOT)\include;$(ZLIB_ROOT)\include"
 				GPUDebugInfo="true"
 				Arch1="21"
 				Arch2="0"
-				PtxAsOptionV="true"
+				PtxAsOptionV="false"
 				Optimization="0"
 				Runtime="3"
 			/>
@@ -53,7 +53,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;;&quot;$(LIBTIFF_ROOT)\include&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -72,8 +72,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="cudart.lib"
-				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)&quot;"
+				AdditionalDependencies="cudart.lib libtiff.lib"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -108,7 +108,7 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc"
+				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBPNG_ROOT)\include;$(ZLIB_ROOT)\include"
 				Arch1="21"
 				Arch2="0"
 				Runtime="2"
@@ -126,7 +126,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;;&quot;$(LIBTIFF_ROOT)\include&quot;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
@@ -144,8 +144,82 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="cudart.lib"
-				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)&quot;"
+				AdditionalDependencies="cudart.lib libtiff.lib"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="echo copy &quot;$(CUDA_PATH_V4_0)\bin\cudart*.dll&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;copy &quot;$(CUDA_PATH_V4_0)\bin\cudart*.dll&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="CUDA Debug|Win32"
+			OutputDirectory="$(SolutionDir)lib\$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)obj\$(ConfigurationName)\$(ProjectName)"
+			ConfigurationType="4"
+			CharacterSet="2"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="Cudart Build Rule"
+				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBPNG_ROOT)\include;$(ZLIB_ROOT)\include"
+				GPUDebugInfo="true"
+				Arch1="21"
+				Arch2="0"
+				PtxAsOptionV="true"
+				Runtime="2"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;;&quot;$(LIBTIFF_ROOT)\include&quot;"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				AdditionalDependencies="cudart.lib libtiff.lib"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -195,24 +269,45 @@
 					>
 				</File>
 				<File
-					RelativePath="..\include\OpenSteer\CUDA\ExtractData.cu"
-					>
-				</File>
-				<File
 					RelativePath="..\include\OpenSteer\CUDA\ObstacleGroupData.cuh"
 					>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cu"
 					>
+					<FileConfiguration
+						Name="CUDA Debug|Win32"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cuh"
 					>
 				</File>
 				<File
+					RelativePath="..\include\OpenSteer\CUDA\ProcessData.cu"
+					>
+					<FileConfiguration
+						Name="CUDA Debug|Win32"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\include\OpenSteer\CUDA\UpdateCUDA.cu"
 					>
+					<FileConfiguration
+						Name="CUDA Debug|Win32"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\UpdateCUDA.h"
@@ -225,6 +320,13 @@
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\WallGroupData.cu"
 					>
+					<FileConfiguration
+						Name="CUDA Debug|Win32"
+						>
+						<Tool
+							Name="Cudart Build Rule"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\include\OpenSteer\CUDA\WallGroupData.cuh"
@@ -244,10 +346,24 @@
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\UpdateCUDAKernelNew.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\WrapWorldCUDA.cuh"
@@ -256,6 +372,13 @@
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\WrapWorldCUDAKernel.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter
@@ -264,6 +387,13 @@
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\KNNData.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\KNNData.cuh"
@@ -283,6 +413,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV1.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV1.cuh"
@@ -291,6 +428,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV2.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV2.cuh"
@@ -303,6 +447,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV1.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV1.cuh"
@@ -311,10 +462,24 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV1Kernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2.cuh"
@@ -323,10 +488,24 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2Kernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNDatabase.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNDatabase.cuh"
@@ -339,6 +518,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cuh"
@@ -347,6 +533,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBruteForceCUDAKernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 					</Filter>
 				</Filter>
@@ -375,6 +568,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cuh"
@@ -383,6 +583,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForPursueCUDAKernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -391,6 +598,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cuh"
@@ -399,6 +613,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForEvasionCUDAKernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -407,6 +628,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cuh"
@@ -415,6 +643,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForFleeCUDAKernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -423,6 +658,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cuh"
@@ -431,6 +673,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerForSeekCUDAKernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -439,6 +688,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cuh"
@@ -447,6 +703,13 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\SteerToFollowPathCUDAKernel.cu"
 							>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								>
+								<Tool
+									Name="Cudart Build Rule"
+								/>
+							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -458,6 +721,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cuh"
@@ -466,6 +736,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForSeparationCUDAKernel.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 						</Filter>
 						<Filter
@@ -474,6 +751,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cuh"
@@ -482,6 +766,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForAlignmentCUDAKernel.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 						</Filter>
 						<Filter
@@ -490,6 +781,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh"
@@ -498,6 +796,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDAKernel.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 						</Filter>
 						<Filter
@@ -506,6 +811,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cuh"
@@ -524,10 +836,24 @@
 										Name="VCCustomBuildTool"
 									/>
 								</FileConfiguration>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="VCCustomBuildTool"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 						</Filter>
 						<Filter
@@ -536,6 +862,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cuh"
@@ -544,6 +877,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 						</Filter>
 						<Filter
@@ -552,6 +892,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cuh"
@@ -560,6 +907,13 @@
 							<File
 								RelativePath="..\include\OpenSteer\CUDA\SteerForCohesionCUDAKernel.cu"
 								>
+								<FileConfiguration
+									Name="CUDA Debug|Win32"
+									>
+									<Tool
+										Name="Cudart Build Rule"
+									/>
+								</FileConfiguration>
 							</File>
 						</Filter>
 					</Filter>
@@ -570,6 +924,13 @@
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cuh"
@@ -578,10 +939,24 @@
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDAKernel.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cuh"
@@ -590,6 +965,13 @@
 					<File
 						RelativePath="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDAKernel.cu"
 						>
+						<FileConfiguration
+							Name="CUDA Debug|Win32"
+							>
+							<Tool
+								Name="Cudart Build Rule"
+							/>
+						</FileConfiguration>
 					</File>
 				</Filter>
 			</Filter>
@@ -631,6 +1013,10 @@
 			</File>
 			<File
 				RelativePath="..\include\OpenSteer\Draw.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OpenSteer\ExtractData.h"
 				>
 			</File>
 			<File
@@ -710,6 +1096,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\ExtractData.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\lq.c"
 				>
 			</File>
@@ -745,6 +1135,13 @@
 		<File
 			RelativePath="..\include\OpenSteer\CUDA\WrapWorldCUDA.cu"
 			>
+			<FileConfiguration
+				Name="CUDA Debug|Win32"
+				>
+				<Tool
+					Name="Cudart Build Rule"
+				/>
+			</FileConfiguration>
 		</File>
 	</Files>
 	<Globals>

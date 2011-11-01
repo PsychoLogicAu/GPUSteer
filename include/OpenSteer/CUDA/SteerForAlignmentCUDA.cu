@@ -90,7 +90,7 @@ void SteerForAlignmentCUDA::run( void )
 																m_doNotApplyWith
 																);
 	cutilCheckMsg( "SteerForAlignmentCUDAKernel failed" );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	SteerForAlignmentKernelUnindTextures();

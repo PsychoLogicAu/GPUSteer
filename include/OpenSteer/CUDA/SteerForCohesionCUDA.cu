@@ -91,7 +91,7 @@ void SteerForCohesionCUDA::run( void )
 																m_doNotApplyWith
 																);
 	cutilCheckMsg( "SteerForCohesionCUDAKernel failed" );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	SteerForCohesionKernelUnindTextures();

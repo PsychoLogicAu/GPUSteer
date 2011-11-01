@@ -80,7 +80,7 @@ void SteerToFollowPathCUDA::run( void )
 												m_doNotApplyWith
 												);
 	cutilCheckMsg( "FollowPathCUDAKernel failed" );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerToFollowPathCUDA::close(void )
