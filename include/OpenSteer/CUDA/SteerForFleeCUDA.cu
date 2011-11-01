@@ -42,7 +42,7 @@ void SteerForFleeCUDA::run(void)
 
 	SteerForFleeCUDAKernel<<< grid, block >>>( pdPosition, pdDirection, pdSteering, m_target, getNumAgents(), m_fWeight, pdAppliedKernels, m_doNotApplyWith );
 	cutilCheckMsg( "SteerForFleeCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerForFleeCUDA::close(void)

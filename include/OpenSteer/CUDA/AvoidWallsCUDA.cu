@@ -98,7 +98,7 @@ void AvoidWallsCUDA::run( void )
 																m_doNotApplyWith
 																);
 	cutilCheckMsg( "AvoidWallsCUDAKernel failed" );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	SteerToAvoidWallsKernelUnbindTextures();

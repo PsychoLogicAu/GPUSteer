@@ -6,7 +6,7 @@
 using namespace OpenSteer;
 
 ObstacleGroup::ObstacleGroup( uint3 const& worldCells, uint const kno )
-:	BaseGroup( kno, 0, worldCells.x*worldCells.y*worldCells.z ),
+:	BaseGroup( kno, 0, worldCells ),
 	m_nCount( 0 )
 {
 }

@@ -90,7 +90,7 @@ void SteerForSeparationCUDA::run( void )
 															m_doNotApplyWith 
 															);
 	cutilCheckMsg( "SteerForSeparationKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	SteerForSeparationKernelUnindTextures();

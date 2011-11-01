@@ -79,7 +79,7 @@ void SteerForPursueCUDA::run(void)
 													m_doNotApplyWith
 													);
 	cutilCheckMsg( "SteerForPursueCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void SteerForPursueCUDA::close(void)

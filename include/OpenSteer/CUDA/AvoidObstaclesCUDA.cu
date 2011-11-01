@@ -89,7 +89,7 @@ void AvoidObstaclesCUDA::run(void)
 																pdAppliedKernels, m_doNotApplyWith
 																);
 	cutilCheckMsg( "AvoidObstaclesCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	SteerToAvoidObstaclesKernelUnbindTextures();

@@ -94,7 +94,8 @@ void KNNBruteForceCUDA::run( void )
 	// Launch the KNNBruteForceCUDAKernel to compute distances to each other vehicle.
 	KNNBruteForceCUDAKernel<<< grid, block >>>( pdPosition, m_pdDistanceMatrix, m_pdIndexMatrix, k, numAgents, pdPositionOther, numOther, groupWithSelf );
 	cutilCheckMsg( "KNNBruteForceCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	CUDA_SAFE_CALL( cudaDeviceSynchronize() );
 
 	// For each agent...
 	for( uint i = 0; i < numAgents; i++ )
@@ -109,7 +110,7 @@ void KNNBruteForceCUDA::run( void )
 		// Sort the results (using thrust)
 		thrust::sort_by_key( pdDistanceStart, pdDistanceEnd, pdIndexStart );
 
-		CUDA_SAFE_CALL( cudaThreadSynchronize() );
+		//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 		// Copy the first k elements to the KNNData structure for output.
 		CUDA_SAFE_CALL( cudaMemcpy( m_pKNNData->pdKNNDistances() + i*k, m_pdDistanceMatrix + i*numAgents, k * sizeof(float), cudaMemcpyDeviceToDevice ) );
@@ -182,7 +183,7 @@ void KNNBruteForceCUDAV2::run( void )
 
 	KNNBruteForceCUDAKernelV2<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, pdPositionOther, numOther, groupWithSelf );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV2 failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 }
 
 void KNNBruteForceCUDAV2::close( void )
@@ -236,7 +237,7 @@ void KNNBruteForceCUDAV3::run( void )
 	// FIXME: there is a bug in the seeding part of KNNBruteForceV3
 	KNNBruteForceCUDAKernelV3<<< grid, block, shMemSize >>>( pdPosition, pdKNNIndices, pdKNNDistances, k, numAgents, pdPositionOther, numOther, groupWithSelf, seedable );
 	cutilCheckMsg( "KNNBruteForceCUDAKernelV3 failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 	
 	// Unbind the texture.
 	KNNBruteForceCUDAKernelV3UnbindTexture();

@@ -93,7 +93,7 @@ void UpdateCUDA::run(void)
 											pdAppliedKernels
 											);
 	cutilCheckMsg( "UpdateCUDAKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	UpdateCUDAKernelUnbindTextures();

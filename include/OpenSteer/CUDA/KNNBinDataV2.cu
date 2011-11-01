@@ -64,7 +64,7 @@ void KNNBinDataV2::ComputeCellNeighbors( bool b3D )
 		KNNBinningV2ComputeCellNeighbors2D<<< grid, block, shMemSize >>>( pdCells(), pdCellNeighbors(), m_nNeighborsPerCell, m_nSearchRadius, m_nCells );
 	}
 	cutilCheckMsg( "KNNBinningComputeCellNeighbors failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the texture.
 	KNNBinningV2UnbindTexture();

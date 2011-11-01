@@ -79,7 +79,7 @@ void AntiPenetrationWALLCUDA::run( void )
 															pdAppliedKernels
 															);
 	cutilCheckMsg( "AntiPenetrationWallKernel failed." );
-	CUDA_SAFE_CALL( cudaThreadSynchronize() );
+	//CUDA_SAFE_CALL( cudaThreadSynchronize() );
 
 	// Unbind the textures.
 	AntiPenetrationWallKernelUnbindTextures();
