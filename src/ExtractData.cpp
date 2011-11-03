@@ -40,8 +40,13 @@ void OpenSteer::WriteCellDensity( char const* szFilenamePrefix, AgentGroup * pAg
 		of << "%\tX\tY\tnumAgents" << std::endl;
 
 		for( uint i = 0; i < worldCells.x; i++ )
+		{
 			for( uint j = 0; j < worldCells.z; j++ )
-				of << i << '\t' << j << '\t' << phAgentsPerCell[i*worldCells.x + j] << std::endl;
+			{
+				of << phAgentsPerCell[i*worldCells.x + j] << '\t';
+			}
+			of << std::endl;
+		}
 
 		of.close();
 	}
