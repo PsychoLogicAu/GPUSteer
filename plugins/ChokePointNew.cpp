@@ -517,11 +517,11 @@ public:
 		if( frame % 30 == 0 )
 		{
 			char szFilename[100];
-			sprintf_s( szFilename, "Frames/cell_density_frame_%d.tiff", frame );
+			sprintf_s( szFilename, "Frames/cell_density_frame_%d", frame );
 
 			WriteCellDensity( szFilename, m_pGroup );
 
-			sprintf_s( szFilename, "Frames/cell_avg_velocity_frame_%d.tiff", frame );
+			sprintf_s( szFilename, "Frames/cell_avg_velocity_frame_%d", frame );
 			WriteAvgCellVelocity( szFilename, m_pGroup );
 		}
 

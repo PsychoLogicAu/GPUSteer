@@ -28,13 +28,14 @@
 
 #include "WrapWorldCUDA.cuh"
 
+
+#if defined TIMING
+// For timing...
 #include "../Timer.h"
+#include <fstream>
 
-//// For timing...
-//#include "../Timer.h"
-//#include <fstream>
-
-//static std::ofstream out( "timing.csv" );
+static std::ofstream out( "timing.csv" );
+#endif
 
 namespace OpenSteer
 {
@@ -136,8 +137,10 @@ static void updateKNNDatabase( BaseGroup * pGroup, KNNBinData * pKNNBinData )
 
 static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinData * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius )
 {
-	//Timer timer;
-	//timer.Start();
+#if defined TIMING
+	Timer timer;
+	timer.Start();
+#endif
 	KNNBinningCUDA kernel( pAgentGroup, pKNNData, pKNNBinData, pOtherGroup, searchRadius );
 
 	//KNNBruteForceCUDA kernel( pAgentGroup, pKNNData, pOtherGroup );
@@ -148,7 +151,9 @@ static void findKNearestNeighbors( AgentGroup * pAgentGroup, KNNData * pKNNData,
 	kernel.run();
 	kernel.close();
 
-	//out << timer.Stop() << std::endl;
+#if defined TIMING
+	out << timer.Stop() << std::endl;
+#endif
 }
 
 
