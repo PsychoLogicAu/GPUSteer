@@ -67,7 +67,7 @@ public:
 
 	{
 		resize( m_nSize );
-		resizeCells( m_nCells );
+		//resizeCells( m_nCells );
 	}
 
 	~KNNDatabase( void )

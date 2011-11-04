@@ -5,8 +5,8 @@
 
 namespace OpenSteer
 {
-	void WriteCellDensity( char const* szImageFilename, AgentGroup * pAgentGroup );
-	void WriteAvgCellVelocity( char const* szImageFilename, AgentGroup * pAgentGroup );
+	void WriteCellDensity( char const* szFilenamePrefix, AgentGroup * pAgentGroup, std::vector< uint > vecSelectedCells = std::vector< uint >() );
+	void WriteAvgCellVelocity( char const* szFilenamePrefix, AgentGroup * pAgentGroup );
 
 }	// namespace OpenSteer
 
