@@ -1,5 +1,6 @@
 #include "OpenSteer/ExtractData.h"
 
+#include <vector>
 #include <fstream>
 
 #define cimg_use_tiff
@@ -15,7 +16,7 @@ extern "C"
 	void ComputeAvgCellVelocity(	AgentGroup * pAgentGroup, float3 * pAvgCellVelocity );
 }
 
-void OpenSteer::WriteCellDensity( char const* szFilenamePrefix, AgentGroup * pAgentGroup )
+void OpenSteer::WriteCellDensity( char const* szAllCellsFilenamePrefix, AgentGroup * pAgentGroup, std::vector< uint > vecSelectedCells )
 {
 	char szFilename[100] = {0};
 
@@ -28,38 +29,57 @@ void OpenSteer::WriteCellDensity( char const* szFilenamePrefix, AgentGroup * pAg
 	// Run the kernel.
 	::ComputeCellDensity( pAgentGroup, phAgentsPerCell );
 
-	// Open the data file for writing.
-	sprintf_s( szFilename, "%s.dat", szFilenamePrefix );
-	std::ofstream of( szFilename );
-
-	if( of.is_open() )
+	for( uint i = 0; i < vecSelectedCells.size(); i++ )
 	{
-		of << "%\tCell densities" << std::endl;
-		of << "%\tworldCells:\tX: " << worldCells.x << "\tY: " << worldCells.y << "\tZ: " << worldCells.z << std::endl;
-		of << "%\tData format: " << std::endl;
-		of << "%\tX\tY\tnumAgents" << std::endl;
+		// Open the data file for writing (selected cells)
+		sprintf_s( szFilename, "%s_%d.dat", "Frames/cell_density", vecSelectedCells[i] );
+		std::ofstream ofsSelectedCells;
+		
+		ofsSelectedCells.open( szFilename, std::ios_base::app );
+		
+		if( ! ofsSelectedCells.is_open() )
+			ofsSelectedCells.open( szFilename );
 
-		for( uint i = 0; i < worldCells.x; i++ )
+		if( ofsSelectedCells.is_open() )
 		{
-			for( uint j = 0; j < worldCells.z; j++ )
+			ofsSelectedCells << phAgentsPerCell[ vecSelectedCells[ i ] ] << std::endl;
+
+			ofsSelectedCells.close();
+		}
+	}
+
+	// Open the data file for writing (all cells in frame)
+	sprintf_s( szFilename, "%s.dat", szAllCellsFilenamePrefix );
+	std::ofstream ofsAllCells( szFilename );
+
+	if( ofsAllCells.is_open() )
+	{
+		ofsAllCells << "%\tCell densities" << std::endl;
+		ofsAllCells << "%\tworldCells:\tX: " << worldCells.x << "\tY: " << worldCells.y << "\tZ: " << worldCells.z << std::endl;
+		ofsAllCells << "%\tData format: " << std::endl;
+		ofsAllCells << "%\tX\tY\tnumAgents" << std::endl;
+
+		for( uint i = 0; i < worldCells.z; i++ )
+		{
+			for( uint j = 0; j < worldCells.x; j++ )
 			{
-				of << phAgentsPerCell[i*worldCells.x + j] << '\t';
+				ofsAllCells << phAgentsPerCell[i*worldCells.x + j] << '\t';
 			}
-			of << std::endl;
+			ofsAllCells << std::endl;
 		}
 
-		of.close();
+		ofsAllCells.close();
 	}
 
 	// Create an image of unsigned char values.
 	CImg< unsigned char > image( worldCells.x, worldCells.z );
 	// Populate with the data.
-	for( uint i = 0; i < worldCells.x; i++ )
-		for( uint j = 0; j < worldCells.z; j++ )
-			image(i,j) =  (unsigned char)(phAgentsPerCell[i*worldCells.x + j]) * 60;
+	for( uint i = 0; i < worldCells.z; i++ )
+		for( uint j = 0; j < worldCells.x; j++ )
+			image(j,i) =  (unsigned char)min((phAgentsPerCell[i*worldCells.x + j]) * 16, 255);
 
 	memset( szFilename, 0, 100 * sizeof(char) );
-	sprintf_s( szFilename, "%s.tiff", szFilenamePrefix );
+	sprintf_s( szFilename, "%s.tiff", szAllCellsFilenamePrefix );
 	image.save_tiff( szFilename );
 	
 	free( phAgentsPerCell );

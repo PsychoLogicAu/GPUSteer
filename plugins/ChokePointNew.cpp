@@ -443,14 +443,23 @@ protected:
 
 	CameraProxy *			m_pCameraProxy;
 
+	std::vector< uint >	m_vecCells;
+
 public:
 	CtfSimulation( void )
 	:	m_pWorld( NULL ),
 		m_pGroup( NULL ),
 		//m_pObstacles( NULL ),
-		m_pCameraProxy( NULL )
+		m_pCameraProxy( NULL ),
+		m_vecCells()
 	{
 		m_pCameraProxy = new CameraProxy;
+
+		// Add some cells to extract density data for.
+		m_vecCells.push_back( 33920 );
+		m_vecCells.push_back( 39296 );
+		m_vecCells.push_back( 45696 );
+		m_vecCells.push_back( 52696 );
 	}
 
 	virtual ~CtfSimulation( void )
@@ -519,7 +528,7 @@ public:
 			char szFilename[100];
 			sprintf_s( szFilename, "Frames/cell_density_frame_%d", frame );
 
-			WriteCellDensity( szFilename, m_pGroup );
+			WriteCellDensity( szFilename, m_pGroup, m_vecCells );
 
 			sprintf_s( szFilename, "Frames/cell_avg_velocity_frame_%d", frame );
 			WriteAvgCellVelocity( szFilename, m_pGroup );
