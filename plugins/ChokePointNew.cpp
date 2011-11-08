@@ -288,6 +288,15 @@ public:
 				drawLine( p0, p2, cellColor );
 				drawLine( p1, p3, cellColor );
 				drawLine( p2, p3, cellColor );
+
+				if( g_bDrawAnnotationText )
+				{
+					std::ostringstream oss;
+					oss << it->index;
+					float3 const textColor = make_float3( 1.f, 1.f, 1.f );
+
+					draw2dTextAt3dLocation( oss, it->position, textColor );
+				}
 			}
 		}
 
@@ -456,10 +465,18 @@ public:
 		m_pCameraProxy = new CameraProxy;
 
 		// Add some cells to extract density data for.
-		m_vecCells.push_back( 33920 );
-		m_vecCells.push_back( 39296 );
-		m_vecCells.push_back( 45696 );
-		m_vecCells.push_back( 52696 );
+		m_vecCells.push_back( 16512 );	// Middle of out-stream
+		m_vecCells.push_back( 31872 );	// At outlet
+		m_vecCells.push_back( 32896 );	// Middle of pipe
+
+		m_vecCells.push_back( 33920 );	// At inlet
+		m_vecCells.push_back( 34944 );
+		m_vecCells.push_back( 35968 );
+		m_vecCells.push_back( 36992 );
+		m_vecCells.push_back( 38016 );
+		m_vecCells.push_back( 39040 );
+		m_vecCells.push_back( 40064 );
+		m_vecCells.push_back( 41088 );
 	}
 
 	virtual ~CtfSimulation( void )
@@ -530,9 +547,15 @@ public:
 
 			WriteCellDensity( szFilename, m_pGroup, m_vecCells );
 
+///*
 			sprintf_s( szFilename, "Frames/cell_avg_velocity_frame_%d", frame );
-			WriteAvgCellVelocity( szFilename, m_pGroup );
+			WriteAvgCellVelocity( szFilename, m_pGroup, m_vecCells );
+//*/
 		}
+
+		// Quit after 1024 sample points.
+		if( frame == 30720 )
+			exit( 0 );
 
 		frame++;
 	}
@@ -549,17 +572,37 @@ void CtfGroup::reset(void)
 {
 	Clear();
 
+	std::vector< float4 > const& otherPositions = m_agentGroupData.hvPosition();
+
 	//static unsigned int id = 0;
 	// Add the required number of enemies.
-	while( Size() < m_pGroupParams->m_nNumAgents )
+	while( m_nCount < m_pGroupParams->m_nNumAgents )
 	{
 		PluginBase agent;
+
+		float const radius_squared = agent.radius() * agent.radius();
+
 		AgentData &aData = agent.getVehicleData();
 
-		aData.speed = m_pGroupParams->m_fMaxSpeed;
+		//aData.speed = m_pGroupParams->m_fMaxSpeed;
+		aData.speed = 0.f;
 		aData.maxForce = m_pGroupParams->m_fMaxForce;
 		aData.maxSpeed = m_pGroupParams->m_fMaxSpeed;
-		randomizeStartingPositionAndHeading2D( aData.position, aData.up, aData.direction, aData.side, m_pGroupParams->m_fMinStartRadius, m_pGroupParams->m_fMaxStartRadius, m_pGroupParams->m_f3StartPosition );
+		
+		bool bOverlaps;
+		do
+		{
+			bOverlaps = false;
+			// Randomize the agent's position.
+			randomizeStartingPositionAndHeading2D( aData.position, aData.up, aData.direction, aData.side, m_pGroupParams->m_fMinStartRadius, m_pGroupParams->m_fMaxStartRadius, m_pGroupParams->m_f3StartPosition );
+
+			// Make sure it doesn't overlap any existing agent.
+			for( uint i = 0; i < otherPositions.size(); i++ )
+			{
+				if( float3_distanceSquared( make_float3( aData.position ), make_float3( otherPositions[i] ) ) < radius_squared )
+					bOverlaps = true;
+			}
+		}while( bOverlaps );
 		
 		bool success = AddAgent( aData );
 	}
@@ -626,7 +669,7 @@ void CtfGroup::draw(void)
 			delete [] KNWDistances;
 		}
 
-		if( g_bDrawAnnotationText )
+		if( g_bDrawAnnotationText && false )
 		{
 			// annotate the agent with useful data.
 			const float3 textOrigin = float3_add( make_float3(ad.position), make_float3( 0, 0.25, 0 ) );
