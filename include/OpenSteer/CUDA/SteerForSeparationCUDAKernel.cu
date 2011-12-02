@@ -86,7 +86,8 @@ __global__ void SteerForSeparationKernel(	float4 const*	pdPosition,
 	DIRECTION_SH( threadIdx.x )	= DIRECTION_F3( index );
 
 	for( int i = 0; i < k; i++ )
-		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		//shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNNIndices[ index + i * numA ];
 	__syncthreads();
 
     // steering accumulator and count of neighbors, both initially zero
@@ -96,7 +97,8 @@ __global__ void SteerForSeparationKernel(	float4 const*	pdPosition,
     // For each agent in this agent's KNN neighborhood...
 	for( uint i = 0; i < k; i++ )
 	{
-		uint BIndex = shKNNIndices[threadIdx.x * k + i];
+		//uint BIndex = shKNNIndices[threadIdx.x * k + i];
+		uint BIndex = shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ];
 
 		// Check for end of KNN.
 		if( BIndex >= numB )

@@ -139,21 +139,25 @@ __global__ void SteerToAvoidCloseNeighborsCUDAKernel(	// KNN data.
 	RADIUS_SH( threadIdx.x ) = RADIUS( index );
 	for( uint i = 0; i < k; i++ )
 	{
-		shKNNDistances[threadIdx.x*k + i] = pdKNNDistances[index*k + i];
-		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		//shKNNDistances[threadIdx.x*k + i] = pdKNNDistances[index*k + i];
+		//shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNNIndices[ index + i * numA ];
+		shKNNDistances[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNNDistances[ index + i * numA ];
 	}
 
 	// For each of the KNN of this agent...
 	for( int i = 0; i < k; i++ )
 	{
-		uint const threatIndex = shKNNIndices[(threadIdx.x * k) + i];
+		//uint const threatIndex = shKNNIndices[(threadIdx.x * k) + i];
+		uint const threatIndex = shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ];
 
 		// Check for the end of KNN.
 		if( threatIndex >= numB )
 			break;
 
 		// Get the distance to the other agent.
-		float const threatDistance = shKNNDistances[(threadIdx.x * k) + i];
+		//float const threatDistance = shKNNDistances[(threadIdx.x * k) + i];
+		float const threatDistance = shKNNDistances[ threadIdx.x + i * THREADSPERBLOCK ];
 
 		float const sumOfRadii = RADIUS_SH( threadIdx.x ) + tex1Dfetch( texBRadius, threatIndex );
 	    float const minCenterToCenter = minSeparationDistance + sumOfRadii;
@@ -275,7 +279,8 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(		// KNN data.
 	// Load this block's data into shared memory.
 	for( uint i = 0; i < k; i++ )
 	{
-		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		//shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNNIndices[ index + i * numA ];
 	}
 
 	POSITION_SH( threadIdx.x ) = POSITION_F3( index );
@@ -300,7 +305,8 @@ __global__ void SteerToAvoidNeighborsCUDAKernel(		// KNN data.
 	// pose the most immediate threat of collision.
 	for( uint i = 0; i < k; i++ )
 	{
-		uint const BIndex = shKNNIndices[threadIdx.x * k + i];
+		//uint const BIndex = shKNNIndices[threadIdx.x * k + i];
+		uint const BIndex = shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ];
 
 		// Check for end of KNN.
 		if( BIndex >= numB )

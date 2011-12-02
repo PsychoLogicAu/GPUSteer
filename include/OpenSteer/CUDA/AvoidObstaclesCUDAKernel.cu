@@ -188,8 +188,10 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 
 	for( int i = 0; i < k; i++ )
 	{
-		shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
-		shKNNDistances[threadIdx.x*k + i] = pdKNNDistances[index*k + i];
+		//shKNNIndices[threadIdx.x*k + i] = pdKNNIndices[index*k + i];
+		//shKNNDistances[threadIdx.x*k + i] = pdKNNDistances[index*k + i];
+		shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNNIndices[ index + i * numAgents ];
+		shKNNDistances[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNNDistances[ index + i * numAgents ];
 	}
 	__syncthreads();
 
@@ -203,7 +205,8 @@ __global__ void SteerToAvoidObstaclesKernel(	uint const*		pdKNNIndices,			// In:
 	// For each obstacle in the KNN for this agent...
 	for( uint i = 0; i < k; i++ )
 	{
-		uint const obstacleIndex = shKNNIndices[threadIdx.x*k + i];
+		//uint const obstacleIndex = shKNNIndices[threadIdx.x*k + i];
+		uint const obstacleIndex = shKNNIndices[ threadIdx.x + i * THREADSPERBLOCK ];
 
 		// Check for the final near obstacle.
 		if( obstacleIndex >= numObstacles )

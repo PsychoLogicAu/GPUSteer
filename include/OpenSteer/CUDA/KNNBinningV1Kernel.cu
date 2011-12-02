@@ -27,7 +27,7 @@ extern "C"
 	// Unbind the textures.
 	__host__ void KNNBinningV1UnbindTexture( void );
 
-	__host__ void KNNBinningV1KernelBindTextures(			uint const*		pdBCellStart,
+	__host__ void KNNBinningV1KernelBindTextures(		uint const*		pdBCellStart,
 														uint const*		pdBCellEnd,
 														uint const*		pdBIndices,
 														float4 const*	pdBPositionSorted,
