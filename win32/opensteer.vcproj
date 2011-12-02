@@ -371,6 +371,14 @@
 							>
 						</File>
 						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV3.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV3.cuh"
+							>
+						</File>
+						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinning.cuh"
 							>
 						</File>
@@ -396,6 +404,18 @@
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2Kernel.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV3.cu"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV3.cuh"
+							>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV3Kernel.cu"
 							>
 						</File>
 						<File

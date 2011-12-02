@@ -816,7 +816,7 @@ public:
 		// Update the simulation.
 		g_pSimulation->update( currentTime, elapsedTime );
 
-		g_pSimulation->extractData();
+		//g_pSimulation->extractData();
 	}
 
     void redraw (const float currentTime, const float elapsedTime)

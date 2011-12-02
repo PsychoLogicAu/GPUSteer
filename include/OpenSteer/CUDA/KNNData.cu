@@ -60,7 +60,12 @@ void KNNData::getAgentData( size_t const index, uint * pKNNIndices, float * pKNN
 		syncHost();
 
 		// Copy into the parameters.
-		memcpy( pKNNIndices, &m_hvKNNIndices[ index * m_nK ], m_nK * sizeof(uint) );
-		memcpy( pKNNDistances, &m_hvKNNDistances[ index * m_nK ], m_nK * sizeof(float) );
+		//memcpy( pKNNIndices, &m_hvKNNIndices[ index * m_nK ], m_nK * sizeof(uint) );
+		//memcpy( pKNNDistances, &m_hvKNNDistances[ index * m_nK ], m_nK * sizeof(float) );
+		for( uint i = 0; i < m_nK; i++ )
+		{
+			pKNNIndices[ i ] = m_hvKNNIndices[ index + i * m_nSize ];
+			pKNNDistances[ i ] = m_hvKNNDistances[ index + i * m_nSize ];
+		}
 	}
 }

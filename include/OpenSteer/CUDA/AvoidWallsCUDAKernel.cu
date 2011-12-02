@@ -115,7 +115,8 @@ __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 
 	for( uint i = 0; i < k; i++ )
 	{
-		shKNLIndices[ threadIdx.x * k + i ] = pdKNLIndices[ index * k + i ];
+		//shKNLIndices[ threadIdx.x * k + i ] = pdKNLIndices[ index * k + i ];
+		shKNLIndices[ threadIdx.x + i * THREADSPERBLOCK ] = pdKNLIndices[ index + i * numAgents ];
 	}
 	FLOAT3_GLOBAL_READ( shSide, pdSide );
 
@@ -167,7 +168,8 @@ __global__ void SteerToAvoidWallsCUDAKernel(	// Agent data.
 	// For each of the K Nearest Lines...
 	for( uint i = 0; i < k; i++ )
 	{
-		uint const	lineIndex = shKNLIndices[ threadIdx.x * k + i ];
+		//uint const	lineIndex = shKNLIndices[ threadIdx.x * k + i ];
+		uint const lineIndex = shKNLIndices[ threadIdx.x + i * THREADSPERBLOCK ];
 
 		// Check for end of KNL.
 		if( lineIndex >= numLines )
