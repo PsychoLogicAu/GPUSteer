@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="plugins">
+      <UniqueIdentifier>{1a4783b7-54d0-4f06-861b-e115fbe019d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugins\params">
+      <UniqueIdentifier>{6fc656fa-3db3-4e50-b825-f57d031cc4be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{a71bfe44-e507-46ce-8087-dc95d0039b32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\plugins\BoidsGroup.cpp">
+      <Filter>plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\plugins\BoidsGroupBruteForce.cpp">
+      <Filter>plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\plugins\BoidsGroupNew.cpp">
+      <Filter>plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\plugins\ChokePointNew.cpp">
+      <Filter>plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\plugins\MultiGroup.cpp">
+      <Filter>plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\plugins\PluginCommon.cpp">
+      <Filter>plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Simulation.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\plugins\PluginCommon.h">
+      <Filter>plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Simulation.h" />
+    <ClInclude Include="..\include\OpenSteer\Timer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Data\BoidsGroup.params">
+      <Filter>plugins\params</Filter>
+    </None>
+    <None Include="..\..\Data\ChokePoint.params">
+      <Filter>plugins\params</Filter>
+    </None>
+    <None Include="..\..\Data\MultiGroup1VStationary.params">
+      <Filter>plugins\params</Filter>
+    </None>
+    <None Include="..\..\Data\MultiGroup2.params">
+      <Filter>plugins\params</Filter>
+    </None>
+    <None Include="..\..\Data\MultiGroup4.params">
+      <Filter>plugins\params</Filter>
+    </None>
+    <None Include="..\..\Data\MultiGroupRightAngle.params">
+      <Filter>plugins\params</Filter>
+    </None>
+    <None Include="OpenSteerDemo.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SteerTest.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
