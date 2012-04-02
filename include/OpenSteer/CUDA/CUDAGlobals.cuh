@@ -26,5 +26,6 @@ typedef unsigned int uint;
 #endif
 
 //#define KNNBINNINGV1
+#define KNNBINNINGV2
 
 #endif

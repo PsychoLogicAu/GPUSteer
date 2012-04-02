@@ -13,9 +13,6 @@
 		/>
 	</Platforms>
 	<ToolFiles>
-		<DefaultToolFile
-			FileName="NvCudaRuntimeApi.v4.0.rules"
-		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -32,16 +29,6 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
-				Name="Cudart Build Rule"
-				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBPNG_ROOT)include;$(ZLIB_ROOT)include"
-				GPUDebugInfo="true"
-				Arch1="21"
-				Arch2="0"
-				PtxAsOptionV="false"
-				Optimization="0"
-				Runtime="3"
-			/>
-			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -53,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;;&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_PATH_V4_0)include&quot;;&quot;$(FREEGLUT_ROOT)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.1\C\common\inc&quot;;&quot;$(LIBTIFF_ROOT)\include&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -73,7 +60,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="cudart.lib libtiff.lib"
-				AdditionalLibraryDirectories="&quot;$(CUDA_PATH_V4_0)lib\Win32&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)lib\Win32&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -107,13 +94,6 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
-				Name="Cudart Build Rule"
-				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBPNG_ROOT)include;$(ZLIB_ROOT)include"
-				Arch1="21"
-				Arch2="0"
-				Runtime="2"
-			/>
-			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -126,7 +106,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;;&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_PATH_V4_0)include&quot;;&quot;$(FREEGLUT_ROOT)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.1\C\common\inc&quot;;&quot;$(LIBTIFF_ROOT)\include&quot;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
@@ -145,7 +125,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="cudart.lib libtiff.lib"
-				AdditionalLibraryDirectories="&quot;$(CUDA_PATH_V4_0)lib\Win32&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)lib\Win32&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -180,12 +160,9 @@
 			/>
 			<Tool
 				Name="Cudart Build Rule"
-				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBPNG_ROOT)include;$(ZLIB_ROOT)include"
-				GPUDebugInfo="true"
+				Include="C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.1\C\common\inc"
 				Arch1="21"
 				Arch2="0"
-				PtxAsOptionV="true"
-				Runtime="2"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -200,7 +177,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc&quot;;&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_PATH_V4_0)include&quot;;&quot;$(FREEGLUT_ROOT)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)opensteer\include&quot;;&quot;$(CUDA_INC_PATH)&quot;;&quot;$(GLUT_ROOT)&quot;;&quot;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.1\C\common\inc&quot;;&quot;$(LIBTIFF_ROOT)\include&quot;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
@@ -219,7 +196,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="cudart.lib libtiff.lib"
-				AdditionalLibraryDirectories="&quot;$(CUDA_PATH_V4_0)lib\Win32&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)lib\Win32&quot;;&quot;$(LIBTIFF_ROOT)\lib&quot;;&quot;$(LIBPNG_ROOT)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -247,6 +224,10 @@
 			>
 			<File
 				RelativePath="..\include\OpenSteer\AbstractKernel.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OpenSteer\CUDA\GroupSteerLibrary.cu"
 				>
 			</File>
 			<File
@@ -369,24 +350,19 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV2.cuh"
 							>
-						</File>
-						<File
-							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV3.cu"
-							>
 							<FileConfiguration
 								Name="Debug|Win32"
 								ExcludedFromBuild="true"
 								>
 								<Tool
-									Name="Cudart Build Rule"
+									Name="VCCustomBuildTool"
 								/>
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release|Win32"
-								ExcludedFromBuild="true"
 								>
 								<Tool
-									Name="Cudart Build Rule"
+									Name="VCCustomBuildTool"
 								/>
 							</FileConfiguration>
 							<FileConfiguration
@@ -394,9 +370,13 @@
 								ExcludedFromBuild="true"
 								>
 								<Tool
-									Name="Cudart Build Rule"
+									Name="VCCustomBuildTool"
 								/>
 							</FileConfiguration>
+						</File>
+						<File
+							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV3.cu"
+							>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinDataV3.cuh"
@@ -411,7 +391,6 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release|Win32"
-								ExcludedFromBuild="true"
 								>
 								<Tool
 									Name="VCCustomBuildTool"
@@ -449,6 +428,29 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2.cuh"
 							>
+							<FileConfiguration
+								Name="Debug|Win32"
+								ExcludedFromBuild="true"
+								>
+								<Tool
+									Name="VCCustomBuildTool"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32"
+								>
+								<Tool
+									Name="VCCustomBuildTool"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="CUDA Debug|Win32"
+								ExcludedFromBuild="true"
+								>
+								<Tool
+									Name="VCCustomBuildTool"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV2Kernel.cu"
@@ -457,30 +459,6 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV3.cu"
 							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="Cudart Build Rule"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="Cudart Build Rule"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="CUDA Debug|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="Cudart Build Rule"
-								/>
-							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV3.cuh"
@@ -495,7 +473,6 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release|Win32"
-								ExcludedFromBuild="true"
 								>
 								<Tool
 									Name="VCCustomBuildTool"
@@ -513,30 +490,6 @@
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNBinningV3Kernel.cu"
 							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="Cudart Build Rule"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="Cudart Build Rule"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="CUDA Debug|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="Cudart Build Rule"
-								/>
-							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\include\OpenSteer\CUDA\KNNDatabase.cu"
@@ -857,30 +810,6 @@
 			<File
 				RelativePath="..\include\OpenSteer\ExtractData.h"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="CUDA Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\include\OpenSteer\Globals.h"
@@ -961,30 +890,6 @@
 			<File
 				RelativePath="..\src\ExtractData.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="CUDA Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\lq.c"

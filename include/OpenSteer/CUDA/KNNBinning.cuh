@@ -11,11 +11,17 @@ using namespace OpenSteer;
 	typedef KNNBinningV1UpdateDBCUDA KNNBinningUpdateDBCUDA;
 	typedef KNNBinningV1CUDA KNNBinningCUDA;
 
-#else
+#elif defined KNNBINNINGV2
 	#include "KNNBinningV2.cuh"
 
 	typedef KNNBinningV2UpdateDBCUDA KNNBinningUpdateDBCUDA;
 	typedef KNNBinningV2CUDA KNNBinningCUDA;
+
+#else
+	#include "KNNBinningV3.cuh"
+
+	typedef KNNBinningV3UpdateDBCUDA KNNBinningUpdateDBCUDA;
+	typedef KNNBinningV3CUDA KNNBinningCUDA;
 #endif
 
 #endif
