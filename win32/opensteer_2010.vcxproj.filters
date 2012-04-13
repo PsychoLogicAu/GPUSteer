@@ -451,8 +451,5 @@
     <CudaCompile Include="..\include\OpenSteer\CUDA\KNNData.cu">
       <Filter>Group Steering\CUDA\Neighborhood</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\include\OpenSteer\CUDA\GroupSteerLibrary.cu">
-      <Filter>Group Steering</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

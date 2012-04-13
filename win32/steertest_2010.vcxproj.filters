@@ -16,9 +16,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\plugins\BoidsGroup.cpp">
-      <Filter>plugins</Filter>
-    </ClCompile>
     <ClCompile Include="..\plugins\BoidsGroupBruteForce.cpp">
       <Filter>plugins</Filter>
     </ClCompile>
