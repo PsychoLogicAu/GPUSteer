@@ -87,8 +87,8 @@ __global__ void AntiPenetrationAgentsCUDAKernel(	float4 const*	pdPosition,
 	RADIUS_SH( threadIdx.x ) = RADIUS( index );
 
 	// Load the data for the first KNN for each agent.
-	shKNNIndices[ threadIdx.x ] = pdKNNIndices[ index * k ];
-	shKNNDistances[ threadIdx.x ] = pdKNNDistances[ index * k ];
+	shKNNIndices[ threadIdx.x ] = pdKNNIndices[ index ];
+	shKNNDistances[ threadIdx.x ] = pdKNNDistances[ index ];
 
 	if( shKNNIndices[ threadIdx.x ] >= numB )	// There is no near agent.
 		return;

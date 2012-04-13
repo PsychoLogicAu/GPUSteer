@@ -1,5 +1,5 @@
-#ifndef OPENSTEER_KNNBINNINGV2_CUH
-#define OPENSTEER_KNNBINNINGV2_CUH
+#ifndef OPENSTEER_KNNBINNINGV3_CUH
+#define OPENSTEER_KNNBINNINGV3_CUH
 
 #include "AbstractCUDAKernel.cuh"
 
@@ -15,26 +15,26 @@ protected:
 	KNNBinDataV3 *	m_pKNNBinData;
 
 public:
-	KNNBinningV3UpdateDBCUDA( BaseGroup * pGroup, KNNBinDataV2 * pKNNBinData );
-	virtual ~KNNBinningV2UpdateDBCUDA( void ) {}
+	KNNBinningV3UpdateDBCUDA( BaseGroup * pGroup, KNNBinDataV3 * pKNNBinData );
+	virtual ~KNNBinningV3UpdateDBCUDA( void ) {}
 
 	virtual void init( void );
 	virtual void run( void );
 	virtual void close( void );
 };
 
-class KNNBinningV2CUDA : public AbstractCUDAKernel
+class KNNBinningV3CUDA : public AbstractCUDAKernel
 {
 protected:
 	KNNData *		m_pKNNData;
-	KNNBinDataV2 *	m_pKNNBinData;
+	KNNBinDataV3 *	m_pKNNBinData;
 	BaseGroup *		m_pOtherGroup;
 
 	uint			m_searchRadius;
 
 public:
-	KNNBinningV2CUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinDataV2 * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius );
-	virtual ~KNNBinningV2CUDA( void ) {}
+	KNNBinningV3CUDA( AgentGroup * pAgentGroup, KNNData * pKNNData, KNNBinDataV3 * pKNNBinData, BaseGroup * pOtherGroup, uint const searchRadius );
+	virtual ~KNNBinningV3CUDA( void ) {}
 
 	virtual void init( void );
 	virtual void run( void );

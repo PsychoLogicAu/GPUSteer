@@ -69,7 +69,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_INC_PATH);$(GLUT_ROOT);C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBTIFF_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_PATH_V4_0)include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -78,8 +78,8 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>cudart.lib;libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)lib\Win32;$(LIBTIFF_ROOT)\lib;$(LIBPNG_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V4_0)lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
       <Command>echo copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
@@ -88,14 +88,14 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     </PostBuildEvent>
     <CudaCompile>
       <Include>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc</Include>
-      <CodeGeneration>compute_20,sm_20</CodeGeneration>
+      <CodeGeneration>compute_20,sm_21</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_INC_PATH);$(GLUT_ROOT);C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBTIFF_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_PATH_V4_0)include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
@@ -103,8 +103,8 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>cudart.lib;libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)lib\Win32;$(LIBTIFF_ROOT)\lib;$(LIBPNG_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V4_0)lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
       <Command>echo copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
@@ -113,14 +113,14 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     </PostBuildEvent>
     <CudaCompile>
       <Include>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc</Include>
-      <CodeGeneration>compute_20,sm_20</CodeGeneration>
+      <CodeGeneration>compute_20,sm_21</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_INC_PATH);$(GLUT_ROOT);C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;$(LIBTIFF_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_PATH_V4_0)include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
@@ -128,8 +128,8 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>cudart.lib;libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)lib\Win32;$(LIBTIFF_ROOT)\lib;$(LIBPNG_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V4_0)lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
       <Command>echo copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
@@ -138,7 +138,7 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     </PostBuildEvent>
     <CudaCompile>
       <Include>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc</Include>
-      <CodeGeneration>compute_20,sm_20</CodeGeneration>
+      <CodeGeneration>compute_20,sm_21</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -170,9 +170,6 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     <ClInclude Include="..\include\OpenSteer\WallGroup.h" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\include\OpenSteer\CUDA\GroupSteerLibrary.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
     <ClInclude Include="..\include\OpenSteer\CUDA\GroupSteerLibrary.cuh">
       <FileType>Document</FileType>
     </ClInclude>
@@ -254,10 +251,13 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     </ClInclude>
     <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV3.cu">
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </CudaCompile>
     <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV3.cuh">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinning.cuh">
       <FileType>Document</FileType>
@@ -283,13 +283,18 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     </CudaCompile>
     <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV3.cu">
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </CudaCompile>
     <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV3.cuh">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV3Kernel.cu">
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="..\include\OpenSteer\CUDA\KNNDatabase.cu">
       <FileType>Document</FileType>
@@ -439,7 +444,11 @@ copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
     <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\Clock.cpp" />
     <ClCompile Include="..\src\Draw.cpp" />
-    <ClCompile Include="..\src\ExtractData.cpp" />
+    <ClCompile Include="..\src\ExtractData.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\lq.c" />
     <ClCompile Include="..\src\ObstacleGroup.cpp" />
     <ClCompile Include="..\src\OpenSteerDemo.cpp" />
