@@ -1,0 +1,455 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Group Steering">
+      <UniqueIdentifier>{5f1f5cf3-c769-484a-8ea7-8499da608363}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA">
+      <UniqueIdentifier>{e35a481f-09c7-4fc1-8b95-e4e094029fc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Kernels">
+      <UniqueIdentifier>{576295f9-b244-4e19-a7ad-d0533257e9bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Neighborhood">
+      <UniqueIdentifier>{b9ac2b4b-5fe0-4062-878a-4e90b7df91b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Neighborhood\KNNBinning">
+      <UniqueIdentifier>{f9024842-5fd8-42ec-8251-38b4e90701a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Neighborhood\KNNBruteForce">
+      <UniqueIdentifier>{a9b1597a-fd1d-48e5-939d-b81e1b486cfb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Utils">
+      <UniqueIdentifier>{b3cf235e-d75f-44c6-a8c9-e4f00dc3b228}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors">
+      <UniqueIdentifier>{35748e04-f853-4c7d-b75b-fafb75b4cfa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Pursue">
+      <UniqueIdentifier>{14f40e88-b738-41e1-927d-285d63409614}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Evade">
+      <UniqueIdentifier>{45e7efea-10b9-4317-8e51-59a277019f01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Flee">
+      <UniqueIdentifier>{02ef63ec-e14a-40c5-83d7-b70dc3c38730}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Seek">
+      <UniqueIdentifier>{ecaf56ac-2704-471b-b489-17e7d2a9d53c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Follow Path">
+      <UniqueIdentifier>{d45af73b-0f34-40ca-9f72-ef4575db37b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood">
+      <UniqueIdentifier>{1efb81ca-56df-4571-957c-a41e7af5a935}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood\Separation">
+      <UniqueIdentifier>{6da17192-d8d5-4c2c-bb0b-31bfaedcf567}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood\Alignment">
+      <UniqueIdentifier>{38fe9d5a-437c-4ac7-a6e8-4a9bd5a6041d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood\Avoid Neighbors">
+      <UniqueIdentifier>{26e419fb-1163-4d8d-925a-95a41151073b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood\Avoid Obstacles">
+      <UniqueIdentifier>{75e3a426-4d66-4109-807d-7955ad961eb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood\Avoid Walls">
+      <UniqueIdentifier>{d45de09c-fe2d-4858-869b-8e00cf9b42e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Behaviors\Neighborhood\Cohesion">
+      <UniqueIdentifier>{f16a5bd9-5cce-43ca-baff-6e4da71ee44a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Group Steering\CUDA\Anti-Penetration">
+      <UniqueIdentifier>{00543d8d-6a13-401a-b1f3-4d294d147f0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{3f98a6e8-803e-4437-9eac-c41529fcf4fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{7dd24580-f1ba-4aab-86d4-cbd76c943aa6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\OpenSteer\AbstractKernel.h">
+      <Filter>Group Steering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\UpdateCUDA.h">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\DebugUtils.h">
+      <Filter>Group Steering\CUDA\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\AbstractLocalSpace.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\AbstractVehicle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\AgentData.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\AgentGroup.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Annotation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\BaseGroup.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Camera.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Clock.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Draw.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\ExtractData.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Globals.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\LocalSpace.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\lq.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Obstacle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\ObstacleGroup.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\OpenSteerDemo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Pathway.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\PlugIn.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Proximity.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\SimpleVehicle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\SteerLibrary.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\Utilities.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\WallGroup.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cuh">
+      <Filter>Group Steering\CUDA\Anti-Penetration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cuh">
+      <Filter>Group Steering\CUDA\Anti-Penetration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Evade</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Flee</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Follow Path</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Alignment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Neighbors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Obstacles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Walls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Cohesion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Separation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Pursue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\FlockingCommon.cuh">
+      <Filter>Group Steering\CUDA\Behaviors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cuh">
+      <Filter>Group Steering\CUDA\Behaviors\Seek</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AbstractCUDAKernel.cuh">
+      <Filter>Group Steering\CUDA\Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\CUDAKernelGlobals.cuh">
+      <Filter>Group Steering\CUDA\Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\WrapWorldCUDA.cuh">
+      <Filter>Group Steering\CUDA\Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinData.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataGlobals.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV1.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV2.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV3.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinning.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV1.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV2.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV3.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNDatabase.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBruteForce</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNData.cuh">
+      <Filter>Group Steering\CUDA\Neighborhood</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\dev_vector.cuh">
+      <Filter>Group Steering\CUDA\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\AgentGroupData.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\CUDAGlobals.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\ObstacleGroupData.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\VectorUtils.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\WallGroupData.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\GroupSteerLibrary.cuh">
+      <Filter>Group Steering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\CUDAUtils.cuh">
+      <Filter>Group Steering\CUDA</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\AgentGroup.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Annotation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Clock.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Draw.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ExtractData.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lq.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ObstacleGroup.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\OpenSteerDemo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Pathway.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\PlugIn.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SimpleVehicle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SteerLibrary.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\WallGroup.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cu">
+      <Filter>Group Steering\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\ProcessData.cu">
+      <Filter>Group Steering\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\UpdateCUDA.cu">
+      <Filter>Group Steering\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\WallGroupData.cu">
+      <Filter>Group Steering\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\WrapWorldCUDA.cu">
+      <Filter>Group Steering\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cu">
+      <Filter>Group Steering\CUDA\Anti-Penetration</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Anti-Penetration</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cu">
+      <Filter>Group Steering\CUDA\Anti-Penetration</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Anti-Penetration</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Evade</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForEvasionCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Evade</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Flee</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForFleeCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Flee</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Follow Path</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToFollowPathCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Follow Path</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Alignment</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForAlignmentCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Alignment</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Neighbors</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Neighbors</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Obstacles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Obstacles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Walls</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Avoid Walls</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Cohesion</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForCohesionCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Cohesion</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Separation</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeparationCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Neighborhood\Separation</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Pursue</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForPursueCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Pursue</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Seek</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeekCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Behaviors\Seek</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\UpdateCUDAKernelNew.cu">
+      <Filter>Group Steering\CUDA\Kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\WrapWorldCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV1.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV2.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV3.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV1.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV1Kernel.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV2.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV2Kernel.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV3.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV3Kernel.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNDatabase.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBinning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBruteForce</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBruteForceCUDAKernel.cu">
+      <Filter>Group Steering\CUDA\Neighborhood\KNNBruteForce</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNData.cu">
+      <Filter>Group Steering\CUDA\Neighborhood</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,465 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="CUDA Debug|Win32">
+      <Configuration>CUDA Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>opensteer</ProjectName>
+    <ProjectGuid>{67B50FB9-3B42-4F9E-A6D9-799115BB2ED8}</ProjectGuid>
+    <RootNamespace>opensteer</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 4.0.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)lib\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)obj\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)lib\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)obj\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">$(SolutionDir)lib\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">$(SolutionDir)obj\$(Configuration)\$(ProjectName)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_PATH_V4_0)include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V4_0)lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>echo copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
+copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
+</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <Include>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc</Include>
+      <CodeGeneration>compute_20,sm_21</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_PATH_V4_0)include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V4_0)lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>echo copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
+copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
+</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <Include>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc</Include>
+      <CodeGeneration>compute_20,sm_21</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\freeglut-2.8.0\include;$(SolutionDir)opensteer\include;$(CUDA_PATH_V4_0)include;C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V4_0)lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>echo copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
+copy "$(CUDA_PATH_V4_1)\bin\cudart*.dll" "$(OutDir)"
+</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <Include>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.0\C\common\inc</Include>
+      <CodeGeneration>compute_20,sm_21</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\OpenSteer\AbstractKernel.h" />
+    <ClInclude Include="..\include\OpenSteer\CUDA\UpdateCUDA.h" />
+    <ClInclude Include="..\include\OpenSteer\CUDA\DebugUtils.h" />
+    <ClInclude Include="..\include\OpenSteer\AbstractLocalSpace.h" />
+    <ClInclude Include="..\include\OpenSteer\AbstractVehicle.h" />
+    <ClInclude Include="..\include\OpenSteer\AgentData.h" />
+    <ClInclude Include="..\include\OpenSteer\AgentGroup.h" />
+    <ClInclude Include="..\include\OpenSteer\Annotation.h" />
+    <ClInclude Include="..\include\OpenSteer\BaseGroup.h" />
+    <ClInclude Include="..\include\OpenSteer\Camera.h" />
+    <ClInclude Include="..\include\OpenSteer\Clock.h" />
+    <ClInclude Include="..\include\OpenSteer\Draw.h" />
+    <ClInclude Include="..\include\OpenSteer\ExtractData.h" />
+    <ClInclude Include="..\include\OpenSteer\Globals.h" />
+    <ClInclude Include="..\include\OpenSteer\LocalSpace.h" />
+    <ClInclude Include="..\include\OpenSteer\lq.h" />
+    <ClInclude Include="..\include\OpenSteer\Obstacle.h" />
+    <ClInclude Include="..\include\OpenSteer\ObstacleGroup.h" />
+    <ClInclude Include="..\include\OpenSteer\OpenSteerDemo.h" />
+    <ClInclude Include="..\include\OpenSteer\Pathway.h" />
+    <ClInclude Include="..\include\OpenSteer\PlugIn.h" />
+    <ClInclude Include="..\include\OpenSteer\Proximity.h" />
+    <ClInclude Include="..\include\OpenSteer\SimpleVehicle.h" />
+    <ClInclude Include="..\include\OpenSteer\SteerLibrary.h" />
+    <ClInclude Include="..\include\OpenSteer\Utilities.h" />
+    <ClInclude Include="..\include\OpenSteer\WallGroup.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\OpenSteer\CUDA\GroupSteerLibrary.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\AgentGroupData.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\CUDAGlobals.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\CUDAUtils.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\ObstacleGroupData.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\PolylinePathwayCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\ProcessData.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\UpdateCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\VectorUtils.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\WallGroupData.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\WallGroupData.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AbstractCUDAKernel.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\CUDAKernelGlobals.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\UpdateCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\UpdateCUDAKernelNew.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\WrapWorldCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\WrapWorldCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNData.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNData.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinData.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataGlobals.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV1.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV1.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV2.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV2.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinDataV3.cu">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinDataV3.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinning.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV1.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV1.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV1Kernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV2.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV2.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV2Kernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV3.cu">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBinningV3.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBinningV3Kernel.cu">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNDatabase.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNDatabase.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\KNNBruteForceCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\KNNBruteForceCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\dev_vector.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenSteer\CUDA\FlockingCommon.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForPursueCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForPursueCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForEvasionCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForEvasionCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForFleeCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForFleeCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForSeekCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeekCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerToFollowPathCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToFollowPathCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForSeparationCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForSeparationCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForAlignmentCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForAlignmentCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerToAvoidNeighborsCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AvoidObstaclesCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidObstaclesCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AvoidWallsCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AvoidWallsCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\SteerForCohesionCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\SteerForCohesionCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationAgentsCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <ClInclude Include="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDA.cuh">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\AntiPenetrationWallCUDAKernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\include\OpenSteer\CUDA\WrapWorldCUDA.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\AgentGroup.cpp" />
+    <ClCompile Include="..\src\Annotation.cpp" />
+    <ClCompile Include="..\src\Camera.cpp" />
+    <ClCompile Include="..\src\Clock.cpp" />
+    <ClCompile Include="..\src\Draw.cpp" />
+    <ClCompile Include="..\src\ExtractData.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='CUDA Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\lq.c" />
+    <ClCompile Include="..\src\ObstacleGroup.cpp" />
+    <ClCompile Include="..\src\OpenSteerDemo.cpp" />
+    <ClCompile Include="..\src\Pathway.cpp" />
+    <ClCompile Include="..\src\PlugIn.cpp" />
+    <ClCompile Include="..\src\SimpleVehicle.cpp" />
+    <ClCompile Include="..\src\SteerLibrary.cpp" />
+    <ClCompile Include="..\src\WallGroup.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 4.0.targets" />
+  </ImportGroup>
+</Project>
