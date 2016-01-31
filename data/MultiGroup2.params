@@ -1,0 +1,92 @@
+# Simulation parameters
+# <simulation>
+	seed								= 12345
+	knn									= 7
+	kno									= 2
+	knw									= 3
+	searchRadius						= 2
+	maxPursuitPredictionTime			= 10
+	minTimeToCollision					= 10
+	minTimeToObstacle					= 5
+	minTimeToWall						= 10
+	pathPredictionTime					= 5
+	minSeparationDistance				= 0.5
+	maxSeparationDistance				= 1.3
+	minFlockingDistance					= 0.5
+	maxFlockingDistance					= 7
+	cosMaxFlockingAngle					= -0.86602540378443864676372317075294
+	avoidCloseNeighbors					= 0
+	# Weights
+	weightAlignment						= 2.5
+	weightCohesion						= 5
+	weightSeparation					= 10
+	weightPursuit						= 1
+	weightSeek							= 4
+	weightFollowPath					= 1
+	weightAvoidObstacles				= 1
+	weightAvoidWalls					= 1
+	weightAvoidNeighbors				= 10
+	# Masks
+	# KERNEL_PURSUE_BIT					= 00000000 00000001 // 1
+	# KERNEL_EVADE_BIT					= 00000000 00000010 // 2
+	# KERNEL_SEEK_BIT					= 00000000 00000100 // 4
+	# KERNEL_FLEE_BIT					= 00000000 00001000 // 8
+	# KERNEL_SEPARATION_BIT				= 00000000 00010000 // 16
+	# KERNEL_ALIGNMENT_BIT				= 00000000 00100000 // 32
+	# KERNEL_COHESION_BIT				= 00000000 01000000 // 64
+	# KERNEL_AVOID_OBSTACLES_BIT		= 00000000 10000000 // 128
+	# KERNEL_AVOID_WALLS_BIT			= 00000001 00000000 // 256
+	# KERNEL_AVOID_NEIGHBORS_BIT		= 00000010 00000000 // 512
+	# KERNEL_AVOID_CLOSE_NEIGHBORS_BIT	= 00000100 00000000 // 1024
+	# KERNEL_FOLLOW_PATH_BIT			= 00001000 00000000 // 2048
+	# KERNEL_ANTI_PENETRATION_WALL		= 00010000 00000000 // 4096
+	# KERNEL_ANTI_PENETRATION_AGENT		= 00100000 00000000 // 8192
+	maskAlignment						= 512	# KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT
+	maskAntiPenetrationAgents			= 512	# KERNEL_ANTI_PENETRATION_WALL
+	maskCohesion						= 512	# KERNEL_AVOID_WALLS_BIT | KERNEL_SEPARATION_BIT
+	maskSeparation						= 512	# KERNEL_ANTI_PENETRATION_WALL
+	maskSeek							= 128	# KERNEL_AVOID_OBSTACLES_BIT
+	maskFlee							= 4496	# KERNEL_ANTI_PENETRATION_WALL | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_OBSTACLES_BIT | KERNEL_SEPARATION_BIT
+	maskPursuit							= 4496	# KERNEL_ANTI_PENETRATION_WALL | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_OBSTACLES_BIT | KERNEL_SEPARATION_BIT
+	maskEvade							= 4496	# KERNEL_ANTI_PENETRATION_WALL | KERNEL_AVOID_WALLS_BIT | KERNEL_AVOID_OBSTACLES_BIT | KERNEL_SEPARATION_BIT
+	maskFollowPath						= 16	# KERNEL_SEPARATION_BIT
+	maskAvoidObstacles					= 0
+	maskAvoidWalls						= 0
+	maskAvoidNeighbors					= 0
+	<world>
+		dimensions						= 1024 10 1024
+		cells							= 256 1 256
+		obstacleCount					= 0
+		#mapFilename					= 10kAgentsChoke.map
+	</world>
+	<group>
+		numAgents						= 5000
+		maxSpeed						= 3
+		maxForce						= 3
+		startPosition					= 0 0 233
+		minStartRadius					= 0
+		maxStartRadius					= 150
+		<path>
+			point						= 0 0 0
+			point						= 0 0 -650
+			cyclic						= 0
+			radius						= 23
+		</path>
+		bodyColor						= 0.4 0.4 0.6 # Bluish
+	</group>
+	<group>
+		numAgents						= 5000
+		maxSpeed						= 3
+		maxForce						= 3
+		startPosition					= 0 0 -233
+		minStartRadius					= 0
+		maxStartRadius					= 150
+		<path>
+			point						= 0 0 0
+			point						= 0 0 650
+			cyclic						= 0
+			radius						= 23
+		</path>
+		bodyColor						= 0.6 0.4 0.4 # Redish
+	</group>
+</simulation>

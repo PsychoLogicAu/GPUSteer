@@ -1,0 +1,26 @@
+# World parameters
+worldDimensions:635,10,635
+worldCells:91,1,91
+numObstacles:500
+mapFile:10kAgentsChoke.map
+maxSearchRadius:2
+
+# Group parameters
+knn:5
+kno:2
+searchRadiusNeighbors:1
+searchRadiusObstacles:2
+
+# Behavior tuning
+pursuitPredictionTime:10
+minSeparationDistance:0.5
+minTimeToCollision:2
+minTimeToObstacle:5
+minTimeToWall:5
+
+# Kernel weights
+weightSeparation:0.2
+weightPursuit:1
+weightAvoidObstacles:1
+weightAvoidNeighbors:1
+weightAvoidWalls:1

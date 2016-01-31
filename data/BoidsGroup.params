@@ -1,0 +1,75 @@
+# Simulation parameters
+# <simulation>
+	seed								= 12345
+	knn									= 6
+	kno									= 2
+	knw									= 3
+	searchRadius						= 1
+	maxPursuitPredictionTime			= 10
+	minTimeToCollision					= 2
+	minTimeToObstacle					= 5
+	minTimeToWall						= 5
+	pathPredictionTime					= 10
+	minSeparationDistance				= 1
+	maxSeparationDistance				= 2
+	minFlockingDistance					= 0.5
+	maxFlockingDistance					= 7
+	cosMaxFlockingAngle					= -0.98480775301220805936674302458952
+	# Weights
+	weightAlignment						= 1
+	weightCohesion						= 16
+	weightSeparation					= 1
+	weightPursuit						= 0
+	weightSeek							= 0
+	weightFollowPath					= 0
+	weightAvoidObstacles				= 0
+	weightAvoidWalls					= 0
+	weightAvoidNeighbors				= 0
+	# Masks
+	# KERNEL_PURSUE_BIT					= 00000000 00000001 // 1
+	# KERNEL_EVADE_BIT					= 00000000 00000010 // 2
+	# KERNEL_SEEK_BIT					= 00000000 00000100 // 4
+	# KERNEL_FLEE_BIT					= 00000000 00001000 // 8
+	# KERNEL_SEPARATION_BIT				= 00000000 00010000 // 16
+	# KERNEL_ALIGNMENT_BIT				= 00000000 00100000 // 32
+	# KERNEL_COHESION_BIT				= 00000000 01000000 // 64
+	# KERNEL_AVOID_OBSTACLES_BIT		= 00000000 10000000 // 128
+	# KERNEL_AVOID_WALLS_BIT			= 00000001 00000000 // 256
+	# KERNEL_AVOID_NEIGHBORS_BIT		= 00000010 00000000 // 512
+	# KERNEL_AVOID_CLOSE_NEIGHBORS_BIT	= 00000100 00000000 // 1024
+	# KERNEL_FOLLOW_PATH_BIT			= 00001000 00000000 // 2048
+	# KERNEL_ANTI_PENETRATION_WALL		= 00010000 00000000 // 4096
+	# KERNEL_ANTI_PENETRATION_AGENT		= 00100000 00000000 // 8192
+	maskAlignment						= 16
+	maskCohesion						= 16
+	maskSeparation						= 0
+	maskSeek							= 0
+	maskFlee							= 0
+	maskPursuit							= 0
+	maskEvade							= 0
+	maskFollowPath						= 0
+	maskAvoidObstacles					= 0
+	maskAvoidWalls						= 0
+	maskAvoidNeighbors					= 0
+	<world>
+		dimensions						= 471 471 471
+		cells							= 94 94 94
+		obstacleCount					= 0
+		# mapFilename						= none
+	</world>
+	<group>
+		#numAgents						= 524288
+		#numAgents						= 32768
+		numAgents						= 1024
+		maxSpeed						= 3
+		maxForce						= 3
+		startPosition					= 0 0 0
+		minStartRadius					= 0
+		maxStartRadius					= 317
+		# <path>
+			# point						= 0 0 0
+			# point						= 0 0 -650
+			# cyclic						= false
+		# </path>
+	</group>
+</simulation>
